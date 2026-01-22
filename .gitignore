@@ -14,4 +14,3 @@ dist/
 # Build files
 packages/*/lib/
 yarn.lock
-package-lock.json

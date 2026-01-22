@@ -1,6 +1,6 @@
-# hui-turation
+# ai-guides
 
-> 一灰灰的知识目录汇总
+> LLM应用开发系列教程
 
 ## 环境
 
