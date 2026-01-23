@@ -9,7 +9,7 @@
   </author>
   <logo>https://liuyueyi.github.io/ai-guides/logo.svg</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-01-22T09:55:43.860Z</updated>
+  <updated>2026-01-23T06:38:01.949Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://liuyueyi.github.io/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://liuyueyi.github.io/ai-guides/"/>
@@ -21,6 +21,188 @@
     <name>一灰灰blog</name>
     <uri>https://ppai.top</uri>
   </contributor>
+  <entry>
+    <title type="text">D04.从0到1实现一个支持RAG的问答机器人</title>
+    <id>https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D04.%E4%BB%8E0%E5%88%B01%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E6%94%AF%E6%8C%81RAG%E7%9A%84%E9%97%AE%E7%AD%94%E6%9C%BA%E5%99%A8%E4%BA%BA.html</id>
+    <link href="https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D04.%E4%BB%8E0%E5%88%B01%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E6%94%AF%E6%8C%81RAG%E7%9A%84%E9%97%AE%E7%AD%94%E6%9C%BA%E5%99%A8%E4%BA%BA.html"/>
+    <updated>2026-01-23T06:36:51.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 基于Spring AI实现RAG知识库问答机器人：从零到一的完整教程</h1>
+<h2> 一、引言</h2>
+<p>随着大语言模型的快速发展，RAG（Retrieval-Augmented Generation）技术已成为构建知识库问答系统的核心技术之一。本文将带领大家从零开始，使用Spring AI框架构建一个支持文档上传的知识库问答机器人，帮助大家深入理解RAG技术的核心原理和实践应用。</p>
+<h3> 1.1 什么是RAG？</h3>
+<p>RAG（检索增强生成）是一种结合了信息检索和文本生成的技术。它的基本工作流程是：</p>
+<ol>
+<li>用户提出问题</li>
+<li>系统从知识库中检索相关信息</li>
+<li>大语言模型基于检索到的信息生成答案</li>
+</ol>]]></summary>
+    <content type="html"><![CDATA[<h1> 基于Spring AI实现RAG知识库问答机器人：从零到一的完整教程</h1>
+<h2> 一、引言</h2>
+<p>随着大语言模型的快速发展，RAG（Retrieval-Augmented Generation）技术已成为构建知识库问答系统的核心技术之一。本文将带领大家从零开始，使用Spring AI框架构建一个支持文档上传的知识库问答机器人，帮助大家深入理解RAG技术的核心原理和实践应用。</p>
+<h3> 1.1 什么是RAG？</h3>
+<p>RAG（检索增强生成）是一种结合了信息检索和文本生成的技术。它的基本工作流程是：</p>
+<ol>
+<li>用户提出问题</li>
+<li>系统从知识库中检索相关信息</li>
+<li>大语言模型基于检索到的信息生成答案</li>
+</ol>
+<p>从系统设计角度触发，RAG 的核心作用可以被描述为：</p>
+<blockquote>
+<p><strong>在LLM调用生成响应之前，由系统动态构造一个“最小且相关的知识上下文”。</strong></p>
+</blockquote>
+<p>请注意两个关键词：</p>
+<ul>
+<li><strong>动态</strong>：每次问题都不同，检索的知识也不同（比如用户问 A 产品时找 A 的文档，问 B 产品时找 B 的文档）</li>
+<li><strong>最小</strong>：只注入必要信息（比如用户问 “A 产品的定价”，就只塞定价相关的片段，而非整份产品手册）</li>
+</ul>
+<p>RAG可以有效的弥补上下文窗口的先天不足：不再需要把所有知识塞进窗口，而是只在需要时 “临时调取” 相关部分，既避免了窗口溢出，又减少了注意力竞争。</p>
+<h3> 1.2 RAG在交互链路中的位置</h3>
+<p>接下来我们以RAG的经典应用场景——企业知识库为例，来看一下RAG在这个流程中所处的位置</p>
+<figure><img src="/imgs/column/llm/17-1.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>在这个结构中，RAG主要就是在用户提问与向LLM发起请求这个中间段，用于检索关联的文档构建上下文</p>
+<h3> 1.3 RAG工作原理</h3>
+<p>我们以一张图来介绍RAG的工作原理，具体的RAG详细介绍，请参照文末引用</p>
+<figure><img src="/imgs/column/llm/D04-1.png" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<h2> 二、核心实现</h2>
+<h3> 2.1 项目结构概览</h3>
+<p>项目源码可以在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D05-rag-qa-bot" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a> 获取，文末有所有相关的参考信息</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.2 项目初始化</h3>
+<h4> 2.2.1 Maven依赖配置</h4>
+<p>首先，我们需要在<code>pom.xml</code>中配置必要的依赖：</p>
+<ul>
+<li>其中关于向量数据库、tika的文档解析属于核心依赖项</li>
+<li>hanlp适用于无法直接使用EmbeddingModel的场景，在我们的示例中，会实现一个基础的文档向量化方案，其中会采用Hanlp来做中文分词</li>
+<li>使用智谱的免费大模型来体验我们的RAG知识库问答（当然也可以基于OpenAI-Starter来切换其他的大模型，使用层面并没有改变，只需要替换依赖、api配置即可）</li>
+</ul>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这里我们引入了Spring AI的核心依赖，以及用于文档处理的Tika和PDF读取器，还特别加入了HanLP中文分词库来优化中文处理效果。</p>
+<h4> 2.2.2 应用配置</h4>
+<p>在<code>application.yml</code>中配置API密钥和相关参数：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.3 自定义向量存储实现</h3>
+<p>通常RAG会使用一些成熟的向量数据库（如Pinecone、weaviate、qdrant、milvus或者es、redis等），但是考虑到安装、环境配置等成本，我们接下来会实现一个基础的自定义的文本向量库 <code>TextBasedVectorStore</code>，基于内存实现，无需额外的外部依赖，单纯的用来体验RAG并没有太大问题</p>
+<p>SpringAI原生提供了一个基于内存的向量数据库<code>SimpleVectorStore</code>，在它的实现中，向量数据写入，依赖向量模型，因此如果有额度使用大模型厂家提供的EmbeddingModel时，直接用它进行测试即可；</p>
+<p>当然如果你现在并没有渠道(💰)使用向量模型的，那也没关系，接下来我们将参照SpringAI的<code>SimpleVectorStore</code>实现的一个自定义的向量库<code>TextBasedVectorStore</code>，提供一套不依赖向量模型的解决方案，特别适合快速原型开发，核心实现如下（当然你也完全可以忽略它，它不是我们的重点）</p>
+<h4> 2.3.1 TextBasedVectorStore - 文本匹配向量存储</h4>
+<p>在下面的实现中，重点体现了两个方法</p>
+<ul>
+<li>doAdd: 将文档保存到向量数据库中（文档分片 -&gt; 向量化 -&gt; 存储）</li>
+<li>doSimilaritySearch: 基于相似度的搜索</li>
+</ul>
+<blockquote>
+<p>需要注意一点，文档的向量化与搜索时传入文本的向量化，需要采用同一套向量化方案（why?）</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 2.3.2 DocumentChunker - 文档分块器</h4>
+<blockquote>
+<p>合理地将长文档分块是RAG系统的关键环节，合理的分块大小，可以有效的增加检索效率、提高准确率、减少上下文长度</p>
+</blockquote>
+<p>在真实的RAG应用中，这一块具体的方案挺多的，比如固定尺寸（下面的方案）、地柜拆分、语义拆分、结构化拆分（如结构化的markdown文档就很适合）、延迟拆分、自适应拆分、层级拆分、LLM驱动拆分、智能体拆分等（具体这一块我也没有深入学习，有兴趣的小伙伴问下AI吧~🤣）</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 2.3.3 DocumentQuantizer - 文档量化器</h4>
+<p>使用HanLP进行中文分词，实现了一个简单的文档向量化工具类（同样的你也完全可以忽略它的具体实现，因为它的效果显然比使用EmbedingModel要差很多很多，但用于学习体验RAG也基本够用）</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 2.3.4 注册向量库</h4>
+<p>接下来就是注册使用这个向量库，在配置类or启动类中，添加下面这个声明即可</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.4 SpringAI向量存储</h3>
+<p>上面2.3适用于无法直接使用大模型厂家的向量模型的场景，如果可以直接使用，那么上面的全部可以直接忽略掉，直接使用下面的方式进行声明向量库即可</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.5 问答服务实现</h3>
+<p>接下来我们进入核心的基于RAG的QA问答机器人的实现</p>
+<h4> 2.5.1 QaBoltService - 核心问答服务</h4>
+<h5> Pre. 问答服务流程</h5>
+<p>我们先从时序的角度来看一下这个问答服务的核心交互流程</p>
+<figure><img src="/imgs/column/llm/D04-2.png" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>在这个时序过程中，为了简化大家的理解，我们将文档的向量化存储与问答进行了拆分</p>
+<p><strong>第一步：文档向量化</strong></p>
+<p>这一部分包含RAG应用数据准备阶段的完整过程</p>
+<ul>
+<li>数据提取</li>
+<li>文本分割</li>
+<li>向量化</li>
+</ul>
+<p><strong>第二步：问答</strong></p>
+<ul>
+<li>应用层响应用户提问</li>
+<li>从向量数据库检索相似度高的文档信息</li>
+<li>注入提示词</li>
+<li>访问大模型，获取答案</li>
+</ul>
+<h5> Impl. 核心实现</h5>
+<p>接下来我们看一下具体的实现（上面的步骤分割得很清楚，但是实际使用时，用户可以在问答中上传附件，这个附件也会作为我们知识库的一部分，因此具体的实现中，你会发现这两部耦合在一起了，请不要惊讶）</p>
+<p><strong>step1: 初始化ChatClient</strong></p>
+<p>在开始之前，我们首先参照SpringAI的官方教程，通过Advisor来初始化支持RAG的<code>ChatClient</code></p>
+<blockquote>
+<p>官方文档：<a href="https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html" target="_blank" rel="noopener noreferrer">https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html</a></p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>接下来就是响应问答的实现，这里分两步</p>
+<p><strong>step2: 文档处理</strong></p>
+<p>处理用户上传的附件，即上面时序图中的第一步，解析文档、切分、向量化、保存到向量库;</p>
+<p>下面的实现中主要体现的是基于SpringAI封装的tika与pdf文档解析starter，来提取上传的文档，生成供向量数据库使用的<code>List&lt;Document&gt;</code>; 而具体的文档切分、向量化等则是在上面的<code>TextBasedVectorStore</code>实现</p>
+<blockquote>
+<p>注：为了一个文档，重复进行数据处理，我们在元数据中维护了文档的 md5，这样当添加到向量库中时，就可以基于这个md5来进行去重了（一个工程化实现方面的小技巧~）</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>step3: 问答实现</strong></p>
+<p>然后就是具体的问答实现，这里主要是借助 <code>QuestionAnswerAdvisor</code> 来封装RAG相关的信息</p>
+<blockquote>
+<p>说明：在下面的实现中，使用了自定义的提示词模板，当然也可以直接使用SpringAI默认的方案</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>到这里，一个基于RAG的问答机器人的核心逻辑，已经全部完成，接下来我们进入体验阶段</p>
+<h4> 2.5.2 控制器实现</h4>
+<p>QaApiController - API控制器</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.6 前端界面</h3>
+<p>交互式聊天界面，前端界面提供了文件上传和问答交互功能，具体的代码实现请参考文末的项目源码地址，这里就不贴了（主要是太长了~）</p>
+<h2> 三、体验与小结</h2>
+<h3> 3.1 启动类</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.2 问答提示词</h3>
+<p>在 <code>resources/prompts/qa-prompts.pt</code> 中维护我们的qa机器人的系统提示词（DeepSeek生成的）</p>
+<div class="language-pt line-numbers-mode" data-ext="pt"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.3 运行与测试</h3>
+<ol>
+<li><strong>启动应用</strong>：运行<code>D05Application</code>主类</li>
+<li><strong>访问页面</strong>：打开<code>http://localhost:8080/chat</code></li>
+<li><strong>上传文档</strong>：选择PDF、Word或文本文件</li>
+<li><strong>提问测试</strong>：在输入框中输入关于文档的问题</li>
+</ol>
+<p>当然在启动时，可以在启动参数中指定大模型的ApiKey，也可以直接修改<code>applicatino.yml</code>，直接维护上apiKey也可以哦</p>
+<figure><img src="/imgs/column/llm/D04-3.gif" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>在上面这个示意图中，我上传的是 <a href="https://mp.weixin.qq.com/s/1s8NC-dCNIfqTXAHyN2e1g" target="_blank" rel="noopener noreferrer">像Excel一样选择网页表格 &amp; 支持选中表单生成sql的神器：TableHelper</a> 的宣传文档，显然是没有被大模型检索、训练过的，从问答来看，效果还是不错的</p>
+<p>但是请注意，这个只是给大家用来体验RAG的，用来学习验证还是不错的；但是真实场景显然比我们提到的内容还多很多，比如</p>
+<ul>
+<li>安全隐私：不同用户的知识库文件需要隔离</li>
+<li>存储优化：上下文窗口的管理、对话历史的管理</li>
+<li>检索优化：多路召回、查询语义理解、查询改写等</li>
+<li>模型优化：成本、效率的权衡</li>
+<li>监控体系：链路追踪、日志分析、告警等</li>
+<li>DevOps: CI/CD，容器编排</li>
+<li>体验、性能等</li>
+</ul>
+<h3> 3.4 核心技术要点小结</h3>
+<h3> 1. RAG工作流程</h3>
+<ul>
+<li><strong>检索阶段</strong>：当用户提问时，系统首先将问题转换为向量，然后在文档向量库中查找相似的文档片段</li>
+<li><strong>生成阶段</strong>：将检索到的相关文档内容与用户问题一起输入大语言模型，生成最终答案</li>
+</ul>
+<h3> 2. 文档处理优化</h3>
+<ul>
+<li><strong>中文分词</strong>：使用HanLP进行精确的中文分词，提高语义理解准确性</li>
+<li><strong>文档分块</strong>：将长文档合理分块，保持语义完整性的同时便于检索</li>
+<li><strong>去重机制</strong>：通过MD5哈希避免重复上传相同的文档</li>
+</ul>
+<h3> 3. 性能优化</h3>
+<ul>
+<li><strong>相似度计算</strong>：使用余弦相似度算法计算文本相似度</li>
+<li><strong>缓存机制</strong>：对已处理的文档进行缓存，避免重复处理</li>
+<li><strong>流式响应</strong>：使用SSE实现答案的流式返回，提升用户体验</li>
+</ul>
+<p>本文通过一个最小成本（技术和资金成本都很小）的方案，我们实现了一个完整的RAG知识库问答机器人。</p>
+<p>通过这个项目，相信对RAG感兴趣，想快速体验一下完成流程的小伙伴，可以有一个动手实操的机会。</p>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="SpringAI"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-01-22T17:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
   <entry>
     <title type="text">SpringAI</title>
     <id>https://liuyueyi.github.io/ai-guides/ai-dev/</id>
@@ -1991,18 +2173,17 @@ Schema，完整记录历史聊天窗口，使用时添加 <code>org.springframew
     <title type="text">D03.从0到1实现一个发票信息提取智能体</title>
     <id>https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D03.%E4%BB%8E0%E5%88%B01%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%8F%91%E7%A5%A8%E4%BF%A1%E6%81%AF%E6%8F%90%E5%8F%96%E6%99%BA%E8%83%BD%E4%BD%93.html</id>
     <link href="https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D03.%E4%BB%8E0%E5%88%B01%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%8F%91%E7%A5%A8%E4%BF%A1%E6%81%AF%E6%8F%90%E5%8F%96%E6%99%BA%E8%83%BD%E4%BD%93.html"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
+    <updated>2026-01-23T06:36:51.000Z</updated>
     <summary type="html"><![CDATA[<p>发票的OCR识别对于现今而言，可以说比较成熟了；今天我们来从0到1实现一个基于大模型的发票提取智能体，也基于此看看大模型开发和传统的开发之间，有什么区别</p>
+<blockquote>
+<p><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></p>
+</blockquote>
 <h2> 一、系统架构设计</h2>
-<h3> 1.1 设计目标</h3>
-<p>大模型发票信息提取方案，主要基于SpringAI+多模态大模型，实现零配置、高泛化、端到端的发票智能提取系统，核心优势：</p>
-<ul>
-<li>无需模板：直接理解任意版式发票</li>
-<li>语义理解：理解发票内容而非单纯OCR</li>
-<li>结构化输出：直接生成可入库的数据结构</li>
-</ul>
-<h3> 1.2 系统整体架构</h3>]]></summary>
+<h3> 1.1 设计目标</h3>]]></summary>
     <content type="html"><![CDATA[<p>发票的OCR识别对于现今而言，可以说比较成熟了；今天我们来从0到1实现一个基于大模型的发票提取智能体，也基于此看看大模型开发和传统的开发之间，有什么区别</p>
+<blockquote>
+<p><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></p>
+</blockquote>
 <h2> 一、系统架构设计</h2>
 <h3> 1.1 设计目标</h3>
 <p>大模型发票信息提取方案，主要基于SpringAI+多模态大模型，实现零配置、高泛化、端到端的发票智能提取系统，核心优势：</p>
@@ -2377,10 +2558,23 @@ Schema，完整记录历史聊天窗口，使用时添加 <code>org.springframew
     <title type="text">应用篇</title>
     <id>https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/</id>
     <link href="https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
+    <updated>2026-01-23T06:36:51.000Z</updated>
     <summary type="html"><![CDATA[<p>以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现</p>
-]]></summary>
+<p>以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现，对应项目工都放在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects" target="_blank" rel="noopener noreferrer">app-projects</a> 下</p>
+<ul class="task-list-container">
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-0" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-0"> <a href="https://mp.weixin.qq.com/s/GTPUPs5FY52rz7bTbuaPuw" target="_blank" rel="noopener noreferrer">从0到1创建一个基于天气的旅游美食推荐智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-1" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-1"> <a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">大模型应用开发实战：两百行实现一个自然语言地址提取智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-2" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-2"> <a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-3" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-3"> <a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></label></li>
+</ul>]]></summary>
     <content type="html"><![CDATA[<p>以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现</p>
+<p>以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现，对应项目工都放在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects" target="_blank" rel="noopener noreferrer">app-projects</a> 下</p>
+<ul class="task-list-container">
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-0" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-0"> <a href="https://mp.weixin.qq.com/s/GTPUPs5FY52rz7bTbuaPuw" target="_blank" rel="noopener noreferrer">从0到1创建一个基于天气的旅游美食推荐智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-1" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-1"> <a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">大模型应用开发实战：两百行实现一个自然语言地址提取智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-2" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-2"> <a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-3" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-3"> <a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></label></li>
+</ul>
 ]]></content>
     <author>
       <name>一灰灰blog</name>

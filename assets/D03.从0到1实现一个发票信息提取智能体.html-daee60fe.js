@@ -1,0 +1,1637 @@
+import{_ as c,V as l,W as i,X as n,Y as s,Z as a,$ as p,F as e}from"./framework-e043e017.js";const u="/ai-guides/imgs/column/springai/D03-01.webp",r="/ai-guides/imgs/column/springai/D03-02.webp",k="/ai-guides/imgs/column/springai/D03-03.webp",d="/ai-guides/imgs/column/springai/D03-04.webp",v="/ai-guides/imgs/column/springai/D03-05.webp",m="/ai-guides/imgs/column/springai/D03-06.png",b="/ai-guides/imgs/column/springai/D03-07.png",g="/ai-guides/imgs/column/springai/D03-08.png",y={},f=n("p",null,"发票的OCR识别对于现今而言，可以说比较成熟了；今天我们来从0到1实现一个基于大模型的发票提取智能体，也基于此看看大模型开发和传统的开发之间，有什么区别",-1),q={href:"https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ",target:"_blank",rel:"noopener noreferrer"},h=p('<h2 id="一、系统架构设计" tabindex="-1"><a class="header-anchor" href="#一、系统架构设计" aria-hidden="true">#</a> 一、系统架构设计</h2><h3 id="_1-1-设计目标" tabindex="-1"><a class="header-anchor" href="#_1-1-设计目标" aria-hidden="true">#</a> 1.1 设计目标</h3><p>大模型发票信息提取方案，主要基于SpringAI+多模态大模型，实现零配置、高泛化、端到端的发票智能提取系统，核心优势：</p><ul><li>无需模板：直接理解任意版式发票</li><li>语义理解：理解发票内容而非单纯OCR</li><li>结构化输出：直接生成可入库的数据结构</li></ul><h3 id="_1-2-系统整体架构" tabindex="-1"><a class="header-anchor" href="#_1-2-系统整体架构" aria-hidden="true">#</a> 1.2 系统整体架构</h3><p>对应的系统架构设计如下</p><figure><img src="'+u+'" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><p>从整体的分层结构来看，一个完整的发票提取包含：</p><ul><li>接入层：负责接收外部请求、做初步流量治理 <ul><li>定位：可以理解为全局网关，承接外部流量并过滤非法请求</li></ul></li><li>应用层：做发票的多模态解析（比如识别票据图片、解析文本） + 数据标准化（统一发票信息的格式）； <ul><li>定位： “业务中枢”，串联下游服务、实现发票提取的核心流程</li></ul></li><li>服务层：把具体技术能力封装为独立服务，供应用层调用 <ul><li>定位：能力组件库，解耦业务逻辑与技术实现。</li></ul></li><li>存储层：按数据特性分两类存储：缓存存储（Redis）存高频访问的发票信息，提升查询效率 + 持久化存储（PostgreSQL）存全量发票数据，做长期归档。 <ul><li>定位：数据仓库，保障数据的高效访问与长期留存。</li></ul></li><li>运维层：监控与审计 <ul><li>定位：运维保障，确保全流程可观测、问题可追溯</li></ul></li></ul>',9),w=p('<h3 id="_1-3-业务流程" tabindex="-1"><a class="header-anchor" href="#_1-3-业务流程" aria-hidden="true">#</a> 1.3 业务流程</h3><p>基于上面的系统架构，我们可以串一下发票信息提取的全流程</p><ul><li>用户上传发票</li><li>后端应用接受请求，做一些基本过滤</li><li>应用层处理发票识别逻辑</li><li>服务层与大模型交互，提取识别结果，并存储相关的数据</li></ul><figure><img src="'+r+`" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><div class="language-text line-numbers-mode" data-ext="text"><pre class="language-text"><code>graph TD
+    %% 样式定义：按架构分层设置配色，适配研发视角
+    classDef userLayer fill:#e6f7ff,stroke:#1890ff,stroke-width:2px,color:#000;
+    classDef accessLayer fill:#b3e0ff,stroke:#096dd9,stroke-width:2px,color:#000;
+    classDef appLayer fill:#b7eb8f,stroke:#52c41a,stroke-width:2px,color:#000;
+    classDef serviceLayer fill:#fff7e6,stroke:#fa8c16,stroke-width:2px,color:#000;
+    classDef storageLayer fill:#f9e5ff,stroke:#722ed1,stroke-width:2px,color:#000;
+    classDef opsLayer fill:#f0f2f5,stroke:#8c8c8c,stroke-width:2px,color:#000;
+
+    %% 流程节点
+    A[用户上传发票文件/图片]:::userLayer --&gt; B[接入层：权限校验+限流控制]:::accessLayer
+    B --&gt; C[接入层：请求路由分发]:::accessLayer
+    C --&gt; D[应用层：接收请求并初始化处理流程]:::appLayer
+    D --&gt; E[应用层：调用AI模型服务]:::appLayer
+    E --&gt; F[服务层：发票OCR识别+大模型信息提取]:::serviceLayer
+    F --&gt; G[服务层：数据校验+格式标准化]:::serviceLayer
+    G --&gt; H[存储层：缓存高频发票数据（Redis）]:::storageLayer
+    G --&gt; I[存储层：持久化全量发票数据（PG）]:::storageLayer
+    H &amp; I --&gt; J[应用层：整合提取结果并封装]:::appLayer
+    J --&gt; K[接入层：返回标准化发票信息结果]:::accessLayer
+    K --&gt; L[用户接收发票提取结果]:::userLayer
+
+    %% 运维层全流程监控（并行）
+    B -.-&gt; M[运维层：请求流量监控]:::opsLayer
+    F -.-&gt; N[运维层：模型调用链路追踪]:::opsLayer
+    G -.-&gt; O[运维层：数据处理日志审计]:::opsLayer
+    K -.-&gt; P[运维层：结果返回延迟统计]:::opsLayer
+    M &amp; N &amp; O &amp; P --&gt; Q[运维层：异常告警（如有）]:::opsLayer
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="二、数据结构设计" tabindex="-1"><a class="header-anchor" href="#二、数据结构设计" aria-hidden="true">#</a> 二、数据结构设计</h2><p>一个完整的应用实现应该包含我们上面提到的六层结构；当然由于篇幅有限，我们这里则只抓重点，主要关注下大模型这一层的交互实现上；对于持久化、运维监控这块就一笔带过</p><h3 id="_2-1-发票核心数据模型" tabindex="-1"><a class="header-anchor" href="#_2-1-发票核心数据模型" aria-hidden="true">#</a> 2.1 发票核心数据模型</h3><p>发票本身的类型较多，不同的发票对应的信息也不太一样，这块的专业性有一点高；如果不太熟悉这块业务背景的小伙伴，直接对照发票来验证即可，比如下面这是一张从baidu上找到的专票</p><figure><img src="https://5b0988e595225.cdn.sohucs.com/images/20191017/c0cf274fec0141439a636ab0c353752a.jpeg" alt="来源于百度" tabindex="0" loading="lazy"><figcaption>来源于百度</figcaption></figure><p>从这个票面信息，我们可以定义销售方、购买方信息(核心是名称 + 纳税人识别号)</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@JsonClassDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票方信息&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">record</span> <span class="token class-name">PartyInfo</span><span class="token punctuation">(</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;名称&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> name<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;纳税人识别号&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> taxId<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;地址&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> address<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;电话&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> phone<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;开户银行&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> bank<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;银行账号&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> account<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>发票行信息（即商品、服务名称）</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@JsonClassDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票商品明细&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">record</span> <span class="token class-name">InvoiceItem</span><span class="token punctuation">(</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;商品名称&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> itemName<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;商品规格&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> specification<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;单位&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">String</span> unit<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;数量&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">BigDecimal</span> quantity<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;单价&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">BigDecimal</span> unitPrice<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;金额&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">BigDecimal</span> amount<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;税率&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">BigDecimal</span> taxRate<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;税额&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">BigDecimal</span> taxAmount<span class="token punctuation">,</span>
+        <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;价税合计&quot;</span><span class="token punctuation">)</span>
+        <span class="token class-name">BigDecimal</span> totalAmount<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>对应的发票信息</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Data</span>
+<span class="token annotation punctuation">@JsonClassDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票完整信息&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceInfo</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 发票基本信息</span>
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票类型，如：增值税专用发票&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> invoiceType<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票代码，如：044001800111&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> invoiceCode<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票号码，如：12345678&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> invoiceNumber<span class="token punctuation">;</span>
+
+    <span class="token comment">// 机器编号</span>
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;机器编号，如：66173206007&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> machineNumber<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;密码区，如：0-TZ099+/8&lt;0*8+T98Z/&lt;6T&lt;/L9&gt;0-260&lt;*L6/6T/S-&gt;&gt;00998¥//&lt;L82Z099*+/8&lt;0*8+T9*/Z&lt;¥&lt;696&lt;E9200-896+/8T*8-&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> passwordArea<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;开票日期，如：2024-01-15&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">LocalDate</span> issueDate<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;校验码，如：12345 67890 12345 67890&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> checkCode<span class="token punctuation">;</span>
+
+    <span class="token comment">// 购销双方信息</span>
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;销售方信息&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">PartyInfo</span> seller<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;购买方信息&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">PartyInfo</span> buyer<span class="token punctuation">;</span>
+
+    <span class="token comment">// 金额信息</span>
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;不含税金额&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">BigDecimal</span> amountWithoutTax<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;税额&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">BigDecimal</span> taxAmount<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;价税合计&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">BigDecimal</span> totalAmount<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;税率，如：0.13&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">BigDecimal</span> taxRate<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;备注&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> remark<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;收款人&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> payee<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;复核人&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> reviewer<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;开票人&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> issuer<span class="token punctuation">;</span>
+
+    <span class="token comment">// 系统信息</span>
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票图片MD5&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> imageHash<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;提取置信度，如：0.95&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">Double</span> confidence<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;提取时间&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">LocalDateTime</span> extractTime<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;商品/服务明细列表&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span></span> items<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-2-请求响应模型" tabindex="-1"><a class="header-anchor" href="#_2-2-请求响应模型" aria-hidden="true">#</a> 2.2 请求响应模型</h3><p>如果我们希望提供一个功能齐全的发票提取服务，那么有必要好好设计一下提供REST API（最好是基于真实的业务诉求来设计），我们先做一个非常基础简单的能力提供</p><p>上传方式：</p><ul><li>传发票文件</li><li>传base64图格式放票</li><li>传http格式发票</li><li>指定是否需要解析发票的商品行</li></ul><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Data</span>
+<span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;发票提取请求&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractRequest</span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;发票图片,如果是http开头表示发票访问链接；如果是 data:image/png;base64, 开头表示为base64格式图片&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> image<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;图片格式&quot;</span><span class="token punctuation">,</span> example <span class="token operator">=</span> <span class="token string">&quot;image/jpeg&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> imageType<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;是否需要商品明细&quot;</span><span class="token punctuation">,</span> example <span class="token operator">=</span> <span class="token string">&quot;true&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token keyword">boolean</span> needItems <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;提示信息&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> msg<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>对应的返回比较常见了</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token comment">// 定义一个枚举状态，用于标记识别结果</span>
+<span class="token keyword">public</span> <span class="token keyword">enum</span> <span class="token class-name">ProcessStatus</span> <span class="token punctuation">{</span>
+    <span class="token constant">SUCCESS</span><span class="token punctuation">,</span>
+    <span class="token constant">PARTIAL_SUCCESS</span><span class="token punctuation">,</span>
+    <span class="token constant">VALIDATION_FAILED</span><span class="token punctuation">,</span>
+    <span class="token constant">OCR_FAILED</span><span class="token punctuation">,</span>
+    <span class="token constant">TIMEOUT</span><span class="token punctuation">,</span>
+    <span class="token constant">ERROR</span>
+<span class="token punctuation">}</span>
+
+
+<span class="token comment">// 返回的包装结果</span>
+<span class="token annotation punctuation">@Data</span>
+<span class="token annotation punctuation">@Accessors</span><span class="token punctuation">(</span>chain <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">)</span>
+<span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;发票提取响应&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractResponse</span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;请求ID&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> requestId<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;处理状态&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">ProcessStatus</span> status<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;提取结果&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">InvoiceInfo</span> invoiceInfo<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;处理耗时(ms)&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">Long</span> processTime<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Schema</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;错误信息&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">String</span> errorMessage<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="三、项目搭建" tabindex="-1"><a class="header-anchor" href="#三、项目搭建" aria-hidden="true">#</a> 三、项目搭建</h2>`,24),x={href:"https://hhui.top/tutorial/spring/springai/%E5%9F%BA%E7%A1%80%E7%AF%87/01.%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AASpringAI-Demo%E5%B7%A5%E7%A8%8B.html",target:"_blank",rel:"noopener noreferrer"},I=p(`<p>在下面的实现过程中，我们使用智谱的免费大模型作为我们的实际载体；若希望使用其他的模型的小伙伴，也可以直接替换（SpringAI对不同厂商的大模型集成得相当可以，切换成本较低）</p><h3 id="_3-1-基础环境" tabindex="-1"><a class="header-anchor" href="#_3-1-基础环境" aria-hidden="true">#</a> 3.1 基础环境</h3><p>我们使用的SpringAI的版本为最新的 <code>1.1.2</code> ，此外直接使用 zhipu 的starter来作为大模型的交互客户端</p><div class="language-xml line-numbers-mode" data-ext="xml"><pre class="language-xml"><code><span class="token comment">&lt;!-- pom.xml 关键依赖 --&gt;</span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependencies</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>org.springframework.boot<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>spring-boot-starter-web<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>org.springframework.ai<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>spring-ai-starter-model-zhipuai<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>cn.hutool<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>hutool-http<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>5.8.38<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependencies</span><span class="token punctuation">&gt;</span></span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后在配置文件中，设置对应的配置信息，其中关键点为</p><ul><li>api-key: 可以通过启动参数、系统环境变量等方式注入key，从而避免硬编码导致的泄露问题</li><li>model: 选择的是免费的 <code>GLM-4.1V-Thinking-Flash</code>， 支持图片识别（相比较于 <code>GLM-4V-Flash</code> 上下文窗口更大，但是响应也更慢）</li><li>temperature: 0.1 低温度，保证提取的稳定性</li></ul><div class="language-yaml line-numbers-mode" data-ext="yml"><pre class="language-yaml"><code><span class="token comment"># application.yml</span>
+<span class="token key atrule">spring</span><span class="token punctuation">:</span>
+  <span class="token key atrule">ai</span><span class="token punctuation">:</span>
+    <span class="token key atrule">zhipuai</span><span class="token punctuation">:</span>
+      <span class="token comment"># api-key 使用你自己申请的进行替换；如果为了安全考虑，可以通过启动参数进行设置</span>
+      <span class="token key atrule">api-key</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>zhipuai<span class="token punctuation">-</span>api<span class="token punctuation">-</span>key<span class="token punctuation">}</span>
+      <span class="token key atrule">chat</span><span class="token punctuation">:</span>
+        <span class="token key atrule">options</span><span class="token punctuation">:</span>
+          <span class="token key atrule">model</span><span class="token punctuation">:</span> GLM<span class="token punctuation">-</span>4.1V<span class="token punctuation">-</span>Thinking<span class="token punctuation">-</span>Flash  <span class="token comment"># 视觉理解模型, 这个模型的上下文窗口 64K，比 GLM-4V-Flash 的 4K 可以返回更多的内容</span>
+          <span class="token key atrule">temperature</span><span class="token punctuation">:</span> <span class="token number">0.1</span> <span class="token comment"># 低温度，保证提取的稳定性</span>
+
+
+<span class="token comment"># 修改日志级别</span>
+<span class="token key atrule">logging</span><span class="token punctuation">:</span>
+  <span class="token key atrule">level</span><span class="token punctuation">:</span>
+    <span class="token key atrule">org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor</span><span class="token punctuation">:</span> debug
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-2-可选的发票提取工具页" tabindex="-1"><a class="header-anchor" href="#_3-2-可选的发票提取工具页" aria-hidden="true">#</a> 3.2 可选的发票提取工具页</h3><p>为了更好的进行交互体验，我们实现一个网页交互页面，用于上传发票、查看返回结果，直接基于 thymleaf 来实现</p><p>因此添加依赖 <code>spring-boot-starter-thymeleaf</code></p><div class="language-xml line-numbers-mode" data-ext="xml"><pre class="language-xml"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>org.springframework.boot<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>spring-boot-starter-thymeleaf<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>如果本地开发，需要修改前端页面的小伙伴，可以考虑关闭缓存 （可选配置）</p><div class="language-yaml line-numbers-mode" data-ext="yml"><pre class="language-yaml"><code><span class="token comment"># application.yml</span>
+<span class="token key atrule">spring</span><span class="token punctuation">:</span>
+  <span class="token key atrule">thymeleaf</span><span class="token punctuation">:</span>
+    <span class="token key atrule">cache</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="四、核心实现代码" tabindex="-1"><a class="header-anchor" href="#四、核心实现代码" aria-hidden="true">#</a> 四、核心实现代码</h2><h3 id="_4-1-提示词管理" tabindex="-1"><a class="header-anchor" href="#_4-1-提示词管理" aria-hidden="true">#</a> 4.1 提示词管理</h3>`,15),S={href:"https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww",target:"_blank",rel:"noopener noreferrer"},P=n("code",null,"resources/prompt",-1),D=n("code",null,"xxx.pt",-1),C=p(`<p>一个可用于大模型提取发票的提示词如下</p><div class="language-pt line-numbers-mode" data-ext="pt"><pre class="language-pt"><code>你是一个专业的发票信息提取专家。请从用户提供的发票图片中提取完整的结构化信息。
+
+必须遵循：
+1. 准确识别发票类型（增值税专用发票、增值税普通发票、电子普通发票等）
+2. 提取所有关键字段：发票代码、发票号码、开票日期、校验码等
+3. 识别购销双方完整信息（名称、纳税人识别号、地址电话、开户行及账号）
+4. 提取商品明细，包括商品名称、规格、单位、数量、单价、金额、税率、税额
+5. 计算并核对金额：不含税金额、税额、价税合计
+6. 识别备注、收款人、复核人、开票人等信息
+7. 对于模糊或不清晰或无法识别的字段，请使用null值。
+8. 请确保所有金额字段为数字类型，日期为字符串格式。
+9. 请务必返回完整内容，不要截断JSON。
+
+输出格式要求：
+请严格按照以下JSON格式输出，不要包含任何额外文本：
+{
+  &quot;invoiceType&quot;: &quot;发票类型&quot;,
+  &quot;invoiceCode&quot;: &quot;发票代码&quot;,
+  &quot;invoiceNumber&quot;: &quot;发票号码&quot;,
+  &quot;issueDate&quot;: &quot;YYYY-MM-DD&quot;,
+  &quot;checkCode&quot;: &quot;校验码&quot;,
+  &quot;seller&quot;: {
+    &quot;name&quot;: &quot;销售方名称&quot;,
+    &quot;taxId&quot;: &quot;纳税人识别号&quot;,
+    &quot;address&quot;: &quot;地址&quot;,
+    &quot;phone&quot;: &quot;电话&quot;,
+    &quot;bank&quot;: &quot;开户行&quot;,
+    &quot;account&quot;: &quot;账号&quot;
+  },
+  &quot;buyer&quot;: {
+    &quot;name&quot;: &quot;购买方名称&quot;,
+    &quot;taxId&quot;: &quot;纳税人识别号&quot;,
+    &quot;address&quot;: &quot;地址&quot;,
+    &quot;phone&quot;: &quot;电话&quot;,
+    &quot;bank&quot;: &quot;开户行&quot;,
+    &quot;account&quot;: &quot;账号&quot;
+  },
+  &quot;amountWithoutTax&quot;: 1000.00,
+  &quot;taxAmount&quot;: 130.00,
+  &quot;totalAmount&quot;: 1130.00,
+  &quot;taxRate&quot;: 0.13,
+  &quot;items&quot;: [
+    {
+      &quot;itemName&quot;: &quot;商品名称&quot;,
+      &quot;specification&quot;: &quot;规格型号&quot;,
+      &quot;unit&quot;: &quot;单位&quot;,
+      &quot;quantity&quot;: 1.0,
+      &quot;unitPrice&quot;: 1000.00,
+      &quot;amount&quot;: 1000.00,
+      &quot;taxRate&quot;: 0.13,
+      &quot;taxAmount&quot;: 130.00,
+      &quot;totalAmount&quot;: 1130.00
+    }
+  ],
+  &quot;remark&quot;: &quot;备注信息&quot;,
+  &quot;payee&quot;: &quot;收款人&quot;,
+  &quot;reviewer&quot;: &quot;复核人&quot;,
+  &quot;issuer&quot;: &quot;开票人&quot;,
+  &quot;confidence&quot;: 0.95
+}
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_4-2-提示词注入" tabindex="-1"><a class="header-anchor" href="#_4-2-提示词注入" aria-hidden="true">#</a> 4.2 提示词注入</h3><p>然后在应用中，对应的提示词可以直接使用 <code>@Value</code> 注解进行注入，如提取服务的初始化</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Slf4j</span>
+<span class="token annotation punctuation">@Service</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractionService</span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Value</span><span class="token punctuation">(</span><span class="token string">&quot;classpath:/prompts/invoice-extract.st&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">Resource</span> invoiceSystemPrompt<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">ChatModel</span> chatModel<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">ChatClient</span> chatClient<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token class-name">InvoiceExtractionService</span><span class="token punctuation">(</span><span class="token class-name">ChatModel</span> chatModel<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>chatModel <span class="token operator">=</span> chatModel<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>chatClient <span class="token operator">=</span> <span class="token class-name">ChatClient</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span>chatModel<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">defaultAdvisors</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">SimpleLoggerAdvisor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_4-3-基于大模型的发票信息提取" tabindex="-1"><a class="header-anchor" href="#_4-3-基于大模型的发票信息提取" aria-hidden="true">#</a> 4.3 基于大模型的发票信息提取</h3><p>接下来就是核心的借助SpringAI实现大模型的交互，基于多模态的交互方案，传入系统提示词、用户消息+图片，定义结果化返回，以此来获取响应结果</p><blockquote><p>不到十行的代码，就可以实现提取逻辑（属实是有点夸张了啊~）</p></blockquote><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token doc-comment comment">/**
+ * 识别发票内容
+ *
+ * <span class="token keyword">@param</span> <span class="token parameter">imageBytes</span> 图片字节
+ * <span class="token keyword">@param</span> <span class="token parameter">mimeType</span>   图片类型
+ * <span class="token keyword">@param</span> <span class="token parameter">msg</span>        识别提示信息
+ * <span class="token keyword">@return</span>
+ */</span>
+<span class="token keyword">public</span> <span class="token class-name">InvoiceInfo</span> <span class="token function">extractInvoice</span><span class="token punctuation">(</span><span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> imageBytes<span class="token punctuation">,</span> <span class="token class-name">MimeType</span> mimeType<span class="token punctuation">,</span> <span class="token class-name">String</span> msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">long</span> start <span class="token operator">=</span> <span class="token class-name">System</span><span class="token punctuation">.</span><span class="token function">currentTimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">Message</span> systemMsg <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SystemMessage</span><span class="token punctuation">(</span>invoiceSystemPrompt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">Media</span> media <span class="token operator">=</span> <span class="token class-name">Media</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">mimeType</span><span class="token punctuation">(</span>mimeType<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span>imageBytes<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">Message</span> userMsg <span class="token operator">=</span> <span class="token class-name">UserMessage</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token punctuation">(</span>msg <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>msg<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">?</span> msg <span class="token operator">:</span> <span class="token string">&quot;请将发票图片内容进行识别，并返回结构化的发票信息&quot;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">media</span><span class="token punctuation">(</span>media<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token class-name">Prompt</span> prompt <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Prompt</span><span class="token punctuation">(</span><span class="token class-name">List</span><span class="token punctuation">.</span><span class="token function">of</span><span class="token punctuation">(</span>systemMsg<span class="token punctuation">,</span> userMsg<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">InvoiceInfo</span> invoiceInfo <span class="token operator">=</span> chatClient<span class="token punctuation">.</span><span class="token function">prompt</span><span class="token punctuation">(</span>prompt<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">entity</span><span class="token punctuation">(</span><span class="token class-name">InvoiceInfo</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    log<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">&quot;解析耗时：{} 返回: \\n{}&quot;</span><span class="token punctuation">,</span> <span class="token class-name">System</span><span class="token punctuation">.</span><span class="token function">currentTimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> start<span class="token punctuation">,</span> <span class="token function">toStr</span><span class="token punctuation">(</span>invoiceInfo<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> invoiceInfo<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_4-4-验证接口" tabindex="-1"><a class="header-anchor" href="#_4-4-验证接口" aria-hidden="true">#</a> 4.4 验证接口</h3><p>接下来为了快速验证效果，我们可以整一个简单的验证接口，接收上传的发票，返回提取结果</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Controller</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractionController</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">InvoiceExtractionService</span> invoiceExtractionService<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token class-name">InvoiceExtractionController</span><span class="token punctuation">(</span><span class="token class-name">InvoiceExtractionService</span> invoiceExtractionService<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>invoiceExtractionService <span class="token operator">=</span> invoiceExtractionService<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token doc-comment comment">/**
+     * 上传发票图片并提取内容
+     *
+     * <span class="token keyword">@param</span> <span class="token parameter">file</span> 上传的发票图片文件
+     * <span class="token keyword">@param</span> <span class="token parameter">msg</span>  识别提示信息
+     * <span class="token keyword">@return</span> 识别结果
+     */</span>
+    <span class="token annotation punctuation">@ResponseBody</span>
+    <span class="token annotation punctuation">@PostMapping</span><span class="token punctuation">(</span>path <span class="token operator">=</span> <span class="token string">&quot;/extractInvoice&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">public</span> <span class="token class-name">InvoiceInfo</span> <span class="token function">extractInvoice</span><span class="token punctuation">(</span><span class="token annotation punctuation">@RequestParam</span><span class="token punctuation">(</span><span class="token string">&quot;file&quot;</span><span class="token punctuation">)</span> <span class="token class-name">MultipartFile</span> file<span class="token punctuation">,</span>
+                                      <span class="token annotation punctuation">@RequestParam</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;msg&quot;</span><span class="token punctuation">,</span> required <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token class-name">String</span> msg
+    <span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">IOException</span> <span class="token punctuation">{</span>
+        <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> imageBytes <span class="token operator">=</span> file<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">MimeType</span> mimeType <span class="token operator">=</span> <span class="token class-name">MimeType</span><span class="token punctuation">.</span><span class="token function">valueOf</span><span class="token punctuation">(</span>file<span class="token punctuation">.</span><span class="token function">getContentType</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> invoiceExtractionService<span class="token punctuation">.</span><span class="token function">extractInvoice</span><span class="token punctuation">(</span>imageBytes<span class="token punctuation">,</span> mimeType<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+
+    <span class="token doc-comment comment">/**
+     * 显示发票识别页面
+     *
+     * <span class="token keyword">@return</span> HTML页面
+     */</span>
+    <span class="token annotation punctuation">@GetMapping</span><span class="token punctuation">(</span><span class="token string">&quot;/invoicePage&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">public</span> <span class="token class-name">String</span> <span class="token function">invoicePage</span><span class="token punctuation">(</span><span class="token class-name">Model</span> model<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">&quot;invoice_extraction&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后让AI帮我生成一个交互的前端页面， <code>invoice_extraction.html</code>，放在 <code>resources/template</code> 目录下</p><div class="language-html line-numbers-mode" data-ext="html"><pre class="language-html"><code><span class="token doctype"><span class="token punctuation">&lt;!</span><span class="token doctype-tag">DOCTYPE</span> <span class="token name">html</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>zh-CN<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">charset</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>UTF-8<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>viewport<span class="token punctuation">&quot;</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>width=device-width, initial-scale=1.0<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>title</span><span class="token punctuation">&gt;</span></span>发票信息提取<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>title</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>style</span><span class="token punctuation">&gt;</span></span><span class="token style"><span class="token language-css">
+        <span class="token selector">body</span> <span class="token punctuation">{</span>
+            <span class="token property">font-family</span><span class="token punctuation">:</span> Arial<span class="token punctuation">,</span> sans-serif<span class="token punctuation">;</span>
+            <span class="token property">max-width</span><span class="token punctuation">:</span> 1600px<span class="token punctuation">;</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 0 auto<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #f5f5f5<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.container</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 8px<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+            <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 2px 10px <span class="token function">rgba</span><span class="token punctuation">(</span>0<span class="token punctuation">,</span> 0<span class="token punctuation">,</span> 0<span class="token punctuation">,</span> 0.1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">h1</span> <span class="token punctuation">{</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> #333<span class="token punctuation">;</span>
+            <span class="token property">margin-bottom</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.main-layout</span> <span class="token punctuation">{</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+            <span class="token property">gap</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+            <span class="token property">align-items</span><span class="token punctuation">:</span> flex-start<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.left-panel,  .right-panel</span> <span class="token punctuation">{</span>
+            <span class="token property">flex</span><span class="token punctuation">:</span> 3<span class="token punctuation">;</span>
+            <span class="token property">min-width</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+            <span class="token property">min-height</span><span class="token punctuation">:</span> 400px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 1px dashed #ccc<span class="token punctuation">;</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token selector">.center-panel</span> <span class="token punctuation">{</span>
+            <span class="token property">flex</span><span class="token punctuation">:</span> 1<span class="token punctuation">;</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">min-height</span><span class="token punctuation">:</span> 400px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 1px dashed #ccc<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 12px<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.panel</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #f9f9f9<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 8px<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+            <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 1px 3px <span class="token function">rgba</span><span class="token punctuation">(</span>0<span class="token punctuation">,</span> 0<span class="token punctuation">,</span> 0<span class="token punctuation">,</span> 0.1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.upload-area</span> <span class="token punctuation">{</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 2px dashed #ccc<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 8px<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">margin-bottom</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+            <span class="token property">transition</span><span class="token punctuation">:</span> border-color 0.3s<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.upload-area.highlight</span> <span class="token punctuation">{</span>
+            <span class="token property">border-color</span><span class="token punctuation">:</span> #007bff<span class="token punctuation">;</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #f0f8ff<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.upload-area p</span> <span class="token punctuation">{</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 0 0 15px 0<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> #666<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.file-input</span> <span class="token punctuation">{</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.upload-btn</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #007bff<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 10px 20px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+            <span class="token property">cursor</span><span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+            <span class="token property">font-size</span><span class="token punctuation">:</span> 16px<span class="token punctuation">;</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 10px 0<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.upload-btn:hover</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #0056b3<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.checkbox-container</span> <span class="token punctuation">{</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 15px 0<span class="token punctuation">;</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.checkbox-label-2</span> <span class="token punctuation">{</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> inline-flex<span class="token punctuation">;</span>
+            <span class="token property">align-items</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">cursor</span><span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+            <span class="token property">font-size</span><span class="token punctuation">:</span> 14px<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> #666<span class="token punctuation">;</span>
+            <span class="token property">user-select</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.checkbox-input</span> <span class="token punctuation">{</span>
+            <span class="token property">margin-right</span><span class="token punctuation">:</span> 8px<span class="token punctuation">;</span>
+            <span class="token property">width</span><span class="token punctuation">:</span> 16px<span class="token punctuation">;</span>
+            <span class="token property">height</span><span class="token punctuation">:</span> 16px<span class="token punctuation">;</span>
+            <span class="token property">cursor</span><span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+            <span class="token property">vertical-align</span><span class="token punctuation">:</span> middle<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.checkbox-text</span> <span class="token punctuation">{</span>
+            <span class="token property">vertical-align</span><span class="token punctuation">:</span> middle<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+
+
+        <span class="token selector">.preview-container</span> <span class="token punctuation">{</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">margin-top</span><span class="token punctuation">:</span> 15px<span class="token punctuation">;</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.preview-container h3</span> <span class="token punctuation">{</span>
+            <span class="token property">margin-top</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+            <span class="token property">margin-bottom</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> #333<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.preview-image</span> <span class="token punctuation">{</span>
+            <span class="token property">max-width</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+            <span class="token property">max-height</span><span class="token punctuation">:</span> 350px<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+            <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 2px 5px <span class="token function">rgba</span><span class="token punctuation">(</span>0<span class="token punctuation">,</span> 0<span class="token punctuation">,</span> 0<span class="token punctuation">,</span> 0.1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 1px solid #eee<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.controls</span> <span class="token punctuation">{</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 20px 0<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.identify-btn</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #28a745<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 12px 30px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+            <span class="token property">cursor</span><span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+            <span class="token property">font-size</span><span class="token punctuation">:</span> 16px<span class="token punctuation">;</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+            <span class="token property">width</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+            <span class="token property">margin-bottom</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.identify-btn:hover</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #218838<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.clear-btn</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #dc3545<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 12px 30px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+            <span class="token property">cursor</span><span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+            <span class="token property">font-size</span><span class="token punctuation">:</span> 16px<span class="token punctuation">;</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+            <span class="token property">width</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.clear-btn:hover</span> <span class="token punctuation">{</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #c82333<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.result-container</span> <span class="token punctuation">{</span>
+            <span class="token property">margin-top</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.result-title</span> <span class="token punctuation">{</span>
+            <span class="token property">font-weight</span><span class="token punctuation">:</span> bold<span class="token punctuation">;</span>
+            <span class="token property">margin-bottom</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> #333<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.result-content</span> <span class="token punctuation">{</span>
+            <span class="token property">white-space</span><span class="token punctuation">:</span> pre-wrap<span class="token punctuation">;</span>
+            <span class="token property">word-wrap</span><span class="token punctuation">:</span> break-word<span class="token punctuation">;</span>
+            <span class="token property">max-height</span><span class="token punctuation">:</span> 500px<span class="token punctuation">;</span>
+            <span class="token property">min-height</span><span class="token punctuation">:</span> 300px<span class="token punctuation">;</span>
+            <span class="token property">overflow-y</span><span class="token punctuation">:</span> auto<span class="token punctuation">;</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 1px solid #eee<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.loading</span> <span class="token punctuation">{</span>
+            <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+            <span class="token property">display</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.loading-spinner</span> <span class="token punctuation">{</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 4px solid #f3f3f3<span class="token punctuation">;</span>
+            <span class="token property">border-top</span><span class="token punctuation">:</span> 4px solid #007bff<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 50%<span class="token punctuation">;</span>
+            <span class="token property">width</span><span class="token punctuation">:</span> 40px<span class="token punctuation">;</span>
+            <span class="token property">height</span><span class="token punctuation">:</span> 40px<span class="token punctuation">;</span>
+            <span class="token property">animation</span><span class="token punctuation">:</span> spin 1s linear infinite<span class="token punctuation">;</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 0 auto 10px<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token atrule"><span class="token rule">@keyframes</span> spin</span> <span class="token punctuation">{</span>
+            <span class="token selector">0%</span> <span class="token punctuation">{</span>
+                <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">rotate</span><span class="token punctuation">(</span>0deg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token selector">100%</span> <span class="token punctuation">{</span>
+                <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">rotate</span><span class="token punctuation">(</span>360deg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.paste-area</span> <span class="token punctuation">{</span>
+            <span class="token property">margin-top</span><span class="token punctuation">:</span> 15px<span class="token punctuation">;</span>
+            <span class="token property">padding</span><span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+            <span class="token property">border</span><span class="token punctuation">:</span> 1px solid #eee<span class="token punctuation">;</span>
+            <span class="token property">border-radius</span><span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+            <span class="token property">background-color</span><span class="token punctuation">:</span> #fafafa<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token selector">.paste-area p</span> <span class="token punctuation">{</span>
+            <span class="token property">margin</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+            <span class="token property">font-size</span><span class="token punctuation">:</span> 14px<span class="token punctuation">;</span>
+            <span class="token property">color</span><span class="token punctuation">:</span> #666<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    </span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>style</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>container<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h1</span><span class="token punctuation">&gt;</span></span>发票信息提取系统<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h1</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>top<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h3</span><span class="token punctuation">&gt;</span></span>选择发票图片<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h3</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>upload-area<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>uploadArea<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">&gt;</span></span>点击下方按钮选择图片，或将图片拖拽到此区域<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>file<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>fileInput<span class="token punctuation">&quot;</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>file-input<span class="token punctuation">&quot;</span></span> <span class="token attr-name">accept</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>image/*<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>upload-btn<span class="token punctuation">&quot;</span></span> <span class="token special-attr"><span class="token attr-name">onclick</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span><span class="token value javascript language-javascript">document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;fileInput&#39;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">click</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span><span class="token punctuation">&quot;</span></span></span><span class="token punctuation">&gt;</span></span>选择图片<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>paste-area<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">&gt;</span></span>或者按 Ctrl+V 粘贴剪贴板中的图片<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>main-layout panel<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+        <span class="token comment">&lt;!-- 左侧面板：图片选择和预览 --&gt;</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>left-panel<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h3</span><span class="token punctuation">&gt;</span></span>图片预览<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h3</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>preview-container<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>previewContainer<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>img</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>previewImage<span class="token punctuation">&quot;</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>preview-image<span class="token punctuation">&quot;</span></span> <span class="token attr-name">alt</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>预览图<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+
+        <span class="token comment">&lt;!-- 中间面板：操作按钮 --&gt;</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>center-panel<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h3</span><span class="token punctuation">&gt;</span></span>操作区域<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h3</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>controls<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>controls<span class="token punctuation">&quot;</span></span> <span class="token special-attr"><span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span><span class="token value css language-css"><span class="token property">display</span><span class="token punctuation">:</span>none<span class="token punctuation">;</span></span><span class="token punctuation">&quot;</span></span></span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>identify-btn<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>identifyBtn<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>识别发票信息<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>checkbox-container<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>label</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>checkbox-label-2<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>checkbox<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>needItemsCheckbox<span class="token punctuation">&quot;</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>checkbox-input<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>span</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>checkbox-text<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>发票行数提取<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>span</span><span class="token punctuation">&gt;</span></span>
+                        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>label</span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>clear-btn<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>clearBtn<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>清除<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>loading<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>loading<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>loading-spinner<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">&gt;</span></span>正在识别发票信息，请稍候...<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+
+        <span class="token comment">&lt;!-- 右侧面板：识别结果 --&gt;</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>right-panel<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h3</span><span class="token punctuation">&gt;</span></span>识别结果<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h3</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>result-container<span class="token punctuation">&quot;</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>resultContainer<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>resultContent<span class="token punctuation">&quot;</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>result-content<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;DOMContentLoaded&#39;</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> uploadArea <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;uploadArea&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> fileInput <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;fileInput&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> previewContainer <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;previewContainer&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> previewImage <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;previewImage&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> controls <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;controls&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> identifyBtn <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;identifyBtn&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> clearBtn <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;clearBtn&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> loading <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;loading&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> resultContainer <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;resultContainer&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> resultContent <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;resultContent&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 文件选择事件</span>
+        fileInput<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;change&#39;</span><span class="token punctuation">,</span> handleFileSelect<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 拖拽事件</span>
+        uploadArea<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;dragover&#39;</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            uploadArea<span class="token punctuation">.</span>classList<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token string">&#39;highlight&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        uploadArea<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;dragleave&#39;</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            uploadArea<span class="token punctuation">.</span>classList<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token string">&#39;highlight&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        uploadArea<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;drop&#39;</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            uploadArea<span class="token punctuation">.</span>classList<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token string">&#39;highlight&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">.</span>length <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">handleFiles</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 粘贴事件</span>
+        document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;paste&#39;</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>clipboardData <span class="token operator">&amp;&amp;</span> e<span class="token punctuation">.</span>clipboardData<span class="token punctuation">.</span>items<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">let</span> items <span class="token operator">=</span> e<span class="token punctuation">.</span>clipboardData<span class="token punctuation">.</span>items<span class="token punctuation">;</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> items<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>items<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>type<span class="token punctuation">.</span><span class="token function">indexOf</span><span class="token punctuation">(</span><span class="token string">&#39;image&#39;</span><span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token keyword">let</span> blob <span class="token operator">=</span> items<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">getAsFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token function">handleFiles</span><span class="token punctuation">(</span><span class="token punctuation">[</span>blob<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token keyword">break</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 清除按钮</span>
+        clearBtn<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;click&#39;</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            fileInput<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">&#39;&#39;</span><span class="token punctuation">;</span>
+            previewContainer<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;none&#39;</span><span class="token punctuation">;</span>
+            controls<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;none&#39;</span><span class="token punctuation">;</span>
+            resultContainer<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;none&#39;</span><span class="token punctuation">;</span>
+            uploadArea<span class="token punctuation">.</span>classList<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token string">&#39;highlight&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 识别按钮</span>
+        identifyBtn<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">&#39;click&#39;</span><span class="token punctuation">,</span> identifyInvoice<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">function</span> <span class="token function">handleFileSelect</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>target<span class="token punctuation">.</span>files<span class="token punctuation">.</span>length <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">handleFiles</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>target<span class="token punctuation">.</span>files<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">function</span> <span class="token function">handleFiles</span><span class="token punctuation">(</span><span class="token parameter">files</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> file <span class="token operator">=</span> files<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>file<span class="token punctuation">.</span>type<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span><span class="token string">&#39;image.*&#39;</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">alert</span><span class="token punctuation">(</span><span class="token string">&#39;请选择图片文件！&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment">// 设置fileInput的files属性，以便识别按钮可以访问</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>fileInput<span class="token punctuation">.</span>files <span class="token operator">!==</span> files<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment">// 创建一个新的FileList对象</span>
+                <span class="token keyword">const</span> dataTransfer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">DataTransfer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                dataTransfer<span class="token punctuation">.</span>items<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                fileInput<span class="token punctuation">.</span>files <span class="token operator">=</span> dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">const</span> reader <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FileReader</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            reader<span class="token punctuation">.</span><span class="token function-variable function">onload</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                previewImage<span class="token punctuation">.</span>src <span class="token operator">=</span> e<span class="token punctuation">.</span>target<span class="token punctuation">.</span>result<span class="token punctuation">;</span>
+                previewContainer<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;block&#39;</span><span class="token punctuation">;</span>
+                controls<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;block&#39;</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">;</span>
+            reader<span class="token punctuation">.</span><span class="token function">readAsDataURL</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">identifyInvoice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>fileInput<span class="token punctuation">.</span>files<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">alert</span><span class="token punctuation">(</span><span class="token string">&#39;请先选择一张图片！&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            loading<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;block&#39;</span><span class="token punctuation">;</span>
+            resultContainer<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;none&#39;</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">const</span> formData <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FormData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            formData<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">&#39;file&#39;</span><span class="token punctuation">,</span> fileInput<span class="token punctuation">.</span>files<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            formData<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">&#39;msg&#39;</span><span class="token punctuation">,</span> <span class="token string">&#39;请将发票图片内容进行识别，并返回结构化的发票信息&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">// 新增参数：needItems</span>
+            <span class="token keyword">const</span> needItemsCheckbox <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&#39;needItemsCheckbox&#39;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            formData<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">&#39;needItems&#39;</span><span class="token punctuation">,</span> needItemsCheckbox<span class="token punctuation">.</span>checked<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+            <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">&#39;/extractInvoice&#39;</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+                    <span class="token literal-property property">method</span><span class="token operator">:</span> <span class="token string">&#39;POST&#39;</span><span class="token punctuation">,</span>
+                    <span class="token literal-property property">body</span><span class="token operator">:</span> formData
+                <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token comment">// 尝试解析JSON并格式化显示</span>
+                <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">const</span> jsonData <span class="token operator">=</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    resultContent<span class="token punctuation">.</span>innerHTML <span class="token operator">=</span> <span class="token function">formatInvoiceData</span><span class="token punctuation">(</span>jsonData<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token comment">// 如果不是有效的JSON，则直接显示原始文本</span>
+                    resultContent<span class="token punctuation">.</span>textContent <span class="token operator">=</span> result<span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                resultContainer<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;block&#39;</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                console<span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">&#39;识别失败:&#39;</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                resultContent<span class="token punctuation">.</span>textContent <span class="token operator">=</span> <span class="token string">&#39;识别失败: &#39;</span> <span class="token operator">+</span> error<span class="token punctuation">.</span>message<span class="token punctuation">;</span>
+                resultContainer<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;block&#39;</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+                loading<span class="token punctuation">.</span>style<span class="token punctuation">.</span>display <span class="token operator">=</span> <span class="token string">&#39;none&#39;</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 格式化发票数据的函数</span>
+    <span class="token keyword">function</span> <span class="token function">formatInvoiceData</span><span class="token punctuation">(</span><span class="token parameter">data</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> data <span class="token operator">!==</span> <span class="token string">&#39;object&#39;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token string">&#39;&lt;p&gt;无法解析的数据格式&lt;/p&gt;&#39;</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">let</span> html <span class="token operator">=</span> <span class="token string">&#39;&lt;div class=&quot;formatted-result&quot;&gt;&#39;</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 如果是数组，遍历每个项目</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Array<span class="token punctuation">.</span><span class="token function">isArray</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            html <span class="token operator">+=</span> <span class="token string">&#39;&lt;h3&gt;发票列表&lt;/h3&gt;&#39;</span><span class="token punctuation">;</span>
+            data<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">item<span class="token punctuation">,</span> index</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+                html <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;div class=&quot;invoice-item&quot;&gt;&lt;h4&gt;发票 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">&lt;/h4&gt;</span><span class="token template-punctuation string">\`</span></span> <span class="token operator">+</span> <span class="token function">formatSingleInvoice</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">&#39;&lt;/div&gt;&#39;</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment">// 单个发票对象</span>
+            html <span class="token operator">+=</span> <span class="token function">formatSingleInvoice</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        html <span class="token operator">+=</span> <span class="token string">&#39;&lt;/div&gt;&#39;</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> html<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">function</span> <span class="token function">formatSingleInvoice</span><span class="token punctuation">(</span><span class="token parameter">invoice</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> invoice <span class="token operator">!==</span> <span class="token string">&#39;object&#39;</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token string">&#39;&#39;</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> html <span class="token operator">=</span> <span class="token string">&#39;&lt;table class=&quot;invoice-table&quot; style=&quot;width: 100%; border-collapse: collapse; margin: 10px 0;&quot;&gt;&#39;</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>key<span class="token punctuation">,</span> value<span class="token punctuation">]</span> <span class="token keyword">of</span> Object<span class="token punctuation">.</span><span class="token function">entries</span><span class="token punctuation">(</span>invoice<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            html <span class="token operator">+=</span> <span class="token string">&#39;&lt;tr style=&quot;border-bottom: 1px solid #eee;&quot;&gt;&#39;</span> <span class="token operator">+</span>
+                <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;td style=&quot;padding: 8px; text-align: left; font-weight: bold; width: 30%; background-color: #f8f9fa;&quot;&gt;
+</span><span class="token template-punctuation string">\`</span></span> <span class="token operator">+</span>
+                <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatKey</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">&lt;/td&gt;
+</span><span class="token template-punctuation string">\`</span></span> <span class="token operator">+</span>
+                <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;td style=&quot;padding: 8px; text-align: left; width: 70%;&quot;&gt;
+</span><span class="token template-punctuation string">\`</span></span> <span class="token operator">+</span>
+                <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatValue</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">&lt;/td&gt;&lt;/tr&gt;</span><span class="token template-punctuation string">\`</span></span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        html <span class="token operator">+=</span> <span class="token string">&#39;&lt;/table&gt;&#39;</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> html<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">function</span> <span class="token function">formatKey</span><span class="token punctuation">(</span><span class="token parameter">key</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> keyMap <span class="token operator">=</span> <span class="token punctuation">{</span>
+            <span class="token string-property property">&#39;invoiceType&#39;</span><span class="token operator">:</span> <span class="token string">&#39;发票类型&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;invoiceCode&#39;</span><span class="token operator">:</span> <span class="token string">&#39;发票代码&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;invoiceNumber&#39;</span><span class="token operator">:</span> <span class="token string">&#39;发票号码&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;invoiceDate&#39;</span><span class="token operator">:</span> <span class="token string">&#39;开票日期&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;checkCode&#39;</span><span class="token operator">:</span> <span class="token string">&#39;校验码&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;machineNumber&#39;</span><span class="token operator">:</span> <span class="token string">&#39;机器编号&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;purchaserName&#39;</span><span class="token operator">:</span> <span class="token string">&#39;购买方名称&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;purchaserTaxNumber&#39;</span><span class="token operator">:</span> <span class="token string">&#39;购买方税号&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;purchaserAddressPhone&#39;</span><span class="token operator">:</span> <span class="token string">&#39;购买方地址电话&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;purchaserBankAccount&#39;</span><span class="token operator">:</span> <span class="token string">&#39;购买方开户行及账号&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;sellerName&#39;</span><span class="token operator">:</span> <span class="token string">&#39;销售方名称&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;sellerTaxNumber&#39;</span><span class="token operator">:</span> <span class="token string">&#39;销售方税号&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;sellerAddressPhone&#39;</span><span class="token operator">:</span> <span class="token string">&#39;销售方地址电话&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;sellerBankAccount&#39;</span><span class="token operator">:</span> <span class="token string">&#39;销售方开户行及账号&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;totalAmountInWords&#39;</span><span class="token operator">:</span> <span class="token string">&#39;合计金额大写&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;totalAmountInFigures&#39;</span><span class="token operator">:</span> <span class="token string">&#39;合计金额小写&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;taxTotalAmountInWords&#39;</span><span class="token operator">:</span> <span class="token string">&#39;价税合计大写&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;taxTotalAmountInFigures&#39;</span><span class="token operator">:</span> <span class="token string">&#39;价税合计小写&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;remark&#39;</span><span class="token operator">:</span> <span class="token string">&#39;备注&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;cashier&#39;</span><span class="token operator">:</span> <span class="token string">&#39;收款人&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;reviewer&#39;</span><span class="token operator">:</span> <span class="token string">&#39;复核&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;checker&#39;</span><span class="token operator">:</span> <span class="token string">&#39;开票人&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;goodsList&#39;</span><span class="token operator">:</span> <span class="token string">&#39;货物或应税劳务清单&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;amount&#39;</span><span class="token operator">:</span> <span class="token string">&#39;金额&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;taxRate&#39;</span><span class="token operator">:</span> <span class="token string">&#39;税率&#39;</span><span class="token punctuation">,</span>
+            <span class="token string-property property">&#39;taxAmount&#39;</span><span class="token operator">:</span> <span class="token string">&#39;税额&#39;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">return</span> keyMap<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">||</span> key<span class="token punctuation">.</span><span class="token function">charAt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> key<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">function</span> <span class="token function">formatValue</span><span class="token punctuation">(</span><span class="token parameter">value</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>value <span class="token operator">===</span> <span class="token keyword">null</span> <span class="token operator">||</span> value <span class="token operator">===</span> <span class="token keyword">undefined</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token string">&#39;&lt;span style=&quot;color: #999; font-style: italic;&quot;&gt;无数据&lt;/span&gt;&#39;</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> value <span class="token operator">===</span> <span class="token string">&#39;object&#39;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Array<span class="token punctuation">.</span><span class="token function">isArray</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>value<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token string">&#39;无数据&#39;</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">let</span> listHtml <span class="token operator">=</span> <span class="token string">&#39;&lt;div style=&quot;margin: 5px 0;&quot;&gt;&#39;</span><span class="token punctuation">;</span>
+                value<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">item<span class="token punctuation">,</span> index</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> item <span class="token operator">===</span> <span class="token string">&#39;object&#39;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        listHtml <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;div style=&quot;border: 1px solid #eee; margin: 5px 0; padding: 8px; border-radius: 4px;&quot;&gt;&lt;strong&gt;项目 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:&lt;/strong&gt;</span><span class="token template-punctuation string">\`</span></span><span class="token punctuation">;</span>
+                        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>k<span class="token punctuation">,</span> v<span class="token punctuation">]</span> <span class="token keyword">of</span> Object<span class="token punctuation">.</span><span class="token function">entries</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                            listHtml <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;div style=&quot;margin-left: 10px;&quot;&gt;&lt;strong&gt;</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatKey</span><span class="token punctuation">(</span>k<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:&lt;/strong&gt; </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatValue</span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">&lt;/div&gt;</span><span class="token template-punctuation string">\`</span></span><span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span>
+                        listHtml <span class="token operator">+=</span> <span class="token string">&#39;&lt;/div&gt;&#39;</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                        listHtml <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;div&gt;</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">. </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatValue</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">&lt;/div&gt;</span><span class="token template-punctuation string">\`</span></span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                listHtml <span class="token operator">+=</span> <span class="token string">&#39;&lt;/div&gt;&#39;</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> listHtml<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token comment">// 嵌套对象递归处理</span>
+                <span class="token keyword">let</span> objHtml <span class="token operator">=</span> <span class="token string">&#39;&lt;div style=&quot;margin: 5px 0; padding: 8px; border-left: 3px solid #007bff;&quot;&gt;&#39;</span><span class="token punctuation">;</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>k<span class="token punctuation">,</span> v<span class="token punctuation">]</span> <span class="token keyword">of</span> Object<span class="token punctuation">.</span><span class="token function">entries</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    objHtml <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">\`</span><span class="token string">&lt;div&gt;&lt;strong&gt;</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatKey</span><span class="token punctuation">(</span>k<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:&lt;/strong&gt; </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">\${</span><span class="token function">formatValue</span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">&lt;/div&gt;</span><span class="token template-punctuation string">\`</span></span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                objHtml <span class="token operator">+=</span> <span class="token string">&#39;&lt;/div&gt;&#39;</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> objHtml<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token function">String</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">&gt;</span></span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>实际体验如下</p><figure><img src="`+k+'" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><p>到这里，发票提取的核心服务层已基本满足要求，关于存储层的缓存和持久化，相对来说属于常见的后端实现技术栈，就不详细展开了； 那么这个实现是否可以直接应用于生产使用呢？</p><p>接下来我们看看若用于生产，还需要做哪些优化</p><h2 id="五、生产优化" tabindex="-1"><a class="header-anchor" href="#五、生产优化" aria-hidden="true">#</a> 五、生产优化</h2><h3 id="_5-1-发票行数据超过大模型上下文窗口" tabindex="-1"><a class="header-anchor" href="#_5-1-发票行数据超过大模型上下文窗口" aria-hidden="true">#</a> 5.1 发票行数据超过大模型上下文窗口</h3><h4 id="_5-1-1-问题描述" tabindex="-1"><a class="header-anchor" href="#_5-1-1-问题描述" aria-hidden="true">#</a> 5.1.1 问题描述</h4><p>发票上的基本票面信息数据量还算可控，但是开票行（即商品、服务明细）这里可能就非常多了，比如我一单买了五六十个商品、而这些商品全部放在一张发票上，当我们提取发票信息时，会发现大模型无法返回完整的数据结构（超出内容被截断了————即便我的提示词明确要求了，不要截断也没有效果）</p><p>如使用<code>GLM-4V-Flash</code> 对一张有十个开票行的发票进行提取时：</p><figure><img src="'+d+`" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><p>上面的示例输出中，从大模型的返回也可以看出，返回结果被截断了，导致返回的是一个不完整的数据结构，因此在结构化为java bean对象时，就报错了</p><p>那么怎么解决呢？</p><blockquote><p>换上下文窗口更大的模型，比如 <code>GLM-4.1V-Thinking-Flash</code> ?</p></blockquote><p>这当然是一个解决方案，但是并不彻底，因为大模型的上下文窗口是有限的，但是发票行却是不固定的；简单来说，我没法保证，换一个模型之后，就不会再出现返回结果被截断的情况了</p><p>那么有没有更彻底的解决方案呢？</p><blockquote><p>分区域、分页提取</p></blockquote><p>怎么理解这个解决方案呢？</p><p>我们可以套用一下传统的开发模式，当一次返回的数据太多时，我们很容易想到的解决方法时将一次的返回</p><ul><li>改为分页返回，一次返回20条，若你需要再返回后20条 ———— 这种适用于列表的返回方式</li></ul><p>参照这种思路，那么我们可以先定大模型，不要一次提取所有的开票行信息，而是按照我给他要求的进行分页提取；开票行的信息改成分页提取之后，但是其他的票面信息实际上只需要提取一次，因此我们可以将一次的提取过程，改为</p><ul><li>只提取票面信息</li><li>分页提取开票行信息</li></ul><h4 id="_5-1-2-票面基本信息提取" tabindex="-1"><a class="header-anchor" href="#_5-1-2-票面基本信息提取" aria-hidden="true">#</a> 5.1.2 票面基本信息提取</h4><p>按照这种方式，我们可以重新设计两个提示词，只提取开票信息的提示词 <code>prompts/invoice-basic-extract.st</code></p><div class="language-tl line-numbers-mode" data-ext="tl"><pre class="language-tl"><code>你是一个专业的发票信息提取专家。请从用户提供的发票图片中提取完整的结构化信息。
+
+必须遵循：
+1. 准确识别发票类型（增值税专用发票、增值税普通发票、电子普通发票等）
+2. 提取所有关键字段：发票代码、发票号码、开票日期、校验码等
+3. 识别购销双方完整信息（名称、纳税人识别号、地址电话、开户行及账号）
+4. 识别备注、收款人、复核人、开票人等信息
+5. 对于模糊或不清晰或无法识别的字段，请使用null值。
+6. 请确保所有金额字段为数字类型，日期为字符串格式。
+7. 请务必返回完整内容，不要截断JSON。
+
+输出格式要求：
+请严格按照以下JSON格式输出，不要包含任何额外文本：
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>对应的实现逻辑也比较简单了，因为我们返回不要开票行，所以我们可以将前面定义的数据结构 <code>InvoiceInfo</code> 进行改造，向上提取一层<code>BaseInvoiceInfo</code>基础类，相比于之前的实现，这个基础类中，不包含<code>List&lt;InvoiceItem&gt; items</code></p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Data</span>
+<span class="token annotation punctuation">@JsonClassDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票基本信息，不包含商品行信息&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BaseInvoiceInfo</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...省略</span>
+<span class="token punctuation">}</span>
+
+<span class="token annotation punctuation">@Data</span>
+<span class="token annotation punctuation">@JsonClassDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;发票完整信息&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceInfo</span> <span class="token keyword">extends</span> <span class="token class-name">BaseInvoiceInfo</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@JsonPropertyDescription</span><span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token string">&quot;商品/服务明细列表&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span></span> items<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后参照上面的发票提取方案，实现对应的发票基本信息提取核心逻辑</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Slf4j</span>
+<span class="token annotation punctuation">@Service</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractionService</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Value</span><span class="token punctuation">(</span><span class="token string">&quot;classpath:/prompts/invoice-basic-extract.st&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">Resource</span> baseInvoiceSystemPrompt<span class="token punctuation">;</span>
+
+
+    <span class="token doc-comment comment">/**
+     * 识别发票基础内容（不包含商品明细）
+     *
+     * <span class="token keyword">@param</span> <span class="token parameter">imageBytes</span> 图片字节
+     * <span class="token keyword">@param</span> <span class="token parameter">mimeType</span>   图片类型
+     * <span class="token keyword">@param</span> <span class="token parameter">msg</span>        识别提示信息
+     * <span class="token keyword">@return</span>
+     */</span>
+    <span class="token keyword">public</span> <span class="token class-name">BaseInvoiceInfo</span> <span class="token function">extractBaseInvoice</span><span class="token punctuation">(</span><span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> imageBytes<span class="token punctuation">,</span> <span class="token class-name">MimeType</span> mimeType<span class="token punctuation">,</span> <span class="token class-name">String</span> msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token class-name">Message</span> systemMsg <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SystemMessage</span><span class="token punctuation">(</span>baseInvoiceSystemPrompt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">String</span> message <span class="token operator">=</span> <span class="token punctuation">(</span>msg <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>msg<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">?</span> msg <span class="token operator">:</span> <span class="token string">&quot;请将发票图片内容进行识别，并返回结构化的发票信息&quot;</span><span class="token punctuation">;</span>
+
+        <span class="token class-name">Media</span> media <span class="token operator">=</span> <span class="token class-name">Media</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">mimeType</span><span class="token punctuation">(</span>mimeType<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span>imageBytes<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Message</span> userMsg <span class="token operator">=</span> <span class="token class-name">UserMessage</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">media</span><span class="token punctuation">(</span>media<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Prompt</span> prompt <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Prompt</span><span class="token punctuation">(</span><span class="token class-name">List</span><span class="token punctuation">.</span><span class="token function">of</span><span class="token punctuation">(</span>systemMsg<span class="token punctuation">,</span> userMsg<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">BaseInvoiceInfo</span> invoiceInfo <span class="token operator">=</span> chatClient<span class="token punctuation">.</span><span class="token function">prompt</span><span class="token punctuation">(</span>prompt<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">entity</span><span class="token punctuation">(</span><span class="token class-name">BaseInvoiceInfo</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        log<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">&quot;解析的结果: \\n{}&quot;</span><span class="token punctuation">,</span> <span class="token function">toStr</span><span class="token punctuation">(</span>invoiceInfo<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> invoiceInfo<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4 id="_5-1-3-分页提取发票行" tabindex="-1"><a class="header-anchor" href="#_5-1-3-分页提取发票行" aria-hidden="true">#</a> 5.1.3 分页提取发票行</h4><p>分页提取开票行的提示词 <code>prompts/invoice-items-extract.st</code></p><div class="language-tl line-numbers-mode" data-ext="tl"><pre class="language-tl"><code>你是一个专业的发票信息提取专家。请从发票图片中提取商品明细的第$start$行到第$end$行。
+
+提取要求：
+1. 只提取指定行数范围的商品明细
+2. 每行需要提取以下字段：
+   - 商品名称
+   - 规格型号（如有）
+   - 单位
+   - 数量
+   - 单价
+   - 金额
+   - 税率
+   - 税额
+   - 价税合计
+
+3. 如果指定范围内没有足够的行数，提取实际存在的行数
+4. 如果无法识别某行，则这一行返回一个空对象进行占位，始终保证返回的行数与实际的一致
+
+始终遵循以下规则：
+- 严格按照从上到下的顺序计数，并且按照顺序提取，从第0行开始计数
+- 只提取第$start$行到第$end$行内容，必须包含第$start$行，不包含第$end$行，不要提取其他行的内容
+
+输出格式要求：
+请返回JSON数组格式，每个元素代表一行：
+[
+  {
+    &quot;rowNumber&quot;: 1,
+    &quot;itemName&quot;: &quot;商品名称&quot;,
+    &quot;specification&quot;: &quot;规格型号&quot;,
+    &quot;unit&quot;: &quot;单位&quot;,
+    &quot;quantity&quot;: 1.0,
+    &quot;unitPrice&quot;: 1000.00,
+    &quot;amount&quot;: 1000.00,
+    &quot;taxRate&quot;: 0.13,
+    &quot;taxAmount&quot;: 130.00,
+    &quot;totalAmount&quot;: 1130.00,
+    &quot;confidence&quot;: 0.95
+  },
+]
+
+如果提取失败或没有找到指定行，返回空数组 []。
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote><p>注意上面的提示词，因为返回提示词模板中，提供了<code>json</code>示例，如果此时我们依然使用默认的 <code>{}</code> 来表示模板变量，就会导致解析异常 (SpringAI的提示词模板解析器会将json样例中{}也认为需要进行变量替换)，为了避免这种问题，在这里，我们使用自定义的 <code>$$</code> 来包裹模板变量</p></blockquote><p>一个基础的分页提取发票行实现如</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Slf4j</span>
+<span class="token annotation punctuation">@Service</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractionService</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Value</span><span class="token punctuation">(</span><span class="token string">&quot;classpath:/prompts/invoice-items-extract.st&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token class-name">Resource</span> invoiceItemPrompt<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span></span> <span class="token function">extractInvoiceItems</span><span class="token punctuation">(</span><span class="token class-name">Media</span> media<span class="token punctuation">,</span> <span class="token class-name">Integer</span> start<span class="token punctuation">,</span> <span class="token class-name">Integer</span> end<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token class-name">PromptTemplate</span> promptTemplate <span class="token operator">=</span> <span class="token class-name">PromptTemplate</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token comment">// 因为提示词中返回的json对象中，有 {}，所以使用默认的 {} 来替换占位变量，会报错</span>
+                <span class="token punctuation">.</span><span class="token function">renderer</span><span class="token punctuation">(</span><span class="token class-name">StTemplateRenderer</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">startDelimiterToken</span><span class="token punctuation">(</span><span class="token char">&#39;$&#39;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">endDelimiterToken</span><span class="token punctuation">(</span><span class="token char">&#39;$&#39;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">resource</span><span class="token punctuation">(</span>invoiceItemPrompt<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">String</span> sys <span class="token operator">=</span> promptTemplate<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token class-name">Map</span><span class="token punctuation">.</span><span class="token function">of</span><span class="token punctuation">(</span><span class="token string">&quot;start&quot;</span><span class="token punctuation">,</span> start<span class="token punctuation">,</span> <span class="token string">&quot;end&quot;</span><span class="token punctuation">,</span> end<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">SystemMessage</span> systemMsg <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SystemMessage</span><span class="token punctuation">(</span>sys<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token class-name">UserMessage</span> userMsg <span class="token operator">=</span> <span class="token class-name">UserMessage</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">media</span><span class="token punctuation">(</span>media<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token string">&quot;提取&quot;</span> <span class="token operator">+</span> start <span class="token operator">+</span> <span class="token string">&quot;行到&quot;</span> <span class="token operator">+</span> end <span class="token operator">+</span> <span class="token string">&quot;行发票商品信息，注意不包含第&quot;</span> <span class="token operator">+</span> end <span class="token operator">+</span> <span class="token string">&quot;行&quot;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Prompt</span> prompt <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Prompt</span><span class="token punctuation">(</span><span class="token class-name">List</span><span class="token punctuation">.</span><span class="token function">of</span><span class="token punctuation">(</span>systemMsg<span class="token punctuation">,</span> userMsg<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span></span> items <span class="token operator">=</span> chatClient<span class="token punctuation">.</span><span class="token function">prompt</span><span class="token punctuation">(</span>prompt<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">entity</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ParameterizedTypeReference</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">List</span><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span><span class="token punctuation">&gt;</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> items<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4 id="_5-1-4-完整的大发票提取" tabindex="-1"><a class="header-anchor" href="#_5-1-4-完整的大发票提取" aria-hidden="true">#</a> 5.1.4 完整的大发票提取</h4><p>然后就是提供一个外部的访问入口，直接基于上面的两个基础实现，来获取大发票的完整信息提取</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token doc-comment comment">/**
+ * 识别发票中商品行较多的发票内容
+ * <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">&gt;</span></span>
+ * - 图片中的信息，超过窗口上下文的场景，我们需要进行分批处理
+ *
+ * <span class="token keyword">@param</span> <span class="token parameter">imageBytes</span> 图片字节
+ * <span class="token keyword">@param</span> <span class="token parameter">mimeType</span>   图片类型
+ * <span class="token keyword">@param</span> <span class="token parameter">msg</span>        识别提示信息
+ * <span class="token keyword">@return</span>
+ */</span>
+<span class="token keyword">public</span> <span class="token class-name">InvoiceInfo</span> <span class="token function">extractInvoiceWitInhItems</span><span class="token punctuation">(</span><span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> imageBytes<span class="token punctuation">,</span> <span class="token class-name">MimeType</span> mimeType<span class="token punctuation">,</span> <span class="token class-name">String</span> msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token class-name">Media</span> media <span class="token operator">=</span> <span class="token class-name">Media</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">mimeType</span><span class="token punctuation">(</span>mimeType<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span>imageBytes<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 提取发票基本信息</span>
+    <span class="token class-name">CompletableFuture</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">BaseInvoiceInfo</span><span class="token punctuation">&gt;</span></span> infoFuture <span class="token operator">=</span> <span class="token class-name">CompletableFuture</span><span class="token punctuation">.</span><span class="token function">supplyAsync</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-&gt;</span> <span class="token punctuation">{</span>
+        <span class="token class-name">BaseInvoiceInfo</span> invoiceInfo <span class="token operator">=</span> <span class="token function">extractBaseInvoice</span><span class="token punctuation">(</span>imageBytes<span class="token punctuation">,</span> mimeType<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> invoiceInfo<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 分页提取发票行</span>
+    <span class="token class-name">CompletableFuture</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">List</span><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span><span class="token punctuation">&gt;</span></span> itemFuture <span class="token operator">=</span> <span class="token class-name">CompletableFuture</span><span class="token punctuation">.</span><span class="token function">supplyAsync</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-&gt;</span> <span class="token punctuation">{</span>
+        <span class="token keyword">final</span> <span class="token keyword">int</span> step <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> start <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> end <span class="token operator">=</span> step<span class="token punctuation">;</span>
+        <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span></span> totalItems <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ArrayList</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token punctuation">&gt;</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            log<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">&quot;开始处理：{} - {}&quot;</span><span class="token punctuation">,</span> start<span class="token punctuation">,</span> end<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">InvoiceItem</span><span class="token punctuation">&gt;</span></span> items <span class="token operator">=</span> <span class="token function">extractInvoiceItems</span><span class="token punctuation">(</span>media<span class="token punctuation">,</span> start<span class="token punctuation">,</span> end<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token class-name">CollectionUtils</span><span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span>items<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            totalItems<span class="token punctuation">.</span><span class="token function">addAll</span><span class="token punctuation">(</span>items<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>items<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> end <span class="token operator">-</span> start<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                start <span class="token operator">+=</span> step<span class="token punctuation">;</span>
+                end <span class="token operator">+=</span> step<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> totalItems<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 等待两个任务完成</span>
+    <span class="token class-name">CompletableFuture</span><span class="token punctuation">.</span><span class="token function">allOf</span><span class="token punctuation">(</span>infoFuture<span class="token punctuation">,</span> itemFuture<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 构建完整的返回结果</span>
+    <span class="token class-name">InvoiceInfo</span> invoiceInfo <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">InvoiceInfo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        <span class="token class-name">BeanUtils</span><span class="token punctuation">.</span><span class="token function">copyProperties</span><span class="token punctuation">(</span>infoFuture<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> invoiceInfo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        invoiceInfo<span class="token punctuation">.</span><span class="token function">setItems</span><span class="token punctuation">(</span>itemFuture<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">RuntimeException</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> invoiceInfo<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>我们使用上下文窗口更小、响应更快的 <code>GLM-4V-Flash</code> 模型来演示这个分页提取，如使用项目中的<code>test/resources/pupiao.jpg</code>为例，即便这个发票中有十行，也可以一并输出</p><figure><img src="`+v+'" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><h4 id="_5-1-5-方案优化" tabindex="-1"><a class="header-anchor" href="#_5-1-5-方案优化" aria-hidden="true">#</a> 5.1.5 方案优化</h4><p>虽然实现了分页的开票行信息提取，但是这个实现是一个明显的串行化方案；对应的当开票行数据越多，整个服务的耗时就会越大</p><p>自然，我们就会有一个改进方案，在返回发票基本信息的同时，返回总的开票行数，然后就可以基于这个总数来计算分页，这样就可以通过并行的方案，实现分页开票行提取，一个可行的实现流程图如下</p><figure><img src="'+m+`" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code>flowchart <span class="token constant">TB</span>
+    <span class="token operator">%</span><span class="token operator">%</span> 全局样式配置：专业简洁，适配技术人员阅读
+    classDef base font<span class="token operator">-</span>size<span class="token operator">:</span><span class="token number">11</span>px<span class="token punctuation">,</span> rounded<span class="token operator">:</span><span class="token number">8</span><span class="token punctuation">,</span> stroke<span class="token operator">-</span>width<span class="token operator">:</span><span class="token number">1.5</span>
+    classDef parallel fill<span class="token operator">:</span>#e6f4ff<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">1976d</span><span class="token number">2</span><span class="token punctuation">,</span>opacity<span class="token operator">:</span><span class="token number">0.9</span>
+    classDef judge fill<span class="token operator">:</span>#fff3e0<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#f57c00
+    classDef process fill<span class="token operator">:</span>#e8f5e8<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">2e7d</span><span class="token number">32</span>
+    classDef state fill<span class="token operator">:</span>#f3e5f5<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">7</span>b1fa2
+
+    <span class="token operator">%</span><span class="token operator">%</span> 起始节点
+    <span class="token class-name">Start</span><span class="token punctuation">[</span>开始<span class="token punctuation">]</span>
+    <span class="token class-name">GlobalState</span><span class="token punctuation">[</span><span class="token string">&quot;初始化全局状态&lt;br/&gt;（记录开票页提取状态）&quot;</span><span class="token punctuation">]</span>
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 并行执行块
+    subgraph <span class="token string">&quot;并行执行任务&quot;</span>
+        style 并行执行任务 fill<span class="token operator">:</span>#f8f9fa<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">616161</span><span class="token punctuation">,</span>stroke<span class="token operator">-</span>width<span class="token operator">:</span><span class="token number">2</span>
+        <span class="token class-name">A</span><span class="token punctuation">[</span><span class="token string">&quot;任务A：提取发票基本信息&lt;br/&gt;（包含总开票行数）&quot;</span><span class="token punctuation">]</span>
+        <span class="token class-name">B</span><span class="token punctuation">[</span><span class="token string">&quot;任务B：提取第一页开票行&lt;br/&gt;（记录第一页已提取）&quot;</span><span class="token punctuation">]</span>
+    end
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 条件判断与处理节点
+    <span class="token class-name">JudgeA</span><span class="token punctuation">[</span><span class="token string">&quot;判断：任务A是否返回？&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">CalcPage</span><span class="token punctuation">[</span><span class="token string">&quot;计算分页数&lt;br/&gt;（基于总开票行数）&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">PrepareParallel</span><span class="token punctuation">[</span><span class="token string">&quot;准备并行提取每一页开票行&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">CheckGlobal</span><span class="token punctuation">[</span><span class="token string">&quot;判断全局状态：&lt;br/&gt;当前页是否已提取？&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">Skip</span><span class="token punctuation">[</span><span class="token string">&quot;跳过当前页提取&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">RecordState</span><span class="token punctuation">[</span><span class="token string">&quot;记录全局状态：&lt;br/&gt;标记当前页待提取&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">ExtractPage</span><span class="token punctuation">[</span><span class="token string">&quot;执行提取当前页开票行&quot;</span><span class="token punctuation">]</span>
+    
+    <span class="token class-name">JudgeB</span><span class="token punctuation">[</span><span class="token string">&quot;判断：任务B返回且A未返回？&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">JudgeNext</span><span class="token punctuation">[</span><span class="token string">&quot;判断：是否有下一页数据？&quot;</span><span class="token punctuation">]</span>
+    <span class="token class-name">PrepareNext</span><span class="token punctuation">[</span><span class="token string">&quot;准备提取下一页开票行&quot;</span><span class="token punctuation">]</span>
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 流程连接
+    <span class="token class-name">Start</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">GlobalState</span>
+    <span class="token class-name">GlobalState</span> <span class="token operator">--</span><span class="token operator">&gt;</span> 并行执行任务
+    并行执行任务 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">JudgeA</span>
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 任务<span class="token class-name">A</span>返回分支
+    <span class="token class-name">JudgeA</span> <span class="token operator">--</span> 是 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">CalcPage</span>
+    <span class="token class-name">CalcPage</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">PrepareParallel</span>
+    <span class="token class-name">PrepareParallel</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">CheckGlobal</span>
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 全局状态判断分支
+    <span class="token class-name">CheckGlobal</span> <span class="token operator">--</span> 已提取 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Skip</span>
+    <span class="token class-name">CheckGlobal</span> <span class="token operator">--</span> 未提取 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">RecordState</span>
+    <span class="token class-name">RecordState</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">ExtractPage</span>
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 任务<span class="token class-name">A</span>未返回（<span class="token class-name">B</span>返回）分支
+    <span class="token class-name">JudgeA</span> <span class="token operator">--</span> 否 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">JudgeB</span>
+    <span class="token class-name">JudgeB</span> <span class="token operator">--</span> 是 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">JudgeNext</span>
+    <span class="token class-name">JudgeNext</span> <span class="token operator">--</span> 有 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">PrepareNext</span>
+    <span class="token class-name">PrepareNext</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">CheckGlobal</span>
+    <span class="token class-name">JudgeNext</span> <span class="token operator">--</span> 无 <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">End</span>
+    
+    <span class="token operator">%</span><span class="token operator">%</span> 收尾节点
+    <span class="token class-name">Skip</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">End</span>
+    <span class="token class-name">ExtractPage</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">End</span>
+    <span class="token class-name">End</span><span class="token punctuation">[</span>结束<span class="token punctuation">]</span>
+
+    <span class="token operator">%</span><span class="token operator">%</span> 样式绑定
+    <span class="token keyword">class</span> <span class="token class-name">A</span><span class="token punctuation">,</span><span class="token class-name">B</span> parallel
+    <span class="token keyword">class</span> <span class="token class-name">JudgeA</span><span class="token punctuation">,</span><span class="token class-name">JudgeB</span><span class="token punctuation">,</span><span class="token class-name">JudgeNext</span><span class="token punctuation">,</span><span class="token class-name">CheckGlobal</span> judge
+    <span class="token keyword">class</span> <span class="token class-name">CalcPage</span><span class="token punctuation">,</span><span class="token class-name">PrepareParallel</span><span class="token punctuation">,</span><span class="token class-name">ExtractPage</span><span class="token punctuation">,</span><span class="token class-name">RecordState</span> process
+    <span class="token keyword">class</span> <span class="token class-name">GlobalState</span> state
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>若是觉得上面这个看起来有些复杂的话，也可以看下面这个简版方案，思路实际上是一致的</p><figure><img src="`+b+`" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code>flowchart <span class="token constant">TB</span>
+<span class="token operator">%</span><span class="token operator">%</span><span class="token punctuation">{</span>init<span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token string">&quot;theme&quot;</span><span class="token operator">:</span> <span class="token string">&quot;base&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;themeVariables&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token string">&quot;primaryColor&quot;</span><span class="token operator">:</span> <span class="token string">&quot;#ffffff&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;secondaryColor&quot;</span><span class="token operator">:</span> <span class="token string">&quot;#f9f9f9&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;tertiaryColor&quot;</span><span class="token operator">:</span> <span class="token string">&quot;#eeeeee&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;textColor&quot;</span><span class="token operator">:</span> <span class="token string">&quot;#333&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;fontSize&quot;</span><span class="token operator">:</span> <span class="token string">&quot;16px&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;subgraph_border_color&quot;</span><span class="token operator">:</span> <span class="token string">&quot;#666&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;subgraph_fill&quot;</span><span class="token operator">:</span> <span class="token string">&quot;#e0e0e0&quot;</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span><span class="token operator">%</span><span class="token operator">%</span>
+graph <span class="token constant">TB</span>
+    subgraph <span class="token constant">SA</span><span class="token punctuation">[</span><span class="token string">&quot;分页提取流程&quot;</span><span class="token punctuation">]</span>
+        style <span class="token constant">SA</span> fill<span class="token operator">:</span>#f0f8fb<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">1976d</span><span class="token number">2</span><span class="token punctuation">,</span>stroke<span class="token operator">-</span>width<span class="token operator">:</span><span class="token number">1</span><span class="token punctuation">,</span>opacity<span class="token operator">:</span><span class="token number">0.5</span>
+        <span class="token class-name">Start</span><span class="token punctuation">[</span>开始<span class="token punctuation">]</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Step1</span><span class="token punctuation">[</span>第一次调用<span class="token generics"><span class="token punctuation">&lt;</span>br<span class="token punctuation">&gt;</span></span>提取基本信息<span class="token punctuation">]</span>
+        <span class="token class-name">Step1</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Step2</span><span class="token punctuation">{</span>判断明细行数<span class="token punctuation">}</span>
+        
+        <span class="token class-name">Step2</span> <span class="token operator">--</span><span class="token operator">&gt;</span><span class="token operator">|</span>行数≤阈值<span class="token operator">|</span> <span class="token class-name">Step3</span><span class="token punctuation">[</span>单次提取所有明细<span class="token punctuation">]</span>
+        <span class="token class-name">Step2</span> <span class="token operator">--</span><span class="token operator">&gt;</span><span class="token operator">|</span>行数<span class="token operator">&gt;</span>阈值<span class="token operator">|</span> <span class="token class-name">Step4</span><span class="token punctuation">[</span>计算分页数<span class="token punctuation">]</span>
+        
+        <span class="token class-name">Step4</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Step5</span><span class="token punctuation">[</span>并行分页提取<span class="token punctuation">]</span>
+        
+        subgraph <span class="token class-name">Step5</span>
+            <span class="token class-name">Page1</span><span class="token punctuation">[</span>第一页<span class="token operator">:</span> 行<span class="token number">1</span><span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">]</span>
+            <span class="token class-name">Page2</span><span class="token punctuation">[</span>第二页<span class="token operator">:</span> 行<span class="token number">6</span><span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">]</span>
+            <span class="token class-name">PageN</span><span class="token punctuation">[</span>第<span class="token class-name">N</span>页<span class="token punctuation">]</span>
+        end
+        
+        <span class="token class-name">Step5</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Step6</span><span class="token punctuation">[</span>合并分页结果<span class="token punctuation">]</span>
+        <span class="token class-name">Step3</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Step7</span><span class="token punctuation">[</span>组装完整发票<span class="token punctuation">]</span>
+        <span class="token class-name">Step6</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">Step7</span>
+        
+        <span class="token class-name">Step7</span> <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token class-name">End</span><span class="token punctuation">[</span>返回结果<span class="token punctuation">]</span>
+    end
+    
+    classDef process fill<span class="token operator">:</span>#e1f5fe<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">01579</span>b
+    classDef decision fill<span class="token operator">:</span>#f3e5f5<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">4</span>a148c
+    classDef parallel fill<span class="token operator">:</span>#c8e6c9<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#<span class="token number">2e7d</span><span class="token number">32</span>
+    classDef result fill<span class="token operator">:</span>#fff3e0<span class="token punctuation">,</span>stroke<span class="token operator">:</span>#e65100
+    
+    <span class="token keyword">class</span> <span class="token class-name">Start</span><span class="token punctuation">,</span><span class="token class-name">Step1</span><span class="token punctuation">,</span><span class="token class-name">Step3</span><span class="token punctuation">,</span><span class="token class-name">Step4</span><span class="token punctuation">,</span><span class="token class-name">Step6</span><span class="token punctuation">,</span><span class="token class-name">Step7</span><span class="token punctuation">,</span><span class="token class-name">End</span> process
+    <span class="token keyword">class</span> <span class="token class-name">Step2</span> decision
+    <span class="token keyword">class</span> <span class="token class-name">Step5</span> parallel
+    <span class="token keyword">class</span> <span class="token class-name">Step7</span><span class="token punctuation">,</span><span class="token class-name">End</span> result
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote><p>具体的实现就省略了，有兴趣的小伙伴可以自行补全🤣</p></blockquote><h3 id="_5-2-图片预处理" tabindex="-1"><a class="header-anchor" href="#_5-2-图片预处理" aria-hidden="true">#</a> 5.2 图片预处理</h3><p>在实际的生产场景中，我们没办法保证用户上传的始终时数电开出来的电子票原件，可能是经过打印、拍照等各种操作之后上传的图片，此时直接拿来解析一般效果较差，通常一个完整可直接商用的发票识别，很大概率会有第一步的图片预处理阶段，当然这一块不是大模型提取的关键点（非大模型的实现中也会有这一步），下面是一个可参考的预处理方案</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Component</span>
+<span class="token annotation punctuation">@Slf4j</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">ImagePreprocessor</span> <span class="token punctuation">{</span>
+    
+    <span class="token annotation punctuation">@Value</span><span class="token punctuation">(</span><span class="token string">&quot;\${invoice.image.quality.threshold:0.8}&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token keyword">double</span> qualityThreshold<span class="token punctuation">;</span>
+    
+    <span class="token annotation punctuation">@Value</span><span class="token punctuation">(</span><span class="token string">&quot;\${invoice.image.max-size:5242880}&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">private</span> <span class="token keyword">long</span> maxImageSize<span class="token punctuation">;</span>
+    
+    <span class="token doc-comment comment">/**
+     * 图片预处理流水线
+     */</span>
+    <span class="token keyword">public</span> <span class="token class-name">ProcessedImage</span> <span class="token function">preprocessImage</span><span class="token punctuation">(</span><span class="token class-name">MultipartFile</span> imageFile<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            <span class="token comment">// 1. 验证图片</span>
+            <span class="token function">validateImage</span><span class="token punctuation">(</span>imageFile<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 2. 读取图片</span>
+            <span class="token class-name">BufferedImage</span> originalImage <span class="token operator">=</span> <span class="token class-name">ImageIO</span><span class="token punctuation">.</span><span class="token function">read</span><span class="token punctuation">(</span>imageFile<span class="token punctuation">.</span><span class="token function">getInputStream</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 3. 质量评估</span>
+            <span class="token keyword">double</span> qualityScore <span class="token operator">=</span> <span class="token function">assessImageQuality</span><span class="token punctuation">(</span>originalImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>qualityScore <span class="token operator">&lt;</span> qualityThreshold<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                log<span class="token punctuation">.</span><span class="token function">warn</span><span class="token punctuation">(</span><span class="token string">&quot;图片质量较低: {}&quot;</span><span class="token punctuation">,</span> qualityScore<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            
+            <span class="token comment">// 4. 图像增强</span>
+            <span class="token class-name">BufferedImage</span> enhancedImage <span class="token operator">=</span> <span class="token function">enhanceImage</span><span class="token punctuation">(</span>originalImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 5. 转换为Base64</span>
+            <span class="token class-name">String</span> base64Image <span class="token operator">=</span> <span class="token function">convertToBase64</span><span class="token punctuation">(</span>enhancedImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 6. 生成哈希</span>
+            <span class="token class-name">String</span> imageHash <span class="token operator">=</span> <span class="token function">generateImageHash</span><span class="token punctuation">(</span>originalImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token keyword">return</span> <span class="token class-name">ProcessedImage</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">originalImage</span><span class="token punctuation">(</span>originalImage<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">enhancedImage</span><span class="token punctuation">(</span>enhancedImage<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">base64Image</span><span class="token punctuation">(</span>base64Image<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">imageHash</span><span class="token punctuation">(</span>imageHash<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">qualityScore</span><span class="token punctuation">(</span>qualityScore<span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">width</span><span class="token punctuation">(</span>originalImage<span class="token punctuation">.</span><span class="token function">getWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">height</span><span class="token punctuation">(</span>originalImage<span class="token punctuation">.</span><span class="token function">getHeight</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span><span class="token function">getImageFormat</span><span class="token punctuation">(</span>imageFile<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ImageProcessingException</span><span class="token punctuation">(</span><span class="token string">&quot;图片预处理失败&quot;</span><span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token doc-comment comment">/**
+     * 图像增强：对比度增强、去噪、旋转校正
+     */</span>
+    <span class="token keyword">private</span> <span class="token class-name">BufferedImage</span> <span class="token function">enhanceImage</span><span class="token punctuation">(</span><span class="token class-name">BufferedImage</span> image<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 转换为灰度图（提高OCR准确率）</span>
+        <span class="token class-name">BufferedImage</span> grayImage <span class="token operator">=</span> <span class="token function">convertToGrayscale</span><span class="token punctuation">(</span>image<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token comment">// 对比度增强</span>
+        <span class="token class-name">BufferedImage</span> contrastImage <span class="token operator">=</span> <span class="token function">enhanceContrast</span><span class="token punctuation">(</span>grayImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token comment">// 降噪处理</span>
+        <span class="token class-name">BufferedImage</span> denoisedImage <span class="token operator">=</span> <span class="token function">applyDenoising</span><span class="token punctuation">(</span>contrastImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token comment">// 自动旋转校正（基于文本方向）</span>
+        <span class="token class-name">BufferedImage</span> rotatedImage <span class="token operator">=</span> <span class="token function">autoRotate</span><span class="token punctuation">(</span>denoisedImage<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">return</span> rotatedImage<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token doc-comment comment">/**
+     * 自动旋转校正
+     */</span>
+    <span class="token keyword">private</span> <span class="token class-name">BufferedImage</span> <span class="token function">autoRotate</span><span class="token punctuation">(</span><span class="token class-name">BufferedImage</span> image<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            <span class="token comment">// 使用Tesseract检测文本方向</span>
+            <span class="token class-name">ITesseract</span> tesseract <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Tesseract</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            tesseract<span class="token punctuation">.</span><span class="token function">setDatapath</span><span class="token punctuation">(</span><span class="token string">&quot;tessdata&quot;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            tesseract<span class="token punctuation">.</span><span class="token function">setLanguage</span><span class="token punctuation">(</span><span class="token string">&quot;chi_sim+eng&quot;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 设置PSM为自动检测方向</span>
+            tesseract<span class="token punctuation">.</span><span class="token function">setPageSegMode</span><span class="token punctuation">(</span><span class="token class-name">ITesseract<span class="token punctuation">.</span>PageSegMode</span><span class="token punctuation">.</span><span class="token constant">PSM_AUTO_OSD</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 获取方向信息</span>
+            <span class="token keyword">int</span> orientation <span class="token operator">=</span> tesseract<span class="token punctuation">.</span><span class="token function">getOrientations</span><span class="token punctuation">(</span>image<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 根据方向进行旋转</span>
+            <span class="token keyword">return</span> <span class="token function">rotateImage</span><span class="token punctuation">(</span>image<span class="token punctuation">,</span> orientation<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            log<span class="token punctuation">.</span><span class="token function">warn</span><span class="token punctuation">(</span><span class="token string">&quot;自动旋转失败，使用原图&quot;</span><span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> image<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">private</span> <span class="token keyword">double</span> <span class="token function">assessImageQuality</span><span class="token punctuation">(</span><span class="token class-name">BufferedImage</span> image<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 1. 清晰度评估（使用拉普拉斯方差）</span>
+        <span class="token keyword">double</span> sharpness <span class="token operator">=</span> <span class="token function">calculateSharpness</span><span class="token punctuation">(</span>image<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token comment">// 2. 亮度评估</span>
+        <span class="token keyword">double</span> brightness <span class="token operator">=</span> <span class="token function">calculateBrightness</span><span class="token punctuation">(</span>image<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token comment">// 3. 对比度评估</span>
+        <span class="token keyword">double</span> contrast <span class="token operator">=</span> <span class="token function">calculateContrast</span><span class="token punctuation">(</span>image<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token comment">// 4. 综合质量评分</span>
+        <span class="token keyword">double</span> qualityScore <span class="token operator">=</span> sharpness <span class="token operator">*</span> <span class="token number">0.4</span> <span class="token operator">+</span> brightness <span class="token operator">*</span> <span class="token number">0.3</span> <span class="token operator">+</span> contrast <span class="token operator">*</span> <span class="token number">0.3</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">return</span> <span class="token class-name">Math</span><span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token class-name">Math</span><span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span>qualityScore<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_5-3-function-calling实现数据验证" tabindex="-1"><a class="header-anchor" href="#_5-3-function-calling实现数据验证" aria-hidden="true">#</a> 5.3 Function Calling实现数据验证</h3><p>对于大模型的返回，我们可以结合 Functino Calling的机制，来实现数据验证，从而实现 ReAct 的多轮交互，比如一个非常基础的字段合法性校验如下：</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Component</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceValidationService</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Tool</span><span class="token punctuation">(</span>
+            name <span class="token operator">=</span> <span class="token string">&quot;validateInvoiceFields&quot;</span><span class="token punctuation">,</span>
+            description <span class="token operator">=</span> <span class="token string">&quot;验证发票字段的合法性和一致性&quot;</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">public</span> <span class="token class-name">ValidationResult</span> <span class="token function">validateInvoice</span><span class="token punctuation">(</span>
+            <span class="token annotation punctuation">@ToolParam</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;发票代码&quot;</span><span class="token punctuation">)</span> <span class="token class-name">String</span> invoiceCode<span class="token punctuation">,</span>
+            <span class="token annotation punctuation">@ToolParam</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;发票号码&quot;</span><span class="token punctuation">)</span> <span class="token class-name">String</span> invoiceNumber<span class="token punctuation">,</span>
+            <span class="token annotation punctuation">@ToolParam</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;开票日期&quot;</span><span class="token punctuation">)</span> <span class="token class-name">String</span> issueDate<span class="token punctuation">,</span>
+            <span class="token annotation punctuation">@ToolParam</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;不含税金额&quot;</span><span class="token punctuation">)</span> <span class="token class-name">BigDecimal</span> amountWithoutTax<span class="token punctuation">,</span>
+            <span class="token annotation punctuation">@ToolParam</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;税额&quot;</span><span class="token punctuation">)</span> <span class="token class-name">BigDecimal</span> taxAmount<span class="token punctuation">,</span>
+            <span class="token annotation punctuation">@ToolParam</span><span class="token punctuation">(</span>description <span class="token operator">=</span> <span class="token string">&quot;价税合计&quot;</span><span class="token punctuation">)</span> <span class="token class-name">BigDecimal</span> totalAmount
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token class-name">ValidationResult</span> result <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ValidationResult</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">ValidationError</span><span class="token punctuation">&gt;</span></span> errors <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ArrayList</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token punctuation">&gt;</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// 1. 验证发票代码格式（12位数字）</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>invoiceCode <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>invoiceCode<span class="token punctuation">.</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token string">&quot;\\\\d{12}&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            errors<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationError</span><span class="token punctuation">(</span><span class="token string">&quot;invoiceCode&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;发票代码必须是12位数字&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// 2. 验证发票号码格式（8位数字）</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>invoiceNumber <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>invoiceNumber<span class="token punctuation">.</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token string">&quot;\\\\d{8}&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            errors<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationError</span><span class="token punctuation">(</span><span class="token string">&quot;invoiceNumber&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;发票号码必须是8位数字&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// 3. 验证日期格式</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>issueDate <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                <span class="token class-name">LocalDate</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>issueDate<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                errors<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationError</span><span class="token punctuation">(</span><span class="token string">&quot;issueDate&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;开票日期格式错误&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// 4. 验证金额关系</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>amountWithoutTax <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> taxAmount <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> totalAmount <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token class-name">BigDecimal</span> calculatedTotal <span class="token operator">=</span> amountWithoutTax<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>taxAmount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token class-name">BigDecimal</span> diff <span class="token operator">=</span> totalAmount<span class="token punctuation">.</span><span class="token function">subtract</span><span class="token punctuation">(</span>calculatedTotal<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">abs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>diff<span class="token punctuation">.</span><span class="token function">compareTo</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">BigDecimal</span><span class="token punctuation">(</span><span class="token string">&quot;0.01&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                errors<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationError</span><span class="token punctuation">(</span><span class="token string">&quot;amounts&quot;</span><span class="token punctuation">,</span>
+                        <span class="token class-name">String</span><span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span><span class="token string">&quot;金额计算不一致: 不含税(%.2f) + 税额(%.2f) ≠ 合计(%.2f)&quot;</span><span class="token punctuation">,</span>
+                                amountWithoutTax<span class="token punctuation">,</span> taxAmount<span class="token punctuation">,</span> totalAmount<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// 5. 验证纳税人识别号（15-20位）</span>
+        <span class="token comment">// 这里可以添加更复杂的验证逻辑</span>
+
+        result<span class="token punctuation">.</span><span class="token function">setErrors</span><span class="token punctuation">(</span>errors<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        result<span class="token punctuation">.</span><span class="token function">setValid</span><span class="token punctuation">(</span>errors<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        result<span class="token punctuation">.</span><span class="token function">setValidationTime</span><span class="token punctuation">(</span><span class="token class-name">LocalDateTime</span><span class="token punctuation">.</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Data</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">ValidationResult</span> <span class="token punctuation">{</span>
+        <span class="token keyword">private</span> <span class="token keyword">boolean</span> valid<span class="token punctuation">;</span>
+        <span class="token keyword">private</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">ValidationError</span><span class="token punctuation">&gt;</span></span> errors<span class="token punctuation">;</span>
+        <span class="token keyword">private</span> <span class="token class-name">LocalDateTime</span> validationTime<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">record</span> <span class="token class-name">ValidationError</span><span class="token punctuation">(</span><span class="token class-name">String</span> field<span class="token punctuation">,</span> <span class="token class-name">String</span> message<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>除了上面这个之外，我们还可以对纳锐人识别号、企业名称进行合法性校验（比如通过内部维护的映射或者外部的企查查之类的接口来实现）</p><p>当然这些属于辅助手段，不加貌似也没有太大的问题🤣</p><h3 id="_5-4-降级策略-传统ocr备用方案" tabindex="-1"><a class="header-anchor" href="#_5-4-降级策略-传统ocr备用方案" aria-hidden="true">#</a> 5.4 降级策略：传统OCR备用方案</h3><p>最后在生产环境中，难免会有一些突发情况，所以一个健壮的系统，对应的降级方案是不可缺少的，比如加一个ocr的备用方案</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Component</span>
+<span class="token annotation punctuation">@Slf4j</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">FallbackOCRExtractor</span> <span class="token punctuation">{</span>
+    
+    <span class="token annotation punctuation">@Autowired</span>
+    <span class="token keyword">private</span> <span class="token class-name">AliYunOCRClient</span> aliYunOCRClient<span class="token punctuation">;</span>
+    
+    <span class="token annotation punctuation">@Autowired</span>
+    <span class="token keyword">private</span> <span class="token class-name">InvoiceTemplateMatcher</span> templateMatcher<span class="token punctuation">;</span>
+    
+    <span class="token doc-comment comment">/**
+     * 当大模型提取失败时的降级方案
+     */</span>
+    <span class="token keyword">public</span> <span class="token class-name">InvoiceInfo</span> <span class="token function">extractWithOCR</span><span class="token punctuation">(</span><span class="token class-name">ProcessedImage</span> processedImage<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            <span class="token comment">// 1. 调用阿里云OCR</span>
+            <span class="token class-name">OCRResponse</span> ocrResponse <span class="token operator">=</span> aliYunOCRClient<span class="token punctuation">.</span><span class="token function">analyzeInvoice</span><span class="token punctuation">(</span>
+                processedImage<span class="token punctuation">.</span><span class="token function">getBase64Image</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 2. 使用模板匹配提取结构化信息</span>
+            <span class="token class-name">Map</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token class-name">String</span><span class="token punctuation">&gt;</span></span> extractedFields <span class="token operator">=</span> templateMatcher<span class="token punctuation">.</span><span class="token function">matchAndExtract</span><span class="token punctuation">(</span>
+                ocrResponse<span class="token punctuation">.</span><span class="token function">getTextBlocks</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 3. 转换为InvoiceInfo对象</span>
+            <span class="token class-name">InvoiceInfo</span> invoiceInfo <span class="token operator">=</span> <span class="token function">convertToInvoiceInfo</span><span class="token punctuation">(</span>extractedFields<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token comment">// 4. 设置较低的置信度</span>
+            invoiceInfo<span class="token punctuation">.</span><span class="token function">setConfidence</span><span class="token punctuation">(</span><span class="token number">0.6</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            
+            <span class="token keyword">return</span> invoiceInfo<span class="token punctuation">;</span>
+            
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            log<span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">&quot;OCR降级方案也失败&quot;</span><span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">InvoiceExtractException</span><span class="token punctuation">(</span><span class="token string">&quot;所有提取方案均失败&quot;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_5-5-监控与指标" tabindex="-1"><a class="header-anchor" href="#_5-5-监控与指标" aria-hidden="true">#</a> 5.5 监控与指标</h3><p>如果有必要有条件，基于Prometheus的监控加上可以说是一个<code>资深程序猿</code>的基本素养了，同样给一个简单的示例</p><div class="language-java line-numbers-mode" data-ext="java"><pre class="language-java"><code><span class="token annotation punctuation">@Component</span>
+<span class="token annotation punctuation">@Slf4j</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">InvoiceExtractMetrics</span> <span class="token punctuation">{</span>
+    
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">MeterRegistry</span> meterRegistry<span class="token punctuation">;</span>
+    
+    <span class="token comment">// 提取成功率</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">Counter</span> successCounter<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">Counter</span> failureCounter<span class="token punctuation">;</span>
+    
+    <span class="token comment">// 处理时间直方图</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">Timer</span> extractTimer<span class="token punctuation">;</span>
+    
+    <span class="token comment">// 图片质量分布</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">DistributionSummary</span> qualitySummary<span class="token punctuation">;</span>
+    
+    <span class="token keyword">public</span> <span class="token class-name">InvoiceExtractMetrics</span><span class="token punctuation">(</span><span class="token class-name">MeterRegistry</span> meterRegistry<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>meterRegistry <span class="token operator">=</span> meterRegistry<span class="token punctuation">;</span>
+        
+        <span class="token keyword">this</span><span class="token punctuation">.</span>successCounter <span class="token operator">=</span> <span class="token class-name">Counter</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token string">&quot;invoice.extract.success&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">description</span><span class="token punctuation">(</span><span class="token string">&quot;发票提取成功次数&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">register</span><span class="token punctuation">(</span>meterRegistry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">this</span><span class="token punctuation">.</span>failureCounter <span class="token operator">=</span> <span class="token class-name">Counter</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token string">&quot;invoice.extract.failure&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">description</span><span class="token punctuation">(</span><span class="token string">&quot;发票提取失败次数&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">register</span><span class="token punctuation">(</span>meterRegistry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">this</span><span class="token punctuation">.</span>extractTimer <span class="token operator">=</span> <span class="token class-name">Timer</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token string">&quot;invoice.extract.duration&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">description</span><span class="token punctuation">(</span><span class="token string">&quot;发票提取耗时&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">publishPercentiles</span><span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">,</span> <span class="token number">0.95</span><span class="token punctuation">,</span> <span class="token number">0.99</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">register</span><span class="token punctuation">(</span>meterRegistry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">this</span><span class="token punctuation">.</span>qualitySummary <span class="token operator">=</span> <span class="token class-name">DistributionSummary</span><span class="token punctuation">.</span><span class="token function">builder</span><span class="token punctuation">(</span><span class="token string">&quot;invoice.image.quality&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">description</span><span class="token punctuation">(</span><span class="token string">&quot;发票图片质量评分&quot;</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">register</span><span class="token punctuation">(</span>meterRegistry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">recordSuccess</span><span class="token punctuation">(</span><span class="token keyword">long</span> duration<span class="token punctuation">,</span> <span class="token keyword">double</span> quality<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        successCounter<span class="token punctuation">.</span><span class="token function">increment</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        extractTimer<span class="token punctuation">.</span><span class="token function">record</span><span class="token punctuation">(</span>duration<span class="token punctuation">,</span> <span class="token class-name">TimeUnit</span><span class="token punctuation">.</span><span class="token constant">MILLISECONDS</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        qualitySummary<span class="token punctuation">.</span><span class="token function">record</span><span class="token punctuation">(</span>quality<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">recordFailure</span><span class="token punctuation">(</span><span class="token class-name">String</span> errorType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        failureCounter<span class="token punctuation">.</span><span class="token function">increment</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        meterRegistry<span class="token punctuation">.</span><span class="token function">counter</span><span class="token punctuation">(</span><span class="token string">&quot;invoice.extract.error.&quot;</span> <span class="token operator">+</span> errorType<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">increment</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="六、部署方案" tabindex="-1"><a class="header-anchor" href="#六、部署方案" aria-hidden="true">#</a> 六、部署方案</h2><h3 id="_6-1-docker容器化" tabindex="-1"><a class="header-anchor" href="#_6-1-docker容器化" aria-hidden="true">#</a> 6.1 Docker容器化</h3><div class="language-docker line-numbers-mode" data-ext="docker"><pre class="language-docker"><code><span class="token comment"># Dockerfile</span>
+<span class="token instruction"><span class="token keyword">FROM</span> openjdk:17-jdk-slim <span class="token keyword">as</span> builder</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /D04-invoice-extraction</span>
+<span class="token instruction"><span class="token keyword">COPY</span> . .</span>
+<span class="token instruction"><span class="token keyword">RUN</span> chmod +x ./mvnw</span>
+<span class="token instruction"><span class="token keyword">RUN</span> ./mvnw clean package -DskipTests</span>
+
+<span class="token instruction"><span class="token keyword">FROM</span> openjdk:17-jdk-slim</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /D04-invoice-extraction</span>
+
+<span class="token comment"># 安装Tesseract OCR（用于降级方案）</span>
+<span class="token instruction"><span class="token keyword">RUN</span> apt-get update &amp;&amp; apt-get install -y <span class="token operator">\\</span>
+    tesseract-ocr <span class="token operator">\\</span>
+    tesseract-ocr-chi-sim <span class="token operator">\\</span>
+    libtesseract-dev <span class="token operator">\\</span>
+    &amp;&amp; rm -rf /var/lib/apt/lists/*</span>
+
+<span class="token comment"># 复制应用</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">builder</span></span> /D04-invoice-extraction/target/D04-invoice-extraction-0.0.1-SNAPSHOT.jar app.jar</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">builder</span></span> /D04-invoice-extraction/tessdata /usr/share/tessdata</span>
+
+<span class="token comment"># 创建非root用户</span>
+<span class="token instruction"><span class="token keyword">RUN</span> useradd -m -u 1000 spring</span>
+<span class="token instruction"><span class="token keyword">USER</span> spring</span>
+
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 8080</span>
+
+<span class="token instruction"><span class="token keyword">ENTRYPOINT</span> [<span class="token string">&quot;java&quot;</span>, <span class="token string">&quot;-jar&quot;</span>, <span class="token string">&quot;app.jar&quot;</span>, <span class="token string">&quot;--spring.ai.zhipuai.api-key=\${ZHIPU_KEY}&quot;</span>]</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_6-2-kubernetes部署" tabindex="-1"><a class="header-anchor" href="#_6-2-kubernetes部署" aria-hidden="true">#</a> 6.2 Kubernetes部署</h3><div class="language-yaml line-numbers-mode" data-ext="yml"><pre class="language-yaml"><code><span class="token comment"># invoice-extract-deployment.yaml</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> invoice<span class="token punctuation">-</span>extract<span class="token punctuation">-</span>service
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> finance
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">3</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> invoice<span class="token punctuation">-</span>extract
+  <span class="token key atrule">template</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> invoice<span class="token punctuation">-</span>extract
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> invoice<span class="token punctuation">-</span>extract
+        <span class="token key atrule">image</span><span class="token punctuation">:</span> xxx/invoice<span class="token punctuation">-</span>extract<span class="token punctuation">:</span>1.0.0
+        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">8080</span>
+        <span class="token key atrule">env</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> ZHIPU_KEY
+          <span class="token key atrule">valueFrom</span><span class="token punctuation">:</span>
+            <span class="token key atrule">secretKeyRef</span><span class="token punctuation">:</span>
+              <span class="token key atrule">name</span><span class="token punctuation">:</span> ai<span class="token punctuation">-</span>secrets
+              <span class="token key atrule">key</span><span class="token punctuation">:</span> zhipu<span class="token punctuation">-</span>key
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> ALIYUN_ACCESS_KEY_ID
+          <span class="token key atrule">valueFrom</span><span class="token punctuation">:</span>
+            <span class="token key atrule">secretKeyRef</span><span class="token punctuation">:</span>
+              <span class="token key atrule">name</span><span class="token punctuation">:</span> aliyun<span class="token punctuation">-</span>secrets
+              <span class="token key atrule">key</span><span class="token punctuation">:</span> access<span class="token punctuation">-</span>key<span class="token punctuation">-</span>id
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> ALIYUN_ACCESS_KEY_SECRET
+          <span class="token key atrule">valueFrom</span><span class="token punctuation">:</span>
+            <span class="token key atrule">secretKeyRef</span><span class="token punctuation">:</span>
+              <span class="token key atrule">name</span><span class="token punctuation">:</span> aliyun<span class="token punctuation">-</span>secrets
+              <span class="token key atrule">key</span><span class="token punctuation">:</span> access<span class="token punctuation">-</span>key<span class="token punctuation">-</span>secret
+        <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+          <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+            <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;1Gi&quot;</span>
+            <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;500m&quot;</span>
+          <span class="token key atrule">limits</span><span class="token punctuation">:</span>
+            <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;2Gi&quot;</span>
+            <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;1000m&quot;</span>
+        <span class="token key atrule">readinessProbe</span><span class="token punctuation">:</span>
+          <span class="token key atrule">httpGet</span><span class="token punctuation">:</span>
+            <span class="token key atrule">path</span><span class="token punctuation">:</span> /actuator/health
+            <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8080</span>
+          <span class="token key atrule">initialDelaySeconds</span><span class="token punctuation">:</span> <span class="token number">30</span>
+          <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">10</span>
+        <span class="token key atrule">livenessProbe</span><span class="token punctuation">:</span>
+          <span class="token key atrule">httpGet</span><span class="token punctuation">:</span>
+            <span class="token key atrule">path</span><span class="token punctuation">:</span> /actuator/health
+            <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8080</span>
+          <span class="token key atrule">initialDelaySeconds</span><span class="token punctuation">:</span> <span class="token number">60</span>
+          <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">30</span>
+<span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> invoice<span class="token punctuation">-</span>extract<span class="token punctuation">-</span>service
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> finance
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> invoice<span class="token punctuation">-</span>extract
+  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">80</span>
+    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">8080</span>
+  <span class="token key atrule">type</span><span class="token punctuation">:</span> ClusterIP
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="七、大模型提取方案-vs-传统ocr发票识别方案" tabindex="-1"><a class="header-anchor" href="#七、大模型提取方案-vs-传统ocr发票识别方案" aria-hidden="true">#</a> 七、大模型提取方案 VS 传统OCR发票识别方案</h2><p>最后我们下来看一下，这个大模型的实现方案，与传统的发票识别方案两者之间有什么差异</p><h3 id="_7-1-传统方案技术架构" tabindex="-1"><a class="header-anchor" href="#_7-1-传统方案技术架构" aria-hidden="true">#</a> 7.1 传统方案技术架构</h3><p>下面是一个经典的传统发票识别方案</p><div class="language-text line-numbers-mode" data-ext="text"><pre class="language-text"><code>%%{init: { &quot;theme&quot;: &quot;base&quot;, &quot;themeVariables&quot;: { &quot;primaryColor&quot;: &quot;#ffffff&quot;, &quot;secondaryColor&quot;: &quot;#f9f9f9&quot;, &quot;tertiaryColor&quot;: &quot;#eeea&quot;, &quot;textColor&quot;: &quot;#333&quot;, &quot;fontSize&quot;: &quot;16px&quot;, &quot;subgraph_border_color&quot;: &quot;#666&quot;, &quot;subgraph_fill&quot;: &quot;#f0f0f0&quot;} } }%%
+graph TB
+    %% 全局样式配置：提升研发视角的专业可读性
+    style Input fill:#fafafa,stroke:#333,stroke-width:1.5px,font-weight:bold
+    style Output fill:#ececff,stroke:#333,stroke-width:1.5px,font-weight:bold
+    linkStyle default stroke:#666,stroke-width:1px,color:#333
+
+    subgraph A1[&quot;传统OCR发票识别系统&quot;]
+        
+        direction TB  // 整体改为自上而下，符合研发对流程的阅读习惯
+        
+        %% 预处理阶段：视觉强化+命名精准化
+        subgraph A2[&quot;1. 图像预处理阶段&quot;]
+            style A2 fill:#e1f5fe,stroke:#01579b,stroke-width:1px,opacity:0.5
+            direction LR
+            P1[图像灰度化]
+            P2[二值化处理]
+            P3[噪声去除]
+            P4[倾斜校正]
+            P5[版面区域分析]
+            %% 流程串联：简化箭头，提升连贯性
+            P1 --&gt; P2 --&gt; P3 --&gt; P4 --&gt; P5
+        end
+        
+        %% OCR识别阶段：补充逻辑标注
+        subgraph A3[&quot;2. OCR字符识别阶段&quot;]
+            style A3 fill:#f3e5f5,stroke:#4a148c,stroke-width:1px,opacity:0.5
+            direction LR
+            O1[字符分割]
+            O2[特征提取&lt;small&gt;（轮廓/纹理）&lt;/small&gt;]
+            O3[字符识别&lt;small&gt;（模板/机器学习）&lt;/small&gt;]
+            O4[字符合并&lt;small&gt;（行/字段级）&lt;/small&gt;]
+            O1 --&gt; O2 --&gt; O3 --&gt; O4
+        end
+        
+        %% 模板匹配阶段：命名更精准
+        subgraph A4[&quot;3. 模板匹配提取阶段&quot;]
+            style A4 fill:#fff3e0,stroke:#e65100,stroke-width:1px,opacity:0.5
+            direction LR
+            T1[加载发票品类预定义模板]
+            T2[字段坐标定位]
+            T3[目标字段提取]
+            T4[正则规则初筛]
+            T1 --&gt; T2 --&gt; T3 --&gt; T4
+        end
+        
+        %% 规则处理阶段：补充逻辑闭环提示
+        subgraph A5[&quot;4. 业务规则校验阶段&quot;]
+            style A5 fill:#c8e6c9,stroke:#2e7d32,stroke-width:1px,opacity:0.5
+            direction LR
+            R1[行业规则引擎]
+            R2[关键字精准匹配]
+            R3[字段格式验证&lt;small&gt;如税号/金额&lt;/small&gt;]
+            R4[跨字段逻辑校验&lt;small&gt;价税合计&lt;/small&gt;]
+            R1 --&gt; R2 --&gt; R3 --&gt; R4
+        end
+        
+        %% 后处理阶段：补充人工核验的闭环逻辑（研发关注的异常流程）
+        subgraph A6[&quot;5. 结果后处理阶段&quot;]
+            style A6 fill:#fce4ec,stroke:#ad1457,stroke-width:1px,opacity:0.5
+            direction LR
+            H1[数据清洗&lt;small&gt;去重/补空&lt;/small&gt;]
+            H2[格式标准化&lt;small&gt;统一JSON/DB格式&lt;/small&gt;]
+            H3{人工核验}
+            H4[模板迭代更新]
+            
+            H1 --&gt; H2 --&gt; H3
+            H3 -- 核验通过 --&gt; Output[结构化发票数据]
+            H3 -- 核验不通过 --&gt; H4 --&gt; P1  
+        end
+        
+        %% 主流程串联：简化线条，逻辑更顺
+        Input[发票图片输入] --&gt; P1
+        P5 --&gt; O1
+        O4 --&gt; T1
+        T4 --&gt; R1
+        R4 --&gt; H1
+    end
+    
+    %% 样式优化：保留原有配色体系，增强视觉区分度
+    classDef preprocess fill:#e1f5fe,stroke:#01579b,stroke-width:1.5px,font-size:12px
+    classDef ocr fill:#f3e5f5,stroke:#4a148c,stroke-width:1.5px,font-size:12px
+    classDef template fill:#fff3e0,stroke:#e65100,stroke-width:1.5px,font-size:12px
+    classDef rule fill:#c8e6c9,stroke:#2e7d32,stroke-width:1.5px,font-size:12px
+    classDef post fill:#fce4ec,stroke:#ad1457,stroke-width:1.5px,font-size:12px
+
+    class P1,P2,P3,P4,P5 preprocess
+    class O1,O2,O3,O4 ocr
+    class T1,T2,T3,T4 template
+    class R1,R2,R3,R4 rule
+    class H1,H2,H3,H4 post
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="`+g+'" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure><p>在传统的方案中，主要分五部分</p><ol><li>图像预处理</li><li>OCR字符识别</li><li>模板匹配提取</li><li>业务规则校验</li><li>结果处理</li></ol><p>其中核心的实现会聚焦在 <code>模板匹配 + 业务规则校验</code>，同样也因为不同的模板的差异性，导致整个方案的挑战点在于</p><table><thead><tr><th>问题类别</th><th>具体表现</th></tr></thead><tbody><tr><td>模板依赖</td><td>每新增一种发票类型需配置新模板</td></tr><tr><td>位置敏感</td><td>发票版式变化导致提取失败</td></tr><tr><td>泛化能力差</td><td>无法处理未见过的发票格式</td></tr><tr><td>规则复杂</td><td>维护大量正则表达式和规则</td></tr><tr><td>容错性差</td><td>OCR识别错误直接导致提取错误</td></tr><tr><td>语义理解缺失</td><td>无法理解字段间的关系和含义</td></tr><tr><td>维护成本高</td><td>需要持续维护模板和规则库</td></tr></tbody></table><h3 id="_7-2-大模型方案-vs-传统方案" tabindex="-1"><a class="header-anchor" href="#_7-2-大模型方案-vs-传统方案" aria-hidden="true">#</a> 7.2 大模型方案 VS 传统方案</h3><p>基于技术方案的对比</p><table><thead><tr><th>维度</th><th>传统OCR方案</th><th>大模型智能体方案</th></tr></thead><tbody><tr><td>核心技术</td><td>图像处理 + 规则引擎</td><td>多模态大模型 + 语义理解</td></tr><tr><td>处理逻辑</td><td>&quot;如果-那么&quot;规则链</td><td>端到端语义理解</td></tr><tr><td>模板依赖</td><td>强依赖，每款发票需模板</td><td>零模板，通用处理</td></tr><tr><td>泛化能力</td><td>差，只能处理已知格式</td><td>强，能处理未见格式</td></tr><tr><td>语义理解</td><td>无，仅文本匹配</td><td>强，理解字段含义和关系</td></tr><tr><td>容错能力</td><td>差，OCR错误即失败</td><td>强，能根据上下文纠正</td></tr><tr><td>维护成本</td><td>高，需持续维护模板规则</td><td>低，基本无需维护</td></tr><tr><td>扩展性</td><td>差，新增类型需开发</td><td>强，通过Prompt调整即可</td></tr><tr><td>准确性</td><td>高</td><td>低，相较于传统方案每一次的输出都存在不确定性</td></tr></tbody></table><p>从性能、实现角度进行对比</p><table><thead><tr><th>指标</th><th>传统OCR方案</th><th>大模型智能体方案</th></tr></thead><tbody><tr><td>首次部署时间</td><td>2-4周（模板开发）</td><td>1-3天（Prompt调优）</td></tr><tr><td>新增模板时间</td><td>1-3天/模板</td><td>几乎为0</td></tr><tr><td>处理准确率</td><td>70-85%（复杂场景）</td><td>90-98%</td></tr><tr><td>泛化能力</td><td>只能处理已知模板</td><td>可处理未知格式</td></tr><tr><td>维护人力</td><td>全职1-2人</td><td>兼职0.5人</td></tr><tr><td>容错能力</td><td>低（严格依赖OCR质量）</td><td>高（语义纠错）</td></tr><tr><td>处理速度</td><td>快（2-5秒）</td><td>中等（3-10秒）</td></tr><tr><td>硬件成本</td><td>低（CPU即可）</td><td>高（需要GPU/API）</td></tr></tbody></table><p>从简单的方案对比，基于大模型的发票提取智能体，其**灵活性、可维护性、未来适应性（如国际业务）**方面明显由于传统的OCR方案，当然在准确度上，若有定向调教的小模型，其准确率完全有可能优于传统的OCR方案，当然它的成本比传统的要高，但若是考虑到维护的员工成本，那显然大模型的优势还是很明显的（当然如果已经有成熟可用的方案，能不改就不要改😊）</p><h2 id="八、小结" tabindex="-1"><a class="header-anchor" href="#八、小结" aria-hidden="true">#</a> 八、小结</h2><p>本文以发票提取为切入点，构建了一个可生产使用的基于大模型的发票提取智能体，从具体的路径来看，这个系统的普适性很高，同样可以用于其他基于图片的结构化信息提取场景（比如快递面单的信息提取、身份证信息提取、简历信息提取等）</p><h3 id="系统的核心功能单元" tabindex="-1"><a class="header-anchor" href="#系统的核心功能单元" aria-hidden="true">#</a> 系统的核心功能单元：</h3><ol><li><strong>多模态理解</strong>：基于大模型准确理解图片内容</li><li><strong>智能提取</strong>：零配置提取任意版式发票信息</li><li><strong>数据验证</strong>：通过Function Calling实现字段验证</li><li><strong>降级策略</strong>：传统OCR备用方案保证服务可用性</li><li><strong>生产就绪</strong>：包含缓存、监控、批量处理等企业级功能</li></ol><h3 id="技术知识点" tabindex="-1"><a class="header-anchor" href="#技术知识点" aria-hidden="true">#</a> 技术知识点</h3><p>下面是本文中涉及到的相关技术点（重点在大模型领域）</p><ul><li>多模态</li><li>图文识别</li><li>提示词工程</li><li>大模型的分页交互如何实现</li><li>Function Call</li><li>结构化输出</li><li>上下文窗口</li></ul><p>对于大模型应用开发感兴趣的小伙伴，或者对上面提到的知识点有疑惑的小伙伴，不妨看看以下几篇内容（每篇耗时不超过五分钟😊）</p>',105),_={href:"https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w",target:"_blank",rel:"noopener noreferrer"},T={href:"https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA",target:"_blank",rel:"noopener noreferrer"},A={href:"https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w",target:"_blank",rel:"noopener noreferrer"},E={href:"https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q",target:"_blank",rel:"noopener noreferrer"},R={href:"https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ",target:"_blank",rel:"noopener noreferrer"},B={href:"https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ",target:"_blank",rel:"noopener noreferrer"},j={href:"https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg",target:"_blank",rel:"noopener noreferrer"},L={href:"https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA",target:"_blank",rel:"noopener noreferrer"},M={href:"https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww",target:"_blank",rel:"noopener noreferrer"};function O(J,F){const t=e("ExternalLinkIcon"),o=e("Mermaid");return l(),i("div",null,[f,n("blockquote",null,[n("p",null,[n("a",q,[s("再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构"),a(t)])])]),h,a(o,{id:"mermaid-108",code:"eJyVVWtP21YY/t5fYQVRdVJo4oRciKZKXDqpGhJZE+0LmirHPgaraRzZZoVVk7gUGFkChEtDgZWka5qug7BsnQiQwJ/xOXY+sZ+wYx/nQgopHEdKznnP8/p53lu6u18IMUEJUC8omzIOngFbgLJFGBnY7NbB94wkMJEokLEFX4pLwjNGmhoUo6Jk3O3izWVclwErxrjLxj7jMX0BSREu2YC5iG1SaZ673W7jkBdjSkj4ySREe+OT5hsmImMSEx9/EhElDkhP2AbI6/VeusAL0Shh4DQeG/Wz8XR33+Gj4nN2nJEUKjxwh8Kru5uC8x9gaRplj2Bl5aKyrZbX1fI2ymT13L52cg4PMmp1/aKS1E731PI03F3QC2twLamfHaPcgumDjTKyPAR4yogc3hvce2RMPkC74pN2ShInYhzgAn47JSuS+BT0PBc4ZTxA3/eY+DoRlKjqpRwszWonBVjcVo+XTEtdFRXqH7X9t5fOU2g5D+fz+CJ1r59lgSxTw8wUkL6y/WACjMUJEmAVQYzVhRqrf5gehe+2tT8PiQetmobz/3wdkRwP+oOPHKGhbx1o6bi2uKKWE2ol2/TWP+wa1Q+PUGkWZXO1j8m7+tGhtlEykbWlT+i3OUft9Sr6dwZ/pTB7ggQxrqmvTcqAIWWjQMGTDW0Dx9+QEo9HBZYxSd9QT5AeRdkyPJ+D715qqwtq+QD/NllhmehDDk3P6IXf0ZtVB9r8C6WKKLsIFxdg8lWLtCCWNleFiR209AcsbWIqpoNvJmLkfYNMNOrQ9vfV8hJ6dVzbWUC/rF6hrylt0JC2k70or1BoNwUTRkapeyEg/Siw4IbKQjhT/Y+wAvjmV+LEJKWWT8mZA87vwpPNkcHHTUchnCQik0SjBUey5tAq6/Bgy4GyFVzqenUfpd52VDJkKFk7ozAIzpIkhRRRYsZuLCNMj5KXEhcmmceAE+QW2mFMOzmjHs/jvLRcC4qyMiaB0HfDHTk+NAspRennq9rpJ5PjSPymDTGCC0jbSaPlAkwn9IP3JFjJRVwnjtr6Ga5y/byqlz823YzgckGZPDzPwGJOL1rhXU+p1V1t87WW2XTUMsXa2y20vIb28lcwN/rcLFncLTgFtelT/SxtWnB3Uj09D4xms/Yusg/SZB+07EHLHiR2XCvUXSP75in+Jqdh8zRcv0uwWDC5FSa3sJxL1Mjwq82n9KW/8Sy0ZtFREVZm0daZns7gQahWl2v5Eh6B8OS9VkijxDR6uXd5EDJkKhljONAViXCAj9jJ6At00X0+L+eytm2TUFamogDPOQsJvHwvz3dEuuxinGEFZSrgvO9tI9EyT4g/1g+8bF/Dn5tm3J7ejkwG6kz8vAc05negywV8nNtlp8y/oECX0+nBHzt1LRfZ6n7LGx0BwNfg4YvQPNM5IoMWkncDD49f1Aat8+hlnE4f3rbwqCe3ScXqYCs5Lo7nmslxOv19vvr2aipD14TEgtap+P1O0Mt3CImIu9QS5ccl4mxwYF2039OZw8M6kgW9gG1ysKBf4tAkYjSd3Wg0UrGthiA24A5rqaIWK+45u9FpVl5bLWFswd1lhbnFgnvPjvvNEH7HPI4KsachU5CzoeCa7ohPtiHoBuKaKv4MYVC6HcJ9a0TvrRGe9lL+IsJ7a4SvvUavQPwPBFgH2g=="}),w,n("p",null,[s("首先我们需要搭建要给SpringAI的项目，不太熟悉的小伙伴可以参照 "),n("a",x,[s("01.创建一个SpringAI的示例工程 | 一灰灰的站点"),a(t)]),s(" 来完成")]),I,n("p",null,[s("首先我们需要制定大模型来提取结构化发票的提示词，区别于 "),n("a",S,[s("大模型应用开发实战：两百行实现一个自然语言地址提取智能体"),a(t)]),s(" 中的硬编码实现方式，我们将提示词统一放在资源目录下 "),P,s(" 命名为 "),D,s("的文本中保存提示词模板")]),C,n("ul",null,[n("li",null,[n("a",_,[s("LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)"),a(t)])]),n("li",null,[n("a",T,[s("大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？"),a(t)])]),n("li",null,[n("a",A,[s("大模型应用开发系列教程：第一章LLM到底在做什么？"),a(t)])]),n("li",null,[n("a",E,[s("大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板"),a(t)])]),n("li",null,[n("a",R,[s("大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？"),a(t)])]),n("li",null,[n("a",B,[s("大模型应用开发系列教程：第四章Prompt 的工程化结构设计"),a(t)])]),n("li",null,[n("a",j,[s("大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理"),a(t)])]),n("li",null,[n("a",L,[s("大模型应用开发系列教程：第六章 上下文窗口的真实边界"),a(t)])]),n("li",null,[n("a",M,[s("大模型应用开发实战：两百行实现一个自然语言地址提取智能体"),a(t)])])])])}const V=c(y,[["render",O],["__file","D03.从0到1实现一个发票信息提取智能体.html.vue"]]);export{V as default};
