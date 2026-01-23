@@ -2,8 +2,8 @@
 home: true
 icon: home
 title: 主页
-heroImage: /logo.svg
-heroText: 大模型应用开发跳坑实战
+heroImage: /logo.jpg
+heroText: 大模型应用开发入坑指南
 tagline: 通过成体系的基础版、进阶版、实战版等系列教程，帮助java开发者紧跟ai的时代浪潮，做一些大模型应用、Agent的转型
 actions:
   - text: LLM开发手册 💡

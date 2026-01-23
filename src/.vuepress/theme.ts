@@ -80,10 +80,10 @@ export default hopeTheme({
        * Using Giscus
        */
       provider: "Giscus",
-      repo: "liuyueyi/tutorial",
-      repoId: "R_kgDOI40jCA",
-      category: "Announcements",
-      categoryId: "DIC_kwDOI40jCM4CT9-n",
+      repo: "liuyueyi/ai-guides",
+      repoId: "R_kgDOQ-3Jrg",
+      category: "General",
+      categoryId: "DIC_kwDOQ-3Jrs4C1UOL",
       mapping: "title",
 
       /**
