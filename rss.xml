@@ -6,14 +6,14 @@
     <link>https://liuyueyi.github.io/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Fri, 23 Jan 2026 07:42:07 GMT</pubDate>
-    <lastBuildDate>Fri, 23 Jan 2026 07:42:07 GMT</lastBuildDate>
+    <pubDate>Fri, 23 Jan 2026 07:51:57 GMT</pubDate>
+    <lastBuildDate>Fri, 23 Jan 2026 07:51:57 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
     <image>
       <title>Helllo LLM Guides</title>
-      <url>https://liuyueyi.github.io/ai-guides/logo.svg</url>
+      <url>https://liuyueyi.github.io/ai-guides/favicon.ico</url>
       <link>https://liuyueyi.github.io/ai-guides/</link>
     </image>
     <category>SpringAI</category>
