@@ -22,12 +22,12 @@ features:
   - title: SpringAI进阶
     icon: view
     details: 不满足SpringAI基础知识点的你，不妨看看这里👋
-    link: /ai_div/应用篇/
+    link: /ai-dev/应用篇/
 
   - title: SpringAI应用实战
     icon: view
     details: 基于SpringAI手把手教你实现一些大模型应用、Agent的开发案例📚
-    link: /ai_div/应用篇/
+    link: /ai-dev/应用篇/
 
   - title: LLM零基础入门
     icon: tree
@@ -42,27 +42,12 @@ features:
   - title: Hello Agent
     icon: router
     details: Agent是什么?为什么大家都在搞agent？🤖
-    link: /tutorial/ai-coding/
+    link: /tutorial/hello-agent/
 
 copyright: false
 footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://beian.miit.gov.cn/" target="_blank"> 鄂ICP备18017282号</a> | 主题 @vuepress-theme-hope 
 ---
 
-<div align="center">
-  <ins class="adsbygoogle"
-       style="display:block"
-       data-ad-format="fluid"
-       data-ad-layout-key="-ef+6k-30-ac+ty"
-       data-ad-client="ca-pub-5592000528061748"
-       data-ad-slot="6935280996"></ins>
-</div>
-<!-- hhui.top 主站 -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-5592000528061748"
-     data-ad-slot="9219792501"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
 
 ## 🔥 精选资料
 
