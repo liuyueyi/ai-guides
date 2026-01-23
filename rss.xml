@@ -6,8 +6,8 @@
     <link>https://liuyueyi.github.io/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Fri, 23 Jan 2026 06:38:01 GMT</pubDate>
-    <lastBuildDate>Fri, 23 Jan 2026 06:38:01 GMT</lastBuildDate>
+    <pubDate>Fri, 23 Jan 2026 07:42:07 GMT</pubDate>
+    <lastBuildDate>Fri, 23 Jan 2026 07:42:07 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -243,20 +243,6 @@
 ]]></content:encoded>
     </item>
     <item>
-      <title>LLM教程</title>
-      <link>https://liuyueyi.github.io/ai-guides/tutorial/</link>
-      <guid>https://liuyueyi.github.io/ai-guides/tutorial/</guid>
-      <source url="https://liuyueyi.github.io/ai-guides/rss.xml">LLM教程</source>
-      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
-      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
-      <content:encoded><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content:encoded>
-    </item>
-    <item>
       <title>关于我</title>
       <link>https://liuyueyi.github.io/ai-guides/me/</link>
       <guid>https://liuyueyi.github.io/ai-guides/me/</guid>
@@ -321,6 +307,20 @@
 </ul>
 ]]></content:encoded>
       <enclosure url="https://spring.hhui.top/spring-blog/imgs/info/info.png" type="image/png"/>
+    </item>
+    <item>
+      <title>LLM教程</title>
+      <link>https://liuyueyi.github.io/ai-guides/tutorial/</link>
+      <guid>https://liuyueyi.github.io/ai-guides/tutorial/</guid>
+      <source url="https://liuyueyi.github.io/ai-guides/rss.xml">LLM教程</source>
+      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
+      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content:encoded>
     </item>
     <item>
       <title>01.创建一个SpringAI的示例工程</title>

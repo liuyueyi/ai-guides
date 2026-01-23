@@ -9,7 +9,7 @@
   </author>
   <logo>https://liuyueyi.github.io/ai-guides/logo.svg</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-01-23T06:38:01.949Z</updated>
+  <updated>2026-01-23T07:42:07.304Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://liuyueyi.github.io/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://liuyueyi.github.io/ai-guides/"/>
@@ -283,34 +283,6 @@
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
-    <title type="text">LLM教程</title>
-    <id>https://liuyueyi.github.io/ai-guides/tutorial/</id>
-    <link href="https://liuyueyi.github.io/ai-guides/tutorial/"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></summary>
-    <content type="html"><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2026-01-22T08:45:40.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
     <title type="text">关于我</title>
     <id>https://liuyueyi.github.io/ai-guides/me/</id>
     <link href="https://liuyueyi.github.io/ai-guides/me/"/>
@@ -397,6 +369,34 @@
 <li>邮箱 : <a href="mailto:bangzewu@126.com">bangzewu@126.com</a></li>
 <li>微博 : 一灰灰blog (基本上不活跃)</li>
 </ul>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-01-22T08:45:40.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">LLM教程</title>
+    <id>https://liuyueyi.github.io/ai-guides/tutorial/</id>
+    <link href="https://liuyueyi.github.io/ai-guides/tutorial/"/>
+    <updated>2026-01-22T08:45:40.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></summary>
+    <content type="html"><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
 ]]></content>
     <author>
       <name>一灰灰blog</name>
