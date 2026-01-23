@@ -15,6 +15,9 @@ export default defineUserConfig({
 
   theme,
   head: [
+     [
+        'link',{ rel: 'icon', href: '/ai-guides/favicon.ico' }
+      ],
       // meta
     ["meta", { name: "robots", content: "all" }],
     ["meta", { name: "author", content: "一灰灰blog" }],

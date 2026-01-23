@@ -12,7 +12,7 @@ export default hopeTheme({
 
   iconAssets: "iconfont",
 
-  logo: "/logo.svg",
+  logo: "/favicon.ico",
 
   repo: "liuyueyi/ai-guides",
 
