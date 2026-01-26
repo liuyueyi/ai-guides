@@ -15,9 +15,12 @@ export default defineUserConfig({
 
   theme,
   head: [
-     [
-        'link',{ rel: 'icon', href: '/ai-guides/favicon.ico' }
-      ],
+    [
+      'link',{ rel: 'icon', href: '/ai-guides/favicon.ico' }
+    ],
+    [
+      'link',{ rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css' }
+    ],
       // meta
     ["meta", { name: "robots", content: "all" }],
     ["meta", { name: "author", content: "一灰灰blog" }],
@@ -44,26 +47,12 @@ export default defineUserConfig({
       "script",
       {},
       `var _hmt = _hmt || [];
-        (function() {
-          var hm = document.createElement("script");
-          hm.src = "https://hm.baidu.com/hm.js?f589900ec107bc271099156a209e58d5";
-          var s = document.getElementsByTagName("script")[0]; 
-          s.parentNode.insertBefore(hm, s);
-        })();`,
-    ],
-    // 添加谷歌广告
-    [
-      "script",
-      {
-         "data-ad-client": "ca-pub-5592000528061748",
-        async: true,
-        src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5592000528061748"
-      },
-    ],
-    [
-      "script",
-      {},
-      `(adsbygoogle = window.adsbygoogle || []).push({});`
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?d09f8c5c03cb6eca0190078252f46f64";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();`,
     ],
     [
       "link",
