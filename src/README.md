@@ -52,7 +52,7 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
           <div class="llm-grid llm-md-grid-cols-2 llm-lg-grid-cols-3 llm-gap-8">
               <!-- 案例1 -->
               <a class="llm-case-item "  style="text-decoration: none;" href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank">
-                  <img src="/ai-guides/imgs/column/springai/D04-3.gif" style="height: 170px;" alt="SpringAI开发RAG问答机器人" title="SpringAI开发RAG问答机器人">
+                 <img src="https://mweb.hhui.top/imgs/D04-3.gif" style="height: 170px;" alt="SpringAI开发RAG问答机器人" title="SpringAI开发RAG问答机器人">
                   <div class="llm-case-item-content">
                       <h4 class="llm-text-xl llm-font-semibold llm-mb-2">SpringAI开发RAG问答机器人</h4>
                       <p class="llm-text-gray-600">手把手教你用SpringAI快速开发支持RAG知识库的问答机器人</p>
@@ -60,7 +60,7 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
               </a>
               <!-- 案例2 -->
               <a class="llm-case-item "  style="text-decoration: none;"  href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank">
-                  <img src="/ai-guides/imgs/info/home/ocr.webp" style="height: 170px;" alt="基于SpringAI与大模型的零配置发票智能提取架构" title="基于SpringAI与大模型的零配置发票智能提取架构">
+                  <img src="https://mweb.hhui.top/imgs/ocr.webp" style="height: 170px;" alt="基于SpringAI与大模型的零配置发票智能提取架构" title="基于SpringAI与大模型的零配置发票智能提取架构">
                   <div class="llm-case-item-content">
                       <h4 class="llm-text-xl llm-font-semibold llm-mb-2">基于SpringAI与大模型的零配置发票智能提取架构</h4>
                       <p class="llm-text-gray-600">引入大模型的能力，详细展示基于SpringAI的零模板解决方案</p>
@@ -68,7 +68,7 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
               </a>
               <!-- 案例3 -->
               <a class="llm-case-item"  style="text-decoration: none;" href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank">
-                  <img src="/ai-guides/imgs/info/home/addr.webp" style="height: 170px;" alt="基于大模型的结构化地址信息提取" title="基于大模型的结构化地址信息提取">
+                  <img src="https://mweb.hhui.top/imgs/addr.webp" style="height: 170px;" alt="基于大模型的结构化地址信息提取" title="基于大模型的结构化地址信息提取">
                   <div class="llm-case-item-content">
                       <h4 class="llm-text-xl llm-font-semibold llm-mb-2">基于大模型的结构化地址信息提取</h4>
                       <p class="llm-text-gray-600">借助大模型实现从自然语言中获取结构化的数据信息，用于业务能力增强</p>
@@ -172,21 +172,21 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
       <div id="articles-tab" class="llm-tab-content">
               <div class="llm-grid llm-grid-cols-1 llm-md-grid-cols-2 llm-lg-grid-cols-3 llm-gap-6">
                   <div class="llm-bg-gray-50 llm-p-4 llm-rounded-lg llm-flex llm-items-center llm-gap-4 llm-card-hover">
-                      <img src="/ai-guides/imgs/info/home/llmBlog01.webp" alt="资料封面" class="llm-w-16 llm-h-16 llm-rounded llm-object-cover">
+                      <img src="https://mweb.hhui.top/imgs/llmBlog01.webp" alt="资料封面" class="llm-w-16 llm-h-16 llm-rounded llm-object-cover">
                       <a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" style="text-decoration: none;color:black;" target="_blank">
                           <h4 class="llm-font-medium">LLM 应用开发是什么：零基础也可以读懂的科普文</h4>
                           <p class="llm-text-xs llm-text-gray-500">发布于 2025-12-30</p>
                       </a>
                   </div>
                   <div class="llm-bg-gray-50 llm-p-4 llm-rounded-lg llm-flex llm-items-center llm-gap-4 llm-card-hover">
-                      <img src="/ai-guides/imgs/info/home/aiGame02.webp" alt="资料封面" class="llm-w-16 llm-h-16 llm-rounded llm-object-cover">
+                      <img src="https://mweb.hhui.top/imgs/aiGame02.webp" alt="资料封面" class="llm-w-16 llm-h-16 llm-rounded llm-object-cover">
                       <a style="text-decoration: none;color:black;" href="https://mp.weixin.qq.com/s/e3wZ7wMnKepm6R1Cz2DbAw" target="_blank">
                           <h4 class="llm-font-medium">AI生成的垃圾小游戏-上架谷歌应用市场全流程-图文介绍</h4>
                           <p class="llm-text-xs llm-text-gray-500">发布于 2025-04-06</p>
                       </a>
                   </div>
                   <div class="llm-bg-gray-50 llm-p-4 llm-rounded-lg llm-flex llm-items-center llm-gap-4 llm-card-hover">
-                      <img src="/ai-guides/imgs/info/home/aiGame01.webp" alt="资料封面" class="llm-w-16 llm-h-16 llm-rounded llm-object-cover">
+                      <img src="https://mweb.hhui.top/imgs/aiGame01.webp" alt="资料封面" class="llm-w-16 llm-h-16 llm-rounded llm-object-cover">
                       <a href="https://mp.weixin.qq.com/s/mu9l0y18mNE3PlI8EQhrYw" style="text-decoration: none;color:black;" target="_blank">
                           <h4 class="llm-font-medium">图文手把手教你由0到1基于AI完成“垃圾消除小游戏”</h4>
                           <p class="llm-text-xs llm-text-gray-500">发布于 2025-03-29</p>
@@ -201,7 +201,7 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
               <div class="llm-grid llm-grid-cols-1 llm-md-grid-cols-2 llm-gap-6">
                   <!-- 书籍2 -->
                   <div class="llm-book-item">
-                      <img src="/ai-guides/imgs/info/home/aiEngine.webp" alt="AI Engineering Guide Book" class="llm-book-cover">
+                      <img src="https://mweb.hhui.top/imgs/aiEngine.webp" alt="AI Engineering Guide Book" class="llm-book-cover">
                       <div class="llm-book-info">
                           <h4 class="llm-book-title">AI Engineering Guide Book</h4>
                           <p class="llm-book-desc">LLMs, RAG and Agents设计范式（2025）</p>
@@ -227,7 +227,7 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
                   </div>
                   <!-- 书籍4 -->
                   <div class="llm-book-item">
-                      <img src="/ai-guides/imgs/info/home/llm.webp" alt="LLM Cookbook" class="llm-book-cover">
+                      <img src="https://mweb.hhui.top/imgs/llm.webp" alt="LLM Cookbook" class="llm-book-cover">
                       <div class="llm-book-info">
                           <h4 class="llm-book-title">LLM Cookbook</h4>
                           <p class="llm-book-desc">面向开发者的大模型手册</p>
