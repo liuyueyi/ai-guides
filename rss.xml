@@ -6,8 +6,8 @@
     <link>https://liuyueyi.github.io/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Fri, 23 Jan 2026 07:51:57 GMT</pubDate>
-    <lastBuildDate>Fri, 23 Jan 2026 07:51:57 GMT</lastBuildDate>
+    <pubDate>Mon, 26 Jan 2026 07:23:20 GMT</pubDate>
+    <lastBuildDate>Mon, 26 Jan 2026 07:23:20 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -54,7 +54,7 @@
 <p>在这个结构中，RAG主要就是在用户提问与向LLM发起请求这个中间段，用于检索关联的文档构建上下文</p>
 <h3> 1.3 RAG工作原理</h3>
 <p>我们以一张图来介绍RAG的工作原理，具体的RAG详细介绍，请参照文末引用</p>
-<figure><img src="/imgs/column/llm/D04-1.png" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<figure><img src="/imgs/column/springai/D04-1.png" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
 <h2> 二、核心实现</h2>
 <h3> 2.1 项目结构概览</h3>
 <p>项目源码可以在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D05-rag-qa-bot" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a> 获取，文末有所有相关的参考信息</p>
@@ -98,7 +98,7 @@
 <h4> 2.5.1 QaBoltService - 核心问答服务</h4>
 <h5> Pre. 问答服务流程</h5>
 <p>我们先从时序的角度来看一下这个问答服务的核心交互流程</p>
-<figure><img src="/imgs/column/llm/D04-2.png" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<figure><img src="/imgs/column/springai/D04-2.png" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
 <p>在这个时序过程中，为了简化大家的理解，我们将文档的向量化存储与问答进行了拆分</p>
 <p><strong>第一步：文档向量化</strong></p>
 <p>这一部分包含RAG应用数据准备阶段的完整过程</p>
@@ -150,7 +150,7 @@
 <li><strong>提问测试</strong>：在输入框中输入关于文档的问题</li>
 </ol>
 <p>当然在启动时，可以在启动参数中指定大模型的ApiKey，也可以直接修改<code>applicatino.yml</code>，直接维护上apiKey也可以哦</p>
-<figure><img src="/imgs/column/llm/D04-3.gif" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<figure><img src="/imgs/column/springai/D04-3.gif" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
 <p>在上面这个示意图中，我上传的是 <a href="https://mp.weixin.qq.com/s/1s8NC-dCNIfqTXAHyN2e1g" target="_blank" rel="noopener noreferrer">像Excel一样选择网页表格 &amp; 支持选中表单生成sql的神器：TableHelper</a> 的宣传文档，显然是没有被大模型检索、训练过的，从问答来看，效果还是不错的</p>
 <p>但是请注意，这个只是给大家用来体验RAG的，用来学习验证还是不错的；但是真实场景显然比我们提到的内容还多很多，比如</p>
 <ul>
@@ -163,18 +163,18 @@
 <li>体验、性能等</li>
 </ul>
 <h3> 3.4 核心技术要点小结</h3>
-<h3> 1. RAG工作流程</h3>
+<h4> 1. RAG工作流程</h4>
 <ul>
 <li><strong>检索阶段</strong>：当用户提问时，系统首先将问题转换为向量，然后在文档向量库中查找相似的文档片段</li>
 <li><strong>生成阶段</strong>：将检索到的相关文档内容与用户问题一起输入大语言模型，生成最终答案</li>
 </ul>
-<h3> 2. 文档处理优化</h3>
+<h4> 2. 文档处理优化</h4>
 <ul>
 <li><strong>中文分词</strong>：使用HanLP进行精确的中文分词，提高语义理解准确性</li>
 <li><strong>文档分块</strong>：将长文档合理分块，保持语义完整性的同时便于检索</li>
 <li><strong>去重机制</strong>：通过MD5哈希避免重复上传相同的文档</li>
 </ul>
-<h3> 3. 性能优化</h3>
+<h4> 3. 性能优化</h4>
 <ul>
 <li><strong>相似度计算</strong>：使用余弦相似度算法计算文本相似度</li>
 <li><strong>缓存机制</strong>：对已处理的文档进行缓存，避免重复处理</li>
@@ -243,6 +243,20 @@
 ]]></content:encoded>
     </item>
     <item>
+      <title>LLM教程</title>
+      <link>https://liuyueyi.github.io/ai-guides/tutorial/</link>
+      <guid>https://liuyueyi.github.io/ai-guides/tutorial/</guid>
+      <source url="https://liuyueyi.github.io/ai-guides/rss.xml">LLM教程</source>
+      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
+      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content:encoded>
+    </item>
+    <item>
       <title>关于我</title>
       <link>https://liuyueyi.github.io/ai-guides/me/</link>
       <guid>https://liuyueyi.github.io/ai-guides/me/</guid>
@@ -307,20 +321,6 @@
 </ul>
 ]]></content:encoded>
       <enclosure url="https://spring.hhui.top/spring-blog/imgs/info/info.png" type="image/png"/>
-    </item>
-    <item>
-      <title>LLM教程</title>
-      <link>https://liuyueyi.github.io/ai-guides/tutorial/</link>
-      <guid>https://liuyueyi.github.io/ai-guides/tutorial/</guid>
-      <source url="https://liuyueyi.github.io/ai-guides/rss.xml">LLM教程</source>
-      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
-      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
-      <content:encoded><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content:encoded>
     </item>
     <item>
       <title>01.创建一个SpringAI的示例工程</title>
