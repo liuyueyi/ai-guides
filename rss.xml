@@ -6,8 +6,8 @@
     <link>https://liuyueyi.github.io/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Mon, 26 Jan 2026 07:23:20 GMT</pubDate>
-    <lastBuildDate>Mon, 26 Jan 2026 07:23:20 GMT</lastBuildDate>
+    <pubDate>Tue, 27 Jan 2026 09:15:00 GMT</pubDate>
+    <lastBuildDate>Tue, 27 Jan 2026 09:15:00 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -17,9 +17,283 @@
       <link>https://liuyueyi.github.io/ai-guides/</link>
     </image>
     <category>SpringAI</category>
+    <category>LLM</category>
     <category>AI</category>
     <category>Agent</category>
-    <category>LLM</category>
+    <item>
+      <title>06.SpringAI智能体模式：使用Skills</title>
+      <link>https://liuyueyi.github.io/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A06.SpringAI%E6%99%BA%E8%83%BD%E4%BD%93%E6%A8%A1%E5%BC%8F%EF%BC%9A%E4%BD%BF%E7%94%A8Skills.html</link>
+      <guid>https://liuyueyi.github.io/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A06.SpringAI%E6%99%BA%E8%83%BD%E4%BD%93%E6%A8%A1%E5%BC%8F%EF%BC%9A%E4%BD%BF%E7%94%A8Skills.html</guid>
+      <source url="https://liuyueyi.github.io/ai-guides/rss.xml">06.SpringAI智能体模式：使用Skills</source>
+      <description>SpringAI Skills模式：AI应用开发的下一个风口，你跟上了吗？ 要收最近AI相关话题中什么最火，毫无疑问是Claude Skills，让我感到震惊的倒不是它为什么火爆，而是SpringAI居然已经迅速支持上Skills了，这效率真的是堪比🚀了。 谁说AI时代java开发者要掉队了？ 肉虽然不一定吃得上，但是喝口汤还是妥妥的 接下来我们通过构建一个code reviewer, 来实际体验一把，如何将SpringAI和Skills结合起来使用 一、项目创建 1. 基础环境要求</description>
+      <category>SpringAI</category>
+      <pubDate>Tue, 27 Jan 2026 11:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> SpringAI Skills模式：AI应用开发的下一个风口，你跟上了吗？</h1>
+<p>要收最近AI相关话题中什么最火，毫无疑问是<strong>Claude Skills</strong>，让我感到震惊的倒不是它为什么火爆，而是SpringAI居然已经迅速支持上Skills了，这效率真的是堪比🚀了。</p>
+<p>谁说AI时代java开发者要掉队了？ 肉虽然不一定吃得上，但是喝口汤还是妥妥的</p>
+<p>接下来我们通过构建一个code reviewer, 来实际体验一把，如何将SpringAI和Skills结合起来使用</p>
+<h2> 一、项目创建</h2>
+<h3> 1. 基础环境要求</h3>
+<p>要体验SpringAI &amp; Skills，目前需要升级到SpringAI 2.x版本，同时我们的SpringBoot也可以升级到4.x</p>
+<ul>
+<li>SpringAI: 2.0.0-M2</li>
+<li>JDK21</li>
+<li>SpringBoot: 4.0.1</li>
+</ul>
+<p>除了这几个基本依赖之外，我们可以选择一个支持Function Tool的大模型来作为这个实现的大脑中枢</p>
+<p>我们这里选择智谱的大模型<code>GLM-4.5-Flash</code> （原因就是因为它免费，且效果还行，对所有想体验的小伙伴没有任何额外成本投入）</p>
+<h3> 2. 项目创建</h3>
+<p>接下来我们创建一个SpringAI应用，对于一个标准的SpringAI应用，在<code>pom.xml</code>配置中，你会看到下面这些基础版本指定，这个也没什么好说的</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>接下来重点看一下我们这个项目所用到的几个核心依赖</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ul>
+<li>spring-ai-agent-utils: 这个就是SpringAI进行agent开发的关键依赖包</li>
+<li>spring-ai-starter-model-zhipuai: 这个是智谱大模型进行交互的依赖包</li>
+</ul>
+<h3> 3. 项目配置</h3>
+<p>依赖搞定之后，接下来就是在配置文件中，配置LLM访问的相关信息、以及agent相关配置参数，对应的配置文件 <code>resources/application.yml</code></p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这几个配置看起来和之前SpringAI相关的并没有太多的区别，其中 <code>agent</code> 相关的配置中，主要设置了skills的存放路径，使用的model</p>
+<p>根据上面的定义，我们将skills信息，放在<code>resources/.claude/skills</code>目录下</p>
+<p>新增一个目录<code>code-reviewer</code>，目录下的文件为 <code>SKILL.md</code></p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><p>对应的内容如下</p>
+<div class="language-markdown line-numbers-mode" data-ext="md"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4. Skills简要说明</h3>
+<p>我们上面的Skill比较简单，就是一个markdown文档，SpringAI支持的Skills中，除了包含基本的<code>SKILL.md</code>文件（包含元数据（名称和描述）以及指导代理如何执行特定任务的说明）之外，还可以有相关的脚本、模板和参考资料</p>
+<p>一个常见的skills结构如下</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 二、核心实现</h2>
+<p>现在前置准备已经完成，接下来开始正式的体验吧</p>
+<h3> 2.1 交互日志打印 MyLoggingAdvisor</h3>
+<p>为了让系统与大模型之间的交互更清晰，我们将双方交互的日志进行更友好的打印（也顺便看一下，一次用户感知的问答过程中，实际上有几次交互）</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.2 准备用于评审的代码</h3>
+<p>我们直接使用 <a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a> 中的代码分块的内容作为待评审的内容，看下这段简单的文本分块工具会评审出什么内容</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.3 核心实现</h3>
+<p>配置Agent实现代码评审</p>
+<p><strong>Bean定义与依赖注入</strong></p>
+<ul>
+<li>CommandLineRunner: Spring启动后自动执行的接口</li>
+<li>ChatClient.Builder: 用于构建聊天客户端</li>
+<li>@Value("${agent.skills.dirs:Unknown}"): 注入配置属性，获取技能目录资源列表</li>
+</ul>
+<p><strong>ChatClient配置链</strong></p>
+<ul>
+<li>系统提示词配置：</li>
+<li>技能工具配置：
+<ul>
+<li>SkillsTool.builder().addSkillsResources(agentSkillsDirs).build(): 动态加载预定义的技能资源</li>
+<li>FileSystemTools.builder().build(): 提供文件系统访问能力</li>
+<li>ShellTools.builder().build(): 提供命令行执行能力</li>
+</ul>
+</li>
+<li>Advisor配置:
+<ul>
+<li>ToolCallAdvisor.builder().build(): 处理工具调用逻辑</li>
+<li>MyLoggingAdvisor.builder().showAvailableTools(false).showSystemMessage(false).build(): 自定义日志记录，隐藏工具和系统消息详情</li>
+</ul>
+</li>
+</ul>
+<p><strong>代码评审执行流程</strong></p>
+<p>请求执行</p>
+<ul>
+<li>prompt(): 构建提示词</li>
+<li>.call(): 发起AI请求</li>
+<li>.content(): 获取返回结果</li>
+</ul>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.4 执行演示</h3>
+<p>接下来我们启动项目，验证一下效果如何（在启动命令行参数中，配置上大模型的api-key，当然也可以直接在yml配置文件中进行配置）</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="/imgs/column/springai/A06-1.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<figure><img src="/imgs/column/springai/A06-2.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>从上面的截图也可以看出，系统与大模型之间进行了三轮对话，</p>
+<ol>
+<li>第一轮： 用户的原始诉求 -&gt; 大模型</li>
+</ol>
+<ul>
+<li>大模型识别到需要进行代码评审，给系统响应 <code>{"command":"code-reviewer"}</code></li>
+</ul>
+<ol start="2">
+<li>第二轮：系统接收到响应之后，读取skills的约束进行响应</li>
+</ol>
+<ul>
+<li>大模型返回需要读取需要评审的代码内容，对应的响应为 <code>{"filePath":"D:\\Workspace\\hui\\project\\spring-ai-demo\\v2\\T01-agentic-skills-simple-design\\src\\main\\java\\com\\git\\hui\\springai\\app\\demo\\DocumentChunker.java"}</code></li>
+</ul>
+<ol start="3">
+<li>第三轮：系统读取代码内容，发送给大模型</li>
+</ol>
+<ul>
+<li>大模型返回评审结果</li>
+</ul>
+<p>下面是完整的返回文本，有兴趣的小伙伴可以看看</p>
+<div class="language-markdown line-numbers-mode" data-ext="md"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 三、小结</h2>
+<p>SpringAI的Agent开发范式配合Skills机制，非常简单就实现了AI应用的工程化。整个过程实现下来，门槛还是比较低的。 不得不赔付Spring🐂🍺</p>
+<p>实现方式虽然简单，但是这个背后的设计哲学、开发思维的转变，还是很值得我们学习参考的——我们不再是在构建"会说话的程序"，而是在创造"能做事的智能代理"。</p>
+<p>那么这一套是怎么实现的呢？</p>
+<figure><img src="/imgs/column/springai/A06-3.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>Spring AI采用基于工具的集成方法，通过实现各种工具，使任何LLM都能回调执行，Skills的运行过程，通常是下面三步：</p>
+<ol>
+<li>发现（启动阶段）</li>
+</ol>
+<ul>
+<li>通过<code>SKILL.md</code>文件中的元数据，快速实现技能的安装注册</li>
+</ul>
+<ol start="2">
+<li>语义匹配（对话过程中）</li>
+</ol>
+<ul>
+<li>当用户发出请求时，LLM 会检查工具定义中嵌入的技能描述。如果 LLM 判断用户请求在语义上与某个技能的描述匹配，则会调用该技能工具，并将技能名称作为参数传递给它。</li>
+</ul>
+<ol start="3">
+<li>执行（技能调用时）</li>
+</ol>
+<ul>
+<li>当调用技能工具时，SkillsTool会从磁盘加载完整的SKILL.md内容，并将其与技能的基础目录路径一起返回给大型语言模型（LLM）。然后，LLM会按照技能内容中的指令执行。如果技能引用了其他文件或辅助脚本，LLM会使用<code>FileSystemTools</code>的<code>Read</code>函数或<code>ShellTools</code>的<code>Bash</code>函数来按需访问它们</li>
+</ul>
+<hr>
+<p>项目源码：</p>
+<ul>
+<li><a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/v2/T01-agentic-skills-simple-design" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/tree/master/v2/T01-agentic-skills-simple-design</a></li>
+</ul>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章：从 “堆上下文” 到 “管理上下文”</a></li>
+</ul>
+<hr>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">大模型应用开发实战：两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">大模型应用开发实战：基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+</ul>
+<p>参考：</p>
+<ul>
+<li><a href="https://spring.io/blog/2026/01/13/spring-ai-generic-agent-skills" target="_blank" rel="noopener noreferrer">Spring AI Agentic Patterns (Part 1): Agent Skills - Modular, Reusable Capabilities</a></li>
+</ul>
+]]></content:encoded>
+      <enclosure url="https://liuyueyi.github.io/ai-guides/imgs/column/springai/A06-1.webp" type="image/webp"/>
+    </item>
+    <item>
+      <title>第 7 章：从 “堆上下文” 到 “管理上下文”</title>
+      <link>https://liuyueyi.github.io/ai-guides/tutorial/hello-llm/12.%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86.html</link>
+      <guid>https://liuyueyi.github.io/ai-guides/tutorial/hello-llm/12.%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86.html</guid>
+      <source url="https://liuyueyi.github.io/ai-guides/rss.xml">第 7 章：从 “堆上下文” 到 “管理上下文”</source>
+      <description>在上一章中，我们已经明确否定了一种做法： 把上下文当作“无限可用的记忆容器”。 在大模型应用给开发时，上下文窗口的限制是一个不得不考虑的问题，不管是哪个模型，终究是有一个长度上限，显然有上限那么就不可能满足无限轮次的对话存储，因此一个更难、也更重要的问题也就出来了： 在有限的上下文窗口里，哪些信息值得被保留？ 首先我们的明确，这不是大模型需要关注的事情，而是我们这种基于大模型做应用开发的苦逼码农需要重点考虑的系统设计决策 —— 它的具体设计，直接决定了多轮对话中系统的稳定性、准确性，甚至是用户对我们产品的信任度</description>
+      <category>LLM</category>
+      <pubDate>Tue, 30 Dec 2025 14:25:07 GMT</pubDate>
+      <content:encoded><![CDATA[<p>在上一章中，我们已经明确否定了一种做法：</p>
+<blockquote>
+<p><strong>把上下文当作“无限可用的记忆容器”。</strong></p>
+</blockquote>
+<p>在大模型应用给开发时，上下文窗口的限制是一个不得不考虑的问题，不管是哪个模型，终究是有一个长度上限，显然有上限那么就不可能满足无限轮次的对话存储，因此一个更难、也更重要的问题也就出来了：</p>
+<blockquote>
+<p><strong>在有限的上下文窗口里，哪些信息值得被保留？</strong></p>
+</blockquote>
+<p>首先我们的明确，这不是大模型需要关注的事情，而是我们这种基于大模型做应用开发的苦逼码农需要重点考虑的<strong>系统设计决策</strong> —— 它的具体设计，直接决定了多轮对话中系统的稳定性、准确性，甚至是用户对我们产品的信任度</p>
+<hr>
+<h3> 7.1 技术决策的第一步：承认信息是有“等级”的</h3>
+<p>在企业知识库助手、智能客服、私域助手等真实对话场景中，并不是所有信息都同等重要。如果我们不主动对信息进行区分，模型就会被迫“平均对待”，从而导致核心规则被冗余内容所稀释</p>
+<p>从工程化实践角度出发，我们至少需要区分三类信息，它们的优先级和保留策略完全不同：</p>
+<figure><img src="/imgs/column/llm/12-1.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<h4> 1.不变约束（最高优先级）</h4>
+<p>指系统必须始终遵守的核心规则，不随对话内容变化而改变。</p>
+<p>例如：</p>
+<ul>
+<li><em>系统角色定义（“你是 XX 公司的内部知识库助手，不对外提供服务”）</em></li>
+<li><em>行为边界（“仅回答员工手册、财务制度中的内容，超出范围需明确拒绝”）</em></li>
+<li><em>安全规则（“禁止泄露员工个人信息、未公开的业务数据”）</em></li>
+</ul>
+<p>这类信息必须<strong>永远保留在上下文窗口中</strong>，且位置要尽可能靠前（减少注意力衰减影响）,不可也不应该被压缩或删除</p>
+<h4> 2.会话状态（中高优先级）</h4>
+<p>指当前对话中形成的关键共识、未完成的任务或用户的核心意图，是维持对话连贯性的基础。</p>
+<p>例如：</p>
+<ul>
+<li><em>当前讨论主题（“用户正在咨询 2025 年新版差旅报销政策”）</em></li>
+<li><em>已确认事实（“用户是销售部员工，经常出差至华东地区”）</em></li>
+<li><em>待解决问题（“需确认‘高铁一等座是否可报销’”）</em></li>
+</ul>
+<p>这类信息需要<strong>持续维护和更新</strong>，实时同步对话进度，移除已闭环的内容，保留未完成事项和核心共识，确保大模型能准确识别到“当前阶段”</p>
+<h4> 3. 瞬时上下文（低优先级）</h4>
+<p>指对话中的临时交互、举例说明或过渡性内容，对长期连贯性影响较小。例如：</p>
+<ul>
+<li>用户的临时追问（“那二等座呢？”）</li>
+<li>辅助说明（“比如我上次去上海的高铁票是一等座”）</li>
+<li>无关寒暄（“谢谢，我再看看”）</li>
+</ul>
+<p>这类信息可以<strong>按需保留最近几轮（通常是2-3轮）</strong>，超出范围后可直接丢弃，避免占用上下文和分散注意力</p>
+<hr>
+<p>接下来我们通过一个模拟的对话案例，来辅助说明一下</p>
+<p><strong>对话场景</strong>：销售部员工小李咨询差旅报销政策，过程中穿插寒暄和临时追问。</p>
+<p><strong>未分层上下文管理（反面案例）</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>问题分析</strong>：未分层导致“系统角色”（不变约束）被瞬时内容挤压，需重复提醒；同时未聚焦“销售部+华东出差”（会话状态），对话连贯性差。</p>
+<p><strong>已分层上下文管理（正面案例）</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<p><strong>上下文失控的本质，不是信息太多，而是信息没有被分层。</strong></p>
+<p>让低优先级的内容挤占了高优先级信息的 “生存空间”。</p>
+</blockquote>
+<hr>
+<h3> 7.2 为什么“直接摘要历史”并不是银弹？</h3>
+<p>在意识到上下文有限后，很多小伙伴的第一直觉就是：</p>
+<blockquote>
+<p><em>那就把历史对话总结一下，再塞回去。</em></p>
+</blockquote>
+<p>这个思路的方向是对的（减少冗余信息），但如果不区分信息等级，简单做 “全量摘要”，会引入新的系统风险：</p>
+<ul>
+<li>约束信息被压缩：比如原系统提示中的 “5 条核心规则” 可能被摘要简化为 “遵守公司规定”，丢失关键细节。</li>
+<li>错误结论被固化：如果某轮回答存在错误（比如 “年假可累计 15 天” 实际应为 10 天），摘要可能会保留这个错误并持续传递。</li>
+<li>决策过程被抹平：用户曾明确拒绝的方向（比如 “我不想了解北京的政策”）可能在摘要中被忽略，导致模型重复无效信息。</li>
+</ul>
+<p>以差旅报销助手为例，对比两种方式的上下文处理结果：</p>
+<table>
+<thead>
+<tr>
+<th><strong>全量摘要（错误示范）</strong></th>
+<th><strong>结构化状态（正确示范）</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>摘要内容：“销售部小李咨询2024年差旅报销政策，关心华东地区高铁一等座和飞机经济舱报销问题，助手已告知可报销，需提供凭证。”<br><strong>问题</strong>：未保留“高铁一等座仅限华东地区”“飞机经济舱4小时以上可升舱”等关键会话状态，也未体现“逾期报销需补报”的不变约束，后续对话易出错。</td>
+<td>【不变约束】：差旅报销需在返程后7天内提交，逾期走补报流程；仅回答2024年新版政策。 <br>【会话状态】：用户小李（销售部），核心需求为华东地区差旅交通报销；已确认高铁一等座可报销（需凭证+审批单）；待补充飞机经济舱升级规则。<br> 【瞬时上下文】：忽略“上次上海一等座票”“寒暄问候”等内容。</td>
+</tr>
+</tbody>
+</table>
+<p>这意味着：</p>
+<blockquote>
+<p><strong>我们需要的不是“一个摘要”，而是“结构化状态”。</strong> —— 即针对不同等级的信息，设计专门的保留和更新策略。</p>
+</blockquote>
+<p>一个常见的结构化状态管理流程如下</p>
+<figure><img src="/imgs/column/llm/12-2.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<hr>
+<h3> 7.3 本章小结：上下文开始变成工程对象</h3>
+<p>到这里，你应该已经意识到：</p>
+<p>上下文不再是自然增长的聊天记录，而是一个<strong>需要被主动设计、分层管理、动态维护的系统状态</strong></p>
+<p>多轮对话的可靠性，从来不取决于“上下文窗口有多大”，而取决于“高优先级信息是否能稳定地影响模型决策”。不变约束的坚守、会话状态的精准同步、瞬时内容的合理舍弃，三者共同构成了上下文管理的核心工程逻辑。</p>
+<p>这一步认知转变，会直接引出下一个问题：</p>
+<blockquote>
+<p><strong>既然信息需要被分层管理，那“记忆”是否也应该分层？</strong></p>
+</blockquote>
+<p>这正是下一章要探讨的核心问题 —— 如何通过短期记忆、长期记忆的分层设计，实现上下文管理的工程化落地，让 LLM 应用具备更稳定、更智能的多轮对话能力。</p>
+<h4> 思考题</h4>
+<ol>
+<li>
+<p>在你的 LLM 应用场景中，哪些信息属于“不变约束”？如何确保这些信息不被压缩或丢失？</p>
+</li>
+<li>
+<p>针对“会话状态”的更新，你会设计哪些规则来判断“内容是否已闭环”？</p>
+</li>
+<li>
+<p>如果上下文窗口极度紧张（如仅 4k  tokens），你会优先舍弃哪类信息，如何平衡准确性与连贯性？</p>
+</li>
+</ol>
+<blockquote>
+<p>（注：文档部分内容可能由 AI 生成）</p>
+</blockquote>
+]]></content:encoded>
+      <enclosure url="https://liuyueyi.github.io/ai-guides/imgs/column/llm/12-1.webp" type="image/webp"/>
+    </item>
     <item>
       <title>D04.从0到1实现一个支持RAG的问答机器人</title>
       <link>https://liuyueyi.github.io/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D04.%E4%BB%8E0%E5%88%B01%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E6%94%AF%E6%8C%81RAG%E7%9A%84%E9%97%AE%E7%AD%94%E6%9C%BA%E5%99%A8%E4%BA%BA.html</link>
@@ -190,7 +464,7 @@
       <link>https://liuyueyi.github.io/ai-guides/ai-dev/</link>
       <guid>https://liuyueyi.github.io/ai-guides/ai-dev/</guid>
       <source url="https://liuyueyi.github.io/ai-guides/rss.xml">SpringAI</source>
-      <description>这里主要介绍的是SpringAI进行AI应用开发的系列教程 注意：在使用SpringAI时，对jdk和springboot有最低的版本要求 jdk: 17+ SpringBoot: 3+ 核心技术栈： SpringAI 1.0.1 LangGraph4J 本篇专栏将从四个系列出发 1.基础教程 主要介绍SpringAI的基础使用，对应的项目工程以 Sxx- 开头，通过这些实例，您将掌握SpringAI的基础知识（如提示词、上下文、架构化输出、tool calling, MCP, advise, ChatClient, 多模型等），并开始使用SpringAI进行大模型应用开发</description>
+      <description>这里主要介绍的是SpringAI进行AI应用开发的系列教程 注意：在使用SpringAI时，对jdk和springboot有最低的版本要求 jdk: 17+ SpringBoot: 3+ 核心技术栈： SpringAI 1.1.2 LangGraph4J 本篇专栏将从四个系列出发 1.基础教程 主要介绍SpringAI的基础使用，对应的项目工程以 Sxx- 开头，通过这些实例，您将掌握SpringAI的基础知识（如提示词、上下文、架构化输出、tool calling, MCP, advise, ChatClient, 多模型等），并开始使用SpringAI进行大模型应用开发</description>
       <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
       <content:encoded><![CDATA[<p>这里主要介绍的是SpringAI进行AI应用开发的系列教程</p>
 <p>注意：在使用SpringAI时，对jdk和springboot有最低的版本要求</p>
@@ -200,7 +474,7 @@
 </ul>
 <p>核心技术栈：</p>
 <ul>
-<li>SpringAI 1.0.1</li>
+<li>SpringAI 1.1.2</li>
 <li>LangGraph4J</li>
 </ul>
 <p>本篇专栏将从四个系列出发</p>
@@ -232,11 +506,15 @@
 <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-18" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-18"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A03.%E4%BD%BF%E7%94%A8Redis%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">03.使用Redis持久化对话历史</a>]</label></li>
 <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-19" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-19"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A04.%E4%BD%BF%E7%94%A8LangGraph4J%E5%AE%9E%E7%8E%B0%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D.html" target="blank">04.使用LangGraph4J实现多伦对话</a></label></li>
 <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-20" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-20"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A05.%E4%BD%BF%E7%94%A8LangGraph4J%E5%AE%9E%E7%8E%B0Agent%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9.html" target="blank">05.使用LangGraph4J实现Agent路由选择</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-21" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-21"> <a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">06.告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></label></li>
 </ul>
 <h3> 3.应用教程</h3>
 <p>以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现，对应项目工都放在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects" target="_blank" rel="noopener noreferrer">app-projects</a> 下</p>
 <ul class="task-list-container">
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-21" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-21"> <a href="/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D01.%E4%BB%8E0%E5%88%B01%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%9F%BA%E4%BA%8E%E5%A4%A9%E6%B0%94%E7%9A%84%E6%97%85%E6%B8%B8%E7%BE%8E%E9%A3%9F%E6%8E%A8%E8%8D%90%E6%99%BA%E8%83%BD%E4%BD%93.html" target="blank">从0到1创建一个基于天气的旅游美食推荐智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-22" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-22"> <a href="/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D01.%E4%BB%8E0%E5%88%B01%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%9F%BA%E4%BA%8E%E5%A4%A9%E6%B0%94%E7%9A%84%E6%97%85%E6%B8%B8%E7%BE%8E%E9%A3%9F%E6%8E%A8%E8%8D%90%E6%99%BA%E8%83%BD%E4%BD%93.html" target="blank">从0到1创建一个基于天气的旅游美食推荐智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-23" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-23"> <a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">大模型应用开发实战：两百行实现一个自然语言地址提取智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-24" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-24"> <a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-25" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-25"> <a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></label></li>
 </ul>
 <h3> 4.源码解读</h3>
 <p>以源码的视角，介绍SpringAI的核心实现，对应的项目工程以 <code>Yxx-</code> 开头</p>
@@ -6083,231 +6361,10 @@ ReAct 让模型“边思考边行动”。</strong></p>
       <link>https://liuyueyi.github.io/ai-guides/tutorial/hello-llm/02.LLM%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E6%95%99%E7%A8%8B%E5%A4%A7%E7%BA%B2.html</link>
       <guid>https://liuyueyi.github.io/ai-guides/tutorial/hello-llm/02.LLM%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E6%95%99%E7%A8%8B%E5%A4%A7%E7%BA%B2.html</guid>
       <source url="https://liuyueyi.github.io/ai-guides/rss.xml">LLM应用开发进阶大纲</source>
-      <description>前言 为什么你“会用 LLM”，但做不出复杂应用？ 为什么调得好 Prompt ≠ 系统就稳定？ 为什么多数 Demo 无法上线？ 本书解决什么问题、不解决什么问题 本书的学习路径说明 你需要什么基础？ 每一模块学完你“能做什么” 推荐的学习与实践方式 第一部分｜重新认识 LLM：不是模型问题，而是系统问题 目标：建立“工程师视角”的 LLM 认知模型</description>
+      <description>终章｜下一步你该学什么？ 什么时候该微调？ 什么时候该换模型？ LLM 应用的长期演进方向 📌 附录 Prompt 模板速查表 RAG 参数调优清单 Agent 架构设计 Checklist 常见坑位与反模式总结</description>
       <category>LLM</category>
       <pubDate>Tue, 30 Dec 2025 09:15:07 GMT</pubDate>
-      <content:encoded><![CDATA[<h2> 前言</h2>
-<h3> 为什么你“会用 LLM”，但做不出复杂应用？</h3>
-<ul>
-<li>为什么调得好 Prompt ≠ 系统就稳定？</li>
-<li>为什么多数 Demo 无法上线？</li>
-<li>本书解决什么问题、不解决什么问题</li>
-</ul>
-<h3> 本书的学习路径说明</h3>
-<ul>
-<li>你需要什么基础？</li>
-<li>每一模块学完你“能做什么”</li>
-<li>推荐的学习与实践方式</li>
-</ul>
-<hr>
-<h1> 第一部分｜重新认识 LLM：不是模型问题，而是系统问题</h1>
-<blockquote>
-<p><strong>目标：建立“工程师视角”的 LLM 认知模型</strong></p>
-</blockquote>
-<hr>
-<h2> 第 1 章：LLM 到底在做什么？（程序员版认知重建）</h2>
-<h3> 1.1 一个反直觉的问题：LLM 真的“理解”语言吗？</h3>
-<ul>
-<li>如果它不理解，为什么还能推理？</li>
-<li>“下一个 token 预测”到底意味着什么？</li>
-</ul>
-<h3> 1.2 从函数视角理解 LLM</h3>
-<ul>
-<li>LLM ≈ <code>f(context) → token</code></li>
-<li>为什么上下文就是一切？</li>
-<li>为什么 prompt 是“代码”？</li>
-</ul>
-<p>📊 <strong>图：Token 预测与采样机制示意图（mermaid）</strong></p>
-<hr>
-<h3> 1.3 你必须接受的事实：LLM 天生不可靠</h3>
-<ul>
-<li>什么是幻觉？为什么无法彻底消除？</li>
-<li>“不知道”为什么是最难的答案？</li>
-</ul>
-<p>📊 <strong>图：无约束生成 vs 受约束生成对比图</strong></p>
-<hr>
-<h3> 1.4 第一性原理总结</h3>
-<ul>
-<li>LLM 擅长什么？</li>
-<li>LLM 永远不该做什么？</li>
-<li>哪些问题必须交给系统解决？</li>
-</ul>
-<hr>
-<h2> 第 2 章：模型不是重点，参数才是你真正的控制面板</h2>
-<h3> 2.1 一个问题：为什么同一个 Prompt 效果忽好忽坏？</h3>
-<ul>
-<li>随机性从哪来？</li>
-<li>temperature / top_p 在“干什么”？</li>
-</ul>
-<h3> 2.2 参数 ≠ 配置，而是策略</h3>
-<ul>
-<li>不同任务的参数决策逻辑</li>
-<li>为什么大多数人“乱调参”？</li>
-</ul>
-<p>📊 <strong>图：任务类型 → 参数决策树</strong></p>
-<hr>
-<h3> 2.3 API 调用的本质结构</h3>
-<ul>
-<li>messages 是“状态机”</li>
-<li>system role 真正的权力边界</li>
-</ul>
-<p>🧪 示例：最小多轮对话实现（伪代码）</p>
-<hr>
-<h1> 第二部分｜Prompt 工程：让模型“稳定干活”的第一道防线</h1>
-<blockquote>
-<p><strong>目标：从“写提示词”升级为“设计 Prompt 结构”</strong></p>
-</blockquote>
-<hr>
-<h2> 第 3 章：Prompt 为什么会失败？</h2>
-<h3> 3.1 一个常见误区：Prompt 写得越长越好？</h3>
-<ul>
-<li>模糊 ≠ 自由</li>
-<li>细节 ≠ 噪声</li>
-</ul>
-<h3> 3.2 Prompt 的三条工程原则</h3>
-<ul>
-<li>清晰性</li>
-<li>约束性</li>
-<li>可复用性</li>
-</ul>
-<p>📊 <strong>图：坏 Prompt vs 好 Prompt 结构对比</strong></p>
-<hr>
-<h2> 第 4 章：从 Zero-shot 到 Few-shot 的设计思维</h2>
-<h3> 4.1 什么时候你真的需要 Few-shot？</h3>
-<ul>
-<li>模型不会“猜你的规则”</li>
-</ul>
-<h3> 4.2 示例驱动 Prompt 的本质</h3>
-<ul>
-<li>示例是在教模型“判题规则”</li>
-</ul>
-<p>🧪 示例：文本分类 / 数据抽取 Prompt 演进过程</p>
-<hr>
-<h2> 第 5 章：Prompt 模板化与工程落地</h2>
-<h3> 5.1 为什么 Prompt 必须版本化？</h3>
-<ul>
-<li>Prompt 就是代码</li>
-</ul>
-<h3> 5.2 通用 Prompt 模板结构</h3>
-<ul>
-<li>Role</li>
-<li>Task</li>
-<li>Constraints</li>
-<li>Output Schema</li>
-</ul>
-<p>📊 <strong>图：Prompt 模板结构图</strong></p>
-<hr>
-<h1> 第三部分｜上下文与记忆：对话为什么会“失忆”？</h1>
-<blockquote>
-<p><strong>目标：掌握对话系统设计，而不是堆 messages</strong></p>
-</blockquote>
-<hr>
-<h2> 第 6 章：上下文窗口的真实边界</h2>
-<h3> 6.1 上下文不是“无限内存”</h3>
-<ul>
-<li>Token 成本、性能与遗忘</li>
-</ul>
-<h3> 6.2 为什么长对话一定会崩？</h3>
-<p>📊 <strong>图：上下文窗口滚动与信息丢失示意图</strong></p>
-<hr>
-<h2> 第 7 章：三种记忆策略的工程取舍</h2>
-<h3> 7.1 短期记忆：直接塞上下文</h3>
-<h3> 7.2 摘要记忆：用 LLM 管 LLM</h3>
-<h3> 7.3 长期记忆：向量化存储历史</h3>
-<p>📊 <strong>图：短 / 中 / 长期记忆系统架构对比</strong></p>
-<p>🧪 示例：对话摘要生成伪代码</p>
-<hr>
-<h2> 第 8 章：上下文工程（Context Engineering）</h2>
-<h3> 8.1 什么信息值得留下？</h3>
-<h3> 8.2 信息如何“压缩但不失真”？</h3>
-<h3> 8.3 结构化上下文设计模式</h3>
-<p>📊 <strong>图：结构化上下文拼装流程图</strong></p>
-<hr>
-<h1> 第四部分｜能力扩展：让 LLM 走出“纯聊天”</h1>
-<blockquote>
-<p><strong>目标：让 LLM 接入真实世界，而不是只会说话</strong></p>
-</blockquote>
-<hr>
-<h2> 第 9 章：为什么单靠 LLM 永远不够？</h2>
-<h3> 9.1 知识截止的问题</h3>
-<h3> 9.2 无状态的问题</h3>
-<h3> 9.3 无执行能力的问题</h3>
-<p>📊 <strong>图：LLM 核心缺陷总览</strong></p>
-<hr>
-<h2> 第 10 章：Function Calling —— LLM 的“决策大脑”</h2>
-<h3> 10.1 模型是如何“选择工具”的？</h3>
-<h3> 10.2 Schema 设计的关键原则</h3>
-<ul>
-<li>函数不是越多越好</li>
-</ul>
-<p>📊 <strong>图：Function Calling 全流程闭环</strong></p>
-<p>🧪 示例：天气 / 数据库查询工具调用</p>
-<hr>
-<h2> 第 11 章：RAG —— 企业级 LLM 的地基</h2>
-<h3> 11.1 为什么 RAG 不是“外挂知识库”？</h3>
-<h3> 11.2 RAG 解决的是哪一类问题？</h3>
-<p>📊 <strong>图：RAG 离线 + 在线全流程图</strong></p>
-<hr>
-<h3> 11.3 文档 → Chunk → Embedding 的关键设计点</h3>
-<ul>
-<li>切多大才合理？</li>
-<li>为什么分割决定效果上限？</li>
-</ul>
-<h3> 11.4 检索失败的真实原因</h3>
-<ul>
-<li>不是模型问题，而是数据问题</li>
-</ul>
-<p>🧪 示例：最小 RAG 原型（伪代码）</p>
-<hr>
-<h1> 第五部分｜Agent 思维：从调用模型到构建系统</h1>
-<blockquote>
-<p><strong>目标：理解“智能体”不是框架，而是架构模式</strong></p>
-</blockquote>
-<hr>
-<h2> 第 12 章：什么是 Agent？它和 Prompt 的本质区别</h2>
-<h3> 12.1 为什么 CoT ≠ Agent？</h3>
-<h3> 12.2 ReAct / Plan-Execute 的本质抽象</h3>
-<p>📊 <strong>图：Agent 推理循环结构图</strong></p>
-<hr>
-<h2> 第 13 章：一个 Agent 的最小系统结构</h2>
-<ul>
-<li>输入解析</li>
-<li>状态管理</li>
-<li>工具调度</li>
-<li>结果评估</li>
-</ul>
-<p>📊 <strong>图：Agent 系统架构全景图</strong></p>
-<hr>
-<h2> 第 14 章：失败的 Agent 都失败在哪？</h2>
-<ul>
-<li>无限循环</li>
-<li>工具滥用</li>
-<li>目标漂移</li>
-</ul>
-<p>🧪 示例：Agent 失败案例拆解</p>
-<hr>
-<h1> 第六部分｜实战：从 Demo 到“可上线系统”</h1>
-<blockquote>
-<p><strong>目标：真正跑起来，而不是只在 Notebook 里成功</strong></p>
-</blockquote>
-<hr>
-<h2> 第 15 章：实战一：可控的多轮对话助手</h2>
-<ul>
-<li>Prompt + 记忆 + 参数策略</li>
-</ul>
-<h2> 第 16 章：实战二：企业知识库问答系统（RAG）</h2>
-<ul>
-<li>文档接入</li>
-<li>检索优化</li>
-<li>引用溯源</li>
-</ul>
-<h2> 第 17 章：实战三：工具驱动型 Agent</h2>
-<ul>
-<li>Function Calling</li>
-<li>状态管理</li>
-<li>错误恢复</li>
-</ul>
-<hr>
+      <content:encoded><![CDATA[<hr>
 <h1> 终章｜下一步你该学什么？</h1>
 <ul>
 <li>什么时候该微调？</li>
