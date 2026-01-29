@@ -2,4 +2,4 @@
 User-agent:*
 Disallow:
 
-Sitemap: https://liuyueyi.github.io/ai-guides/sitemap.xml
+Sitemap: https://ppai.top/ai-guides/sitemap.xml
