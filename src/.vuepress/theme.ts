@@ -3,7 +3,7 @@ import { enNavbar, zhNavbar } from "./navbar/index.js";
 import { enSidebar, zhSidebar } from "./sidebar/index.js";
 
 export default hopeTheme({
-  hostname: "https://liuyueyi.github.io",
+  hostname: "https://ppai.top",
 
   author: {
     name: "一灰灰blog",
