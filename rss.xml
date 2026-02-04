@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Thu, 29 Jan 2026 00:51:01 GMT</pubDate>
-    <lastBuildDate>Thu, 29 Jan 2026 00:51:01 GMT</lastBuildDate>
+    <pubDate>Wed, 04 Feb 2026 07:11:53 GMT</pubDate>
+    <lastBuildDate>Wed, 04 Feb 2026 07:11:53 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -20,6 +20,311 @@
     <category>LLM</category>
     <category>AI</category>
     <category>Agent</category>
+    <item>
+      <title>07.SpringAI智能体模式：让大模型主动提问获取明确需求</title>
+      <link>https://ppai.top/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A07.SpringAI%E6%99%BA%E8%83%BD%E4%BD%93%E6%A8%A1%E5%BC%8F%EF%BC%9A%E5%93%8D%E5%BA%94%E5%89%8D%E5%85%88%E9%97%AE%E8%AF%A2%E6%9C%BA%E5%88%B6.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A07.SpringAI%E6%99%BA%E8%83%BD%E4%BD%93%E6%A8%A1%E5%BC%8F%EF%BC%9A%E5%93%8D%E5%BA%94%E5%89%8D%E5%85%88%E9%97%AE%E8%AF%A2%E6%9C%BA%E5%88%B6.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">07.SpringAI智能体模式：让大模型主动提问获取明确需求</source>
+      <description>Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求 在日常我们与大模型交互的过程中，通常是我输入一个问题或者场景要求，然后大模型基于我给出的信息进行生成内容。这种方式很容易出现一个答非所问的场景（好像大模型并不能总是回答到我的心趴上🤣） 那么有什么好的解决办法吗？ 熟练调教大模型的小伙伴，可能早就有自己的一套标准流程了 -- 通过多次与大模型之间的多次问询回答，让大模型能更清晰的知道自己的诉求 那么如何让AI主动问询用户来获取更精确的信息呢？如果我开发的大模型应用，希望集成这样的能力，又可以怎么实现呢？</description>
+      <category>SpringAI</category>
+      <pubDate>Tue, 27 Jan 2026 11:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</h1>
+<p>在日常我们与大模型交互的过程中，通常是我输入一个问题或者场景要求，然后大模型基于我给出的信息进行生成内容。这种方式很容易出现一个答非所问的场景（好像大模型并不能总是回答到我的心趴上🤣）</p>
+<p>那么有什么好的解决办法吗？</p>
+<p>熟练调教大模型的小伙伴，可能早就有自己的一套标准流程了 -- 通过多次与大模型之间的多次问询回答，让大模型能更清晰的知道自己的诉求</p>
+<p>那么如何让AI主动问询用户来获取更精确的信息呢？如果我开发的大模型应用，希望集成这样的能力，又可以怎么实现呢？</p>
+<p>接下来我们看看，SpringAI中，如何通过巧妙的多轮对话艺术，来实现让大模型主动提问获取明确需求</p>
+<h2> 一、方案设计</h2>
+<h3> 1.1 核心问题</h3>
+<p>在我们这个场景中，核心的问题点在于 <strong>如何让大模型在面对模糊需求时，能够主动发起询问，获取更详细的信息，从而提供更精准的响应。</strong></p>
+<p>常见的实现中，存在的问题如下：</p>
+<ul>
+<li>单次交互试图解决复杂问题</li>
+<li>对模糊输入不做处理直接响应</li>
+<li>缺少多轮对话的状态管理</li>
+</ul>
+<p>这些问题的根本原因在于没有建立起AI与用户之间的有效反馈循环，导致大模型无法获取足够的上下文信息，但是对于大模型而言，响应内容是对它的一个非常重要的考量指标，所以就很容出现大模型<code>话说八道</code> <code>答非所问</code>等幻觉那问题</p>
+<h3> 1.2 主动问询设计</h3>
+<blockquote>
+<p>好的设计应该主动适应用户，而不是让用户适应设计。</p>
+</blockquote>
+<p>很多人认为大模型只能被动接收输入，实际上 <code>Spring AI</code> 提供了 <code>AskUserQuestionTool</code> 这个强大的工具，让AI能够主动向用户提出问题。</p>
+<p>它是通过什么实现的呢？</p>
+<figure><img src="/imgs/column/springai/A07-0.webp" alt="交互演示" tabindex="0" loading="lazy"><figcaption>交互演示</figcaption></figure>
+<ul>
+<li>通过Function Callback来实现，将<code>AskUserQuestionTool</code>注册为大模型可回调使用的工具，通过这个工具来实现多轮问询应答</li>
+</ul>
+<p>下面是这个工具的核心定义:</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>重点看一下这个工具的描述，将其翻译成中文，内容如下</p>
+<div class="language-txt line-numbers-mode" data-ext="txt"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>在这个工具类中，通过巧妙的设计，告诉大模型在具体响应之前，可以先进行用户问询</p>
+<ul>
+<li>大模型将需要问询的内容，转换为结构化的 <code>List&lt;Question&gt;</code></li>
+<li>通过设计一个<code>QuestionHandler</code>来处理具体的用户问答交互流程，通过责任分离的设计思想，AI负责决定何时提问，具体的UI交互由开发者自定义。你可以将其适配到Web界面、移动端或任何其他平台。</li>
+</ul>
+<p>因此具体的问询应答方式，完全是由应用方（即开发者）来控制的</p>
+<p>接下来我们进入实战演练，看看如何实现这样的一个多轮问询</p>
+<h2> 二、项目创建</h2>
+<h3> 2.1 基础环境要求</h3>
+<p>要体验SpringAI的问询机制，目前需要升级到SpringAI 2.x版本，同时我们的SpringBoot也可以升级到4.x</p>
+<ul>
+<li>SpringAI: 2.0.0-M2</li>
+<li>SpringBoot: 4.0.1</li>
+<li>JDK21/17：这两版本都可以</li>
+</ul>
+<p>除了这几个基本依赖之外，我们可以选择一个支持Function Tool的大模型来作为这个实现的大脑中枢</p>
+<p>我们这里选择智谱的大模型<code>GLM-4.5-Flash</code> （原因就是因为它免费，且效果还行，对所有想体验的小伙伴没有任何额外成本投入）</p>
+<h3> 2.2 项目创建</h3>
+<p>接下来我们创建一个SpringAI应用，对于一个标准的SpringAI应用，在<code>pom.xml</code>配置中，你会看到下面这些基础版本指定，这个也没什么好说的</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>接下来重点看一下我们这个项目所用到的几个核心依赖</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ul>
+<li>spring-ai-agent-utils: 这个就是SpringAI进行agent开发的关键依赖包</li>
+<li>spring-ai-starter-model-zhipuai: 这个是智谱大模型进行交互的依赖包</li>
+</ul>
+<h3> 2.3 项目配置</h3>
+<p>依赖搞定之后，接下来就是在配置文件中，配置LLM访问的相关信息、以及agent相关配置参数，对应的配置文件 <code>resources/application.yml</code></p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 三、核心实现</h2>
+<p>接下来我们进行快速体验，首先为了更好的观察应用与大模型之间的交互，我们实现一个<code>LoggingAdvisor</code></p>
+<h3> 3.1 交互日志打印： MyLoggingAdvisor</h3>
+<blockquote>
+<p>说明：这个实现非必需，不感兴趣的直接跳过</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.2 命令行的问询应答实现：CommandLineQuestionHandler</h3>
+<p>在前面的设计篇中介绍了<code>AskUserQuestionTool</code>中，设计了一个扩展点 <code>QuestionHandler</code> 由使用者来实现具体的问答交互方案，因此我们先实现一个基础的基于命令行的问答</p>
+<ul>
+<li><code>CommandLineQuestionHandler</code>：实现<code>QuestionHandler</code>接口，处理用户问题列表</li>
+<li><code>handle</code>方法：遍历问题，显示选项供用户选择，支持单选/多选模式</li>
+<li><code>parseResponse</code>方法：解析用户输入，将数字编号转换为对应选项标签，或直接返回自定义文本答案</li>
+</ul>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.3 问询对话实现</h3>
+<p>创建一个简易聊天客户端，配置了三个Advisor：工具调用顾问、消息记忆顾问和自定义日志顾问（隐藏可用工具和系统消息）。</p>
+<p>然后启动一个命令行循环，用户输入问题后通过聊天客户端处理并输出AI助手的回答</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.4 测试验证</h3>
+<p>直接启动项目，然后再控制台中输入我的原始诉求</p>
+<figure><img src="/imgs/column/springai/A07-1.webp" alt="交互演示" tabindex="0" loading="lazy"><figcaption>交互演示</figcaption></figure>
+<p>下面是完整的文字版本输出内容</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>我们可以将这个方案，拿来生成图片，比如下面是豆包、千问、元宝等不同平台的生成效果</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>效果图</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>豆包</td>
+<td><img src="/imgs/column/springai/A07-doubao.webp" alt="豆包效果图" loading="lazy"></td>
+</tr>
+<tr>
+<td>元宝</td>
+<td><img src="/imgs/column/springai/A07-yuanbao.webp" alt="元宝效果图" loading="lazy"></td>
+</tr>
+<tr>
+<td>千问</td>
+<td><img src="/imgs/column/springai/A07-yuanbao.webp" alt="千问效果图" loading="lazy"></td>
+</tr>
+<tr>
+<td>百度</td>
+<td><img src="/imgs/column/springai/A07-baidu.webp" alt="百度效果图" loading="lazy"></td>
+</tr>
+<tr>
+<td>ChatGPT</td>
+<td><img src="/imgs/column/springai/A07-chatgpt.webp" alt="ChatGPT效果图" loading="lazy"></td>
+</tr>
+</tbody>
+</table>
+<h2> 四、小结</h2>
+<p>本片内容通过设计+实例给大家演示了一下Spring AI中的多轮对话艺术，如何让大模型主动提问获取明确需求？ 下面几部即可：</p>
+<ul>
+<li>主动询问机制：使用AskUserQuestionTool让AI在信息不足时主动提问</li>
+<li>灵活的响应处理：通过自定义QuestionHandler适配不同平台的交互方式</li>
+<li>对话状态管理：利用MessageChatMemoryAdvisor维护多轮对话的上下文</li>
+<li>工具组合使用：将询问工具与记忆顾问、日志顾问等配合使用，构建完整的交互体系</li>
+<li>异步处理支持：在Web环境中使用SSE实现流畅的多轮对话体验</li>
+</ul>
+]]></content:encoded>
+      <enclosure url="https://ppai.top/ai-guides/imgs/column/springai/A07-0.webp" type="image/webp"/>
+    </item>
+    <item>
+      <title>第 8 章：记忆策略的工程化选择</title>
+      <link>https://ppai.top/ai-guides/tutorial/hello-llm/13.%E8%AE%B0%E5%BF%86%E7%AD%96%E7%95%A5.html</link>
+      <guid>https://ppai.top/ai-guides/tutorial/hello-llm/13.%E8%AE%B0%E5%BF%86%E7%AD%96%E7%95%A5.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">第 8 章：记忆策略的工程化选择</source>
+      <description>在前两章中，我们已经完成了两个关键决策： 否定“无限上下文”的幻想：明确上下文窗口存在硬性约束，无法承载无限制的对话信息； 接受“信息必须被分层管理”：将信息划分为不变约束、会话状态、瞬时上下文，优先保障高优先级信息的有效性。 接下来，我们需要面对一个更系统级的问题，当然这也是很多小伙伴在具体落地时，最容易困惑的地方 “记忆”是否应该只有一种实现方式？ 答案显然是否定的，就像人类会用“瞬时回忆”记住刚说的话、用“短期记忆”记住当天的任务、用“长期记忆”记住过往的经验一样，大模型应用的“记忆”也需要分层设计</description>
+      <category>LLM</category>
+      <pubDate>Tue, 30 Dec 2025 14:55:07 GMT</pubDate>
+      <content:encoded><![CDATA[<p>在前两章中，我们已经完成了两个关键决策：</p>
+<ul>
+<li>否定“无限上下文”的幻想：明确上下文窗口存在硬性约束，无法承载无限制的对话信息；</li>
+<li>接受“信息必须被分层管理”：将信息划分为不变约束、会话状态、瞬时上下文，优先保障高优先级信息的有效性。</li>
+</ul>
+<p>接下来，我们需要面对一个更系统级的问题，当然这也是很多小伙伴在具体落地时，最容易困惑的地方</p>
+<blockquote>
+<p><strong>“记忆”是否应该只有一种实现方式？</strong></p>
+</blockquote>
+<p>答案显然是否定的，就像人类会用“瞬时回忆”记住刚说的话、用“短期记忆”记住当天的任务、用“长期记忆”记住过往的经验一样，大模型应用的“记忆”也需要分层设计</p>
+<p><strong>那么为什么不能用一种记忆搞定所有场景？</strong></p>
+<blockquote>
+<p>答：短期能用，但无法规模化、稳定化。</p>
+<p>比如我们实现了一个公司差旅助手，初期用“全量历史+摘要”的单一记忆方式，上线后很容易出现</p>
+<ol>
+<li>员工跨周期咨询时，如上一次一个月前让助手定了一张机票，输入了一些关键信息，但是没有走完流程；这一次准备让助手帮忙订机票，助手可能就直接基于上一次的输入来订机票了，而员工实际上却是要去另一个地方</li>
+<li>多员工并发咨询时，不同人的报销信息混杂，模型给出错误答复。</li>
+</ol>
+<p>本质是“单一记忆”无法适配“瞬时、会话、长期”三种不同的信息需求，最终导致用户体验崩塌。</p>
+</blockquote>
+<hr>
+<h3> 8.1 技术决策视角：记忆不是功能，而是策略组合</h3>
+<p>在很多产品讨论中，“给系统加记忆” 常被当作一个简单的功能点（比如 “让模型记住之前说过的话”）。</p>
+<p>但从工程角度看，记忆是<strong>一组需要根据场景动态调整的策略</strong></p>
+<p>—— 不同的信息生命周期（几秒、几小时、几天）、不同的重要性，需要匹配不同的记忆方式。</p>
+<p>比如：</p>
+<ul>
+<li><em>用户当前的提问意图（“我在问报销流程”）需要 “即时记忆”，确保下一句回应不跑偏；</em></li>
+<li><em>已确认的用户身份（“市场部员工”）需要 “会话级记忆”，在整个对话过程中保持一致；</em></li>
+<li><em>三个月前用户咨询过的 “差旅政策” 需要 “长期记忆”，在用户再次提问时能快速关联。</em></li>
+</ul>
+<p>这些不同场景的需求，无法通过单一的 “记忆功能” 满足，必须设计分层的记忆策略。</p>
+<p>下面用一张示意图，直观理解不同记忆策略的适配场景：</p>
+<figure><img src="/imgs/column/llm/13-0.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<hr>
+<h3> 8.2 短期记忆：受控的上下文拼接（什么时候足够用）</h3>
+<p>最基础、成本最低的记忆策略是 “短期记忆”，适用于单一会话内的近期交互（通常持续几分钟到 1 小时）。</p>
+<p>其核心设计是：</p>
+<ul>
+<li>只保留最近 N 轮对话（N 的值根据模型窗口大小确定，通常为 5-10 轮）；</li>
+<li>明确区分 <code>system</code> / <code>state</code> / <code>recent messages</code> 三个层级，按优先级拼接上下文</li>
+<li>Token 控制：实时统计拼接后的 Token 数量，接近窗口上限时，优先丢弃最早的瞬时对话内容，保留高优先级信息</li>
+</ul>
+<figure><img src="/imgs/column/llm/13-1.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>这个策略的工程价值在于：</p>
+<ul>
+<li><strong>行为可预测</strong>：由于只保留有限内容，token 数量可控，不会突然触发截断；</li>
+<li><strong>成本可控</strong>：避免了全量历史导致的 token 爆炸，调用成本稳定，尤其适合中小规模应用；</li>
+<li><strong>实现简单</strong>：无需复杂的存储或摘要逻辑，仅需维护一个滑动窗口，开发成本低、上线快。</li>
+</ul>
+<p>但它很快会遇到边界，这也是很多开发同学会踩的坑：</p>
+<blockquote>
+<p><strong>当对话跨越更长时间或主题切换频繁时，仅靠短期记忆会导致状态丢失</strong></p>
+</blockquote>
+<p>例如，用户上午9点咨询“年假政策”，告知助手“自己入职满3年”，助手确认“入职满3年可休10天年假”；下午2点，用户继续在同一个会话中咨询“年假是否可以拆分休”，此时短期记忆的滑动窗口已丢弃上午的对话，助手再次追问“请问您入职满几年？”，用户体验极差。</p>
+<p>此时，就需要引入第二种记忆策略——中期记忆，来解决“会话级关键信息持久化”的问题。</p>
+<blockquote>
+<p><strong>高频问答：短期记忆的滑动窗口 N 怎么确定？</strong>
+疑问：短期记忆的“最近N轮”，N设为5还是10？有没有统一标准？
+回复：没有统一标准，核心取决于两个因素：</p>
+<ol>
+<li>模型的上下文窗口大小（窗口越大，N可适当增大；如4k窗口建议N=3-5，16k窗口建议N=5-10）</li>
+<li>单轮对话的Token长度（如果用户每轮提问都很长，N需减小，避免Token溢出）
+核心原则：确保“不变约束+会话状态+最近N轮”的总Token数，不超过窗口上限的70%（预留30%给模型回应）。</li>
+</ol>
+</blockquote>
+<hr>
+<h3> 8.3 中期记忆：由 LLM 维护的状态摘要（为什么要引入）</h3>
+<p>为了避免重要状态被挤出窗口，企业知识库助手通常会引入 “中期记忆” —— 通过“会话状态摘要”来持久化关键信息，确保在对话持续数小时或主题切换时，核心状态不丢失。</p>
+<p>请注意，这里有一个关键误区：很多开发同学会把“会话状态摘要”和“对话内容摘要”混淆，其实两者完全不同：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>核心目的</th>
+<th>内容特点</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>对话内容摘要</td>
+<td>总结对话的整体内容，方便用户回顾</td>
+<td>非结构化，侧重“过程描述”</td>
+<td>用户咨询差旅报销，先问了高铁，再问了住宿，助手告知了相关政策。</td>
+</tr>
+<tr>
+<td>会话状态摘要</td>
+<td>持久化关键决策信息，供模型后续参考</td>
+<td>结构化，侧重“结果确认”</td>
+<td>用户：张三（市场部，入职3年）；已确认：高铁二等座可报销、一线城市住宿上限800元/晚。</td>
+</tr>
+</tbody>
+</table>
+<p>简单来说会话状态摘要的核心不是 “总结对话内容”，而是<strong>记录 “已确认的决策信息”</strong>，格式通常是结构化的键值对或列表。</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这类摘要的维护机制通常是：<strong>每轮对话结束后，调用 LLM 对比新内容与当前摘要，自动更新关键信息</strong>（新增确认项、移除已解决问题、修正错误）。</p>
+<p>这个流程可以通过示意图直观理解：</p>
+<figure><img src="/imgs/column/llm/13-2.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<p>它的核心价值是：<strong>将分散在多轮对话中的关键信息 “浓缩固化”，避免被短期记忆的滑动窗口 “挤出”</strong>。</p>
+<p>即使短期记忆只保留最近 5 轮，状态摘要也能确保 “用户身份”“已确认规则” 等信息持续影响模型决策。</p>
+<blockquote>
+<p>这不是对话摘要，而是<strong>决策状态的持久化</strong>。</p>
+</blockquote>
+<hr>
+<h3> 8.4 长期记忆：为什么不能继续塞进上下文？</h3>
+<p>当对话场景扩展到以下情况时，仅靠短期和中期记忆（依赖上下文窗口）就会变得不现实——它们的核心局限是“无法脱离上下文窗口存在”，而窗口容量和单一会话的限制，决定了它们无法应对“跨时间、跨规模”的记忆需求：</p>
+<ul>
+<li><strong>跨天对话</strong>：用户今天咨询一半，明天继续（此时会话可能已被重置，中期记忆的摘要也会丢失）；</li>
+<li><strong>多任务切换</strong>：用户同时处理 “报销”“年假”“绩效” 多个主题（每个主题有独立的关键信息，塞进同一个上下文会导致信息混杂，模型混淆）；</li>
+<li><strong>多用户并发</strong>：同一个助手服务多个员工，需要区分每个人的历史。</li>
+</ul>
+<p>此时，继续将所有信息塞进上下文窗口会导致两个问题：</p>
+<ol>
+<li>窗口容量有限，无法容纳多天的状态摘要；</li>
+<li>不同用户 / 任务的信息混杂，导致模型混淆。</li>
+</ol>
+<p>因此，我们需要一种 “移出上下文但可按需召回” 的记忆机制 —— 这正是<strong>长期记忆</strong>的核心价值。</p>
+<p>长期记忆的实现通常依赖外部存储（如数据库、向量数据库），其核心逻辑是：</p>
+<ul>
+<li>将不活跃的会话状态（如 24 小时未更新）从上下文移出，存入外部存储；</li>
+<li>当用户再次激活对话时，通过检索（如基于用户 ID、主题关键词）将相关历史状态重新导入上下文。</li>
+</ul>
+<p>以企业助手为例，具体的实现步骤通常有下面四步：</p>
+<ol>
+<li>
+<p>存储：将不活跃的会话状态（如 24 小时未更新的会话）、用户历史咨询记录，从上下文移出，存入外部存储（向量数据库优先，方便后续关键词检索）；存储时需关联“用户ID、主题关键词、时间戳”，便于后续召回；</p>
+</li>
+<li>
+<p>检索：当用户再次激活对话（如第二天继续咨询）或切换主题时，模型先提取当前对话的“用户ID、主题关键词”（比如“张三、海外差旅”），通过检索工具查询外部存储，找到相关的历史记忆；</p>
+</li>
+<li>
+<p>召回：将检索到的历史记忆（如张三上次未完成的“海外差旅政策”咨询记录、已确认的“入职年限”），精简后重新导入上下文，结合短期、中期记忆，生成回应；</p>
+</li>
+<li>
+<p>更新：本轮对话结束后，更新长期记忆中的相关记录，确保历史信息的时效性（比如补充新确认的“海外差旅住宿上限”）。</p>
+</li>
+</ol>
+<blockquote>
+<p><strong>长期记忆的核心不是 “记住一切”，而是 “在需要时，能把正确的信息带回上下文”</strong> —— 它解决的是 “跨时间、跨规模” 的记忆问题。</p>
+</blockquote>
+<p>此时，一个新的技术出现了：这正是<code>向量检索</code>、<code>RAG</code>等机制存在的根本原因。</p>
+<h3> 8.5 短中长记忆协同工作流程</h3>
+<p>在实际的项目工程中，上面提到的短期、中期、长期三种记忆策略通常不是独立使用的、而是协同工作，形成完整的记忆体系，下面是一个典型的示意图</p>
+<figure><img src="/imgs/column/llm/13-3.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
+<hr>
+<h3> 8.6 本章小结：记忆层次决定系统上限</h3>
+<p>通过本章的分析，我们可以明确：企业知识库助手的 “记忆” 是分层的策略组合，不同层次解决不同问题，三者协同，才能构建稳定、高效、用户体验好的记忆体系：</p>
+<ul>
+<li>短期记忆：通过受控的上下文拼接，解决 “当前几轮对话的连贯性”；</li>
+<li>中期记忆：通过状态摘要，解决 “会话级关键信息的一致性”；</li>
+<li>长期记忆：通过外部存储与检索，解决 “跨时间、跨任务的信息召回”。</li>
+</ul>
+<p>这三层记忆共同构成了系统在时间维度上的可靠性基础。但还有一个关键问题尚未解决：</p>
+<blockquote>
+<p><em>当用户的问题超出模型自身的知识范围（比如最新的公司政策），仅靠记忆策略如何保证回答准确？</em></p>
+</blockquote>
+<p>而这自然引出了下一部分的讨论主题：我们将深入探讨 RAG（检索增强生成）技术如何与上下文工程结合，让系统的知识边界可控、可扩展。</p>
+<p><strong>扩展思考</strong></p>
+<ol>
+<li>
+<p>你所开发的 LLM 应用，会话持续时间通常是多久？如果是跨天对话，长期记忆的“不活跃阈值”（如24小时）如何设定更合理？</p>
+</li>
+<li>
+<p>中期记忆的会话状态摘要，每轮都调用 LLM 更新会增加成本，如何设计“更新触发条件”（比如仅当有新的确认项时才更新），平衡成本与效果？</p>
+</li>
+<li>
+<p>如果没有向量数据库，能否用“关键词匹配”替代向量检索，实现长期记忆的召回？这种方式的局限性是什么？</p>
+</li>
+</ol>
+]]></content:encoded>
+      <enclosure url="https://ppai.top/ai-guides/imgs/column/llm/13-0.webp" type="image/webp"/>
+    </item>
     <item>
       <title>06.SpringAI智能体模式：使用Skills</title>
       <link>https://ppai.top/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A06.SpringAI%E6%99%BA%E8%83%BD%E4%BD%93%E6%A8%A1%E5%BC%8F%EF%BC%9A%E4%BD%BF%E7%94%A8Skills.html</link>
@@ -521,6 +826,20 @@
 ]]></content:encoded>
     </item>
     <item>
+      <title>LLM教程</title>
+      <link>https://ppai.top/ai-guides/tutorial/</link>
+      <guid>https://ppai.top/ai-guides/tutorial/</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
+      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
+      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content:encoded>
+    </item>
+    <item>
       <title>关于我</title>
       <link>https://ppai.top/ai-guides/me/</link>
       <guid>https://ppai.top/ai-guides/me/</guid>
@@ -585,20 +904,6 @@
 </ul>
 ]]></content:encoded>
       <enclosure url="https://spring.hhui.top/spring-blog/imgs/info/info.png" type="image/png"/>
-    </item>
-    <item>
-      <title>LLM教程</title>
-      <link>https://ppai.top/ai-guides/tutorial/</link>
-      <guid>https://ppai.top/ai-guides/tutorial/</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
-      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
-      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
-      <content:encoded><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content:encoded>
     </item>
     <item>
       <title>01.创建一个SpringAI的示例工程</title>
