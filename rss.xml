@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Tue, 10 Feb 2026 06:54:57 GMT</pubDate>
-    <lastBuildDate>Tue, 10 Feb 2026 06:54:57 GMT</lastBuildDate>
+    <pubDate>Tue, 10 Feb 2026 07:06:09 GMT</pubDate>
+    <lastBuildDate>Tue, 10 Feb 2026 07:06:09 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -21,13 +21,13 @@
     <category>AI</category>
     <category>Agent</category>
     <item>
-      <title>D05.从0到1实现一个支持RAG的问答机器人</title>
+      <title>D05.从0到1实现一个微信红包封面设计Agent</title>
       <link>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D05.%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AA%E5%BE%AE%E4%BF%A1%E7%BA%A2%E5%8C%85%E7%94%9F%E6%88%90Agent.html</link>
       <guid>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D05.%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AA%E5%BE%AE%E4%BF%A1%E7%BA%A2%E5%8C%85%E7%94%9F%E6%88%90Agent.html</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml">D05.从0到1实现一个支持RAG的问答机器人</source>
+      <source url="https://ppai.top/ai-guides/rss.xml">D05.从0到1实现一个微信红包封面设计Agent</source>
       <description>我用SpringAI实现了个「微信红包封面设计Agent」 年底收到了微信给公众号免费发的一波红包封面兑换卡，正好上次在学习SpringAI的时候，看到了一个有趣的机制——大模型的响应前问询，这不是就是一个绝佳的应用场景嘛~ 让AI来扮演一个设计师，通过与我的对话来敲定我想要的红包封面，然后基于这个设计方案来生成对应的红包封面，来个一站式的微信红包封面生成Agent 一、效果体验 线上体验地址： https://api.ppai.top/</description>
       <category>SpringAI</category>
-      <pubDate>Thu, 22 Jan 2026 17:15:07 GMT</pubDate>
+      <pubDate>Tue, 10 Feb 2026 12:15:07 GMT</pubDate>
       <content:encoded><![CDATA[<h1> 我用SpringAI实现了个「微信红包封面设计Agent」</h1>
 <p>年底收到了微信给公众号免费发的一波红包封面兑换卡，正好上次在学习SpringAI的时候，看到了一个有趣的机制——大模型的响应前问询，这不是就是一个绝佳的应用场景嘛~</p>
 <p>让AI来扮演一个设计师，通过与我的对话来敲定我想要的红包封面，然后基于这个设计方案来生成对应的红包封面，来个一站式的微信红包封面生成Agent</p>
