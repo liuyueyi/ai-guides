@@ -33,6 +33,7 @@ export const zhNavbar = navbar([
       }
     ]
   },
+  { text: "红包封面设计器", icon: "card", link: "https://api.ppai.top/" },
   { text: "百宝箱", icon: "tool", link: "https://app.ppai.top/" },
-  { text: "一灰灰技术分享", icon: "tool", link: "https://hhui.top/" },
+  { text: "一灰灰技术分享", icon: "flower", link: "https://hhui.top/" },
 ]);

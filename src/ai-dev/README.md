@@ -7,12 +7,12 @@ icon: material
 
 注意：在使用SpringAI时，对jdk和springboot有最低的版本要求
 
-- jdk: 17+
+- jdk: 17+/21
 - SpringBoot: 3+
 
 核心技术栈：
 
-- SpringAI 1.1.2
+- SpringAI 1.1.2/2.0.0-M2
 - LangGraph4J
 
 本篇专栏将从四个系列出发
@@ -48,10 +48,9 @@ icon: material
 - [x] [04.使用LangGraph4J实现多伦对话](进阶篇/A04.使用LangGraph4J实现多轮对话.md)
 - [x] [05.使用LangGraph4J实现Agent路由选择](进阶篇/A05.使用LangGraph4J实现Agent路由选择.md)
 - [x] [06.告别传统AI开发！SpringAI Agent + Skills重新定义智能应用](https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA)
-
+- [x] [07.Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求](https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg)
 
 ### 3.应用教程
-
 
 以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现，对应项目工都放在 [app-projects](https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects) 下
 
@@ -59,7 +58,7 @@ icon: material
 - [x] [大模型应用开发实战：两百行实现一个自然语言地址提取智能体](https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww)
 - [x] [再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构](https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ)
 - [x] [实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现](https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ)
-
+- [x] [我用SpringAI造了个「微信红包封面设计师」](https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ)
 
 
 ### 4.源码解读

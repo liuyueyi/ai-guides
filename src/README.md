@@ -43,8 +43,8 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
               <div class="llm-w-12 llm-h-12 bg-primary-div-10 llm-rounded-lg llm-flex llm-items-center llm-justify-center llm-mb-4">
                   <i class="fa fa-github llm-text-primary llm-text-xl"></i>
               </div>
-              <h3 class="llm-text-xl llm-font-semibold llm-mb-2">开源项目</h3>
-              <p class="llm-text-gray-600">所有文档、项目全部开源，免费可直接零成本使用</p>
+              <h3 class="llm-text-xl llm-font-semibold llm-mb-2">免费项目</h3>
+              <p class="llm-text-gray-600">所有文档、项目全部开源，免费零成本，可直接商用</p>
           </a>
       </div>
       <div class="llm-mt-8 llm-mb-12 lm-py-16" style="margin-top: 1em;">
@@ -67,11 +67,11 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
                   </div>
               </a>
               <!-- 案例3 -->
-              <a class="llm-case-item"  style="text-decoration: none;" href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank">
-                  <img src="https://ppai.top/ai-guides/imgs/info/home/addr.webp" style="height: 170px;" alt="基于大模型的结构化地址信息提取" title="基于大模型的结构化地址信息提取">
+              <a class="llm-case-item"  style="text-decoration: none;" href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank">
+                  <img src="https://ppai.top/ai-guides/imgs/column/springai/D05-4.gif" style="height: 170px;" alt="我用SpringAI造了个「微信红包封面设计师」" title="我用SpringAI造了个「微信红包封面设计师」">
                   <div class="llm-case-item-content">
-                      <h4 class="llm-text-xl llm-font-semibold llm-mb-2">基于大模型的结构化地址信息提取</h4>
-                      <p class="llm-text-gray-600">借助大模型实现从自然语言中获取结构化的数据信息，用于业务能力增强</p>
+                      <h4 class="llm-text-xl llm-font-semibold llm-mb-2">我用SpringAI造了个「微信红包封面设计师」</h4>
+                      <p class="llm-text-gray-600">你有没有想过，让AI帮你设计微信红包封面？</p>
                   </div>
               </a>
           </div>
