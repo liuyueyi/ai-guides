@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Thu, 12 Feb 2026 06:22:52 GMT</pubDate>
-    <lastBuildDate>Thu, 12 Feb 2026 06:22:52 GMT</lastBuildDate>
+    <pubDate>Fri, 27 Feb 2026 04:00:52 GMT</pubDate>
+    <lastBuildDate>Fri, 27 Feb 2026 04:00:52 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -16,10 +16,61 @@
       <url>https://ppai.top/ai-guides/favicon.ico</url>
       <link>https://ppai.top/ai-guides/</link>
     </image>
-    <category>LLM</category>
     <category>SpringAI</category>
+    <category>LLM</category>
     <category>AI</category>
     <category>Agent</category>
+    <item>
+      <title>18.语音模型之语音识别</title>
+      <link>https://ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/18.%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9E%8B%E4%B9%8B%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/18.%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9E%8B%E4%B9%8B%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">18.语音模型之语音识别</source>
+      <description>18.语音模型之语音识别 现在的大模型应用中，语音输入是一个非常常见的场景，因此语音识别就是一个很基础的要求了；当然在没有大模型的时代，语音识别也不算少见，接下来我们看一下，如何使用SpringAI来实现语音识别 下面的演示，我们将基于 硅基流动 的免费语音识别模型来完成 一、实例演示 首先我们需要创建一个SpringAI的项目，基本流程同 创建一个SpringAI-Demo工程</description>
+      <category>SpringAI</category>
+      <pubDate>Fri, 27 Feb 2026 11:24:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 18.语音模型之语音识别</h1>
+<p>现在的大模型应用中，语音输入是一个非常常见的场景，因此语音识别就是一个很基础的要求了；当然在没有大模型的时代，语音识别也不算少见，接下来我们看一下，如何使用SpringAI来实现语音识别</p>
+<p>下面的演示，我们将基于 <a href="https://cloud.siliconflow.cn/me/models?types=speech" target="_blank" rel="noopener noreferrer">硅基流动</a> 的免费语音识别模型来完成</p>
+<h2> 一、实例演示</h2>
+<p>首先我们需要创建一个SpringAI的项目，基本流程同 <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/01.%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AASpringAI-Demo%E5%B7%A5%E7%A8%8B.html" target="blank">创建一个SpringAI-Demo工程</a></p>
+<h3> 1. 初始化</h3>
+<p>我们借助OpenAI的接口风格来完成语音识别接入，因此需要引入对应的依赖：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>在配置文件中，配置模型相关的配置， 对应的 <code>application.yml</code> 内容如下</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后在资源目录(resources)下，准备一个用于测试的音频文件 <a href="https://github.com/liuyueyi/spring-ai-demo/blob/master/S19-audio-transaction/src/main/resources/" target="_blank" rel="noopener noreferrer">test.mp3</a></p>
+<h3> 2. 测试端点</h3>
+<p>然后创建一个 <code>Controller</code> 用于测试，这里直接使用注入的 <code>TranscriptionModel</code> 来进行语音模型的交互</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 获取语音识别内容</h3>
+<p>接下来我们直接使用<code>transcriptionModel</code>来进行大模型的交互，看看语音识别效果</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>整体的使用方式和文本模型大差不差，使用 音频文件 + <code>AudioTranscriptionOptions</code> 来构建提示词 <code>AudioTranscriptionPrompt</code>，然后直接通过 <code>model.call()</code> 进行大模型调用，获取返回结果</p>
+<p>对于 <code>AudioTranscriptionOptions</code> 可以设置语音、温度、模型、返回格式等各种参数（当然不同的模型厂家支持情况并不一样）</p>
+<p>接下来我们直接访问这个端点，看下识别情况</p>
+<figure><img src="https://imgbed.ppai.top/file/1772162533716_18-1.webp" alt="18-1.webp" tabindex="0" loading="lazy"><figcaption>18-1.webp</figcaption></figure>
+<p>可以看到中英文的音频都被正确的识别出来了</p>
+<h3> 4. 手动初始化Model</h3>
+<p>前面使用到的是OpenAI starter自动注入的<code>TranscriptionModel</code>，当然我们也可以通过<code>OpenAiAudioApi</code>来手动实现一个<code>TranscriptionModel</code></p>
+<p>接下来看看具体的实现方式</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>看了上面基于 <code>OpenAiAudioApi</code> 创建 <code>TranscriptionModel</code> 的方式，我们会惊奇的发现，这种实现和前面介绍的OpenAI风格的创建对话模型的方式简直是雷同了（这样挺好的，减少了我们的学习成本😊）</p>
+<p>接下来写个demo验证下效果如何(具体的使用方式和前面并没有区别)</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5. 踩坑记录</h3>
+<p>整体的音频模型的使用方式比较简单，但是我在实际使用的时候发现了几个蛋疼的问题</p>
+<p>现在的 <code>1.1.2</code> 版本中，只支持配置 base-url，对应的语音是被的path路径在代码中写死的为<code>/v1/audio/translations</code></p>
+<figure><img src="https://imgbed.ppai.top/file/1772163049647_18-2.webp" alt="18-2.webp" tabindex="0" loading="lazy"><figcaption>18-2.webp</figcaption></figure>
+<blockquote>
+<p>注：即便你的大模型支持openStyle的接口风格，但是若path路径不一致，那也是无法使用 openai-starter 的</p>
+<p>这个问题在 <code>SpringAI ~ 2.0.0-M2</code> 得到了解决，如下图
+<img src="https://imgbed.ppai.top/file/1772163253350_18-3.webp" alt="18-3.webp" loading="lazy"></p>
+</blockquote>
+<hr>
+<p>第二个踩坑点就是使用OpenAI的start进行语音识别时，大模型的服务端一直返回异常 <code>{"detail":[{"type":"missing","loc":["body","file"],"msg":"Field required","input":null}]}</code></p>
+<figure><img src="https://imgbed.ppai.top/file/1772163689795_18-4.webp" alt="18-4.webp" tabindex="0" loading="lazy"><figcaption>18-4.webp</figcaption></figure>
+<p>音频文件明明上传了，为什么模型端提示没有呢？</p>
+<p>主要的原因是默认的 RestClient 其底层 Client 不是 JDK HttpClient，而是某个不支持 multipart 的实现，从而到这了这个问题，对应的解决方式就是强制指定</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>所以你会在项目源码的 Application 中看到 <code>RestClient.Builder</code> 的注册，就是为了解决上面这个问题而出现的</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 二、小结</h2>
+<p>本文介绍了语音大模型的使用方式，目前spring-ai官方也只针对OpenAI进行的支撑，不同的厂商的语音模型可能会有自己的特定交互方式，大家在使用的时候需要注意甄别</p>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1772162533716_18-1.webp" type="image/webp"/>
+    </item>
     <item>
       <title>第 9 章：上下文工程在企业知识库助手中的落地</title>
       <link>https://ppai.top/ai-guides/tutorial/hello-llm/14.%E4%B8%8A%E4%B8%8B%E6%96%87%E5%B7%A5%E7%A8%8B.html</link>
@@ -1309,45 +1360,34 @@
 <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-11" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-11"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/12.%E5%A4%9A%E6%A8%A1%E6%80%81%E5%AE%9E%E7%8E%B0%E9%A3%9F%E6%9D%90%E5%9B%BE%E7%89%87%E5%8D%A1%E8%B7%AF%E9%87%8C%E8%AF%86%E5%88%AB%E7%A4%BA%E4%BE%8B.html" target="blank">12.多模态实现食材图片卡路里识别示例</a></label></li>
 <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-12" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-12"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/13.%E6%94%AF%E6%8C%81MCP%20Client%E7%9A%84AI%E5%AF%B9%E8%AF%9D%E5%AE%9E%E7%8E%B0.html" target="blank">13.支持MCP Client的AI对话实现</a></label></li>
 <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-13" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-13"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/14.%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AALanggraph4j%E5%AE%9E%E4%BE%8B%E5%B7%A5%E7%A8%8B.html" target="blank">14.创建一个LangGraph4J示例工程</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-14" disabled="disabled"><label class="task-list-item-label" for="task-item-14"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/12.%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B.html" target="blank">音频模型</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-15" disabled="disabled"><label class="task-list-item-label" for="task-item-15"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/08.%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90RAG.html" target="blank">检索增强生成RAG</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-14" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-14"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/15.%E6%8E%A5%E5%85%A5OpenAI%E6%8E%A5%E5%8F%A3%E9%A3%8E%E6%A0%BC%E7%9A%84%E5%A4%A7%E6%A8%A1%E5%9E%8B.html" target="blank">15.接入OpenAI接口风格大模型</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-15" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-15"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/16.%E5%BC%82%E6%AD%A5%E6%B5%81%E5%BC%8F%E6%A8%A1%E5%9E%8B%E8%B0%83%E7%94%A8.html" target="blank">16.异步流式模型调用</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-16" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-16"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/17.%E6%8E%A8%E7%90%86%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A5%E5%85%A5%E4%B8%8E%E6%8E%A8%E7%90%86%E8%BF%87%E7%A8%8B%E8%BF%94%E5%9B%9E.html" target="blank">17.推理大模型接入与推理过程返回</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-17" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-17"> <a href="/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/18.%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9E%8B%E4%B9%8B%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB.html" target="blank">18.语音模型之语音识别</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-18" disabled="disabled"><label class="task-list-item-label" for="task-item-18"> <a href="">检索增强生成RAG</a></label></li>
 </ul>
 <h3> 2.进阶教程</h3>
 <p>进阶相关将主要介绍如何更好的使用SpringAI进行大模型应用开发，对应的实例工程都放在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/advance-projects" target="_blank" rel="noopener noreferrer">advance-projects</a> 下</p>
 <ul class="task-list-container">
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-16" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-16"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A01.%E4%BD%BF%E7%94%A8MySql%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">01.使用MySql持久化对话历史</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-17" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-17"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A02.%E4%BD%BF%E7%94%A8H2%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">02.使用H2持久化对话历史</a>]</label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-18" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-18"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A03.%E4%BD%BF%E7%94%A8Redis%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">03.使用Redis持久化对话历史</a>]</label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-19" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-19"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A04.%E4%BD%BF%E7%94%A8LangGraph4J%E5%AE%9E%E7%8E%B0%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D.html" target="blank">04.使用LangGraph4J实现多伦对话</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-20" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-20"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A05.%E4%BD%BF%E7%94%A8LangGraph4J%E5%AE%9E%E7%8E%B0Agent%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9.html" target="blank">05.使用LangGraph4J实现Agent路由选择</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-21" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-21"> <a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">06.告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-22" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-22"> <a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">07.Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-19" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-19"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A01.%E4%BD%BF%E7%94%A8MySql%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">01.使用MySql持久化对话历史</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-20" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-20"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A02.%E4%BD%BF%E7%94%A8H2%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">02.使用H2持久化对话历史</a>]</label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-21" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-21"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A03.%E4%BD%BF%E7%94%A8Redis%E6%8C%81%E4%B9%85%E5%8C%96%E5%AF%B9%E8%AF%9D%E5%8E%86%E5%8F%B2.html" target="blank">03.使用Redis持久化对话历史</a>]</label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-22" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-22"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A04.%E4%BD%BF%E7%94%A8LangGraph4J%E5%AE%9E%E7%8E%B0%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D.html" target="blank">04.使用LangGraph4J实现多伦对话</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-23" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-23"> <a href="/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A05.%E4%BD%BF%E7%94%A8LangGraph4J%E5%AE%9E%E7%8E%B0Agent%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9.html" target="blank">05.使用LangGraph4J实现Agent路由选择</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-24" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-24"> <a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">06.告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-25" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-25"> <a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">07.Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></label></li>
 </ul>
 <h3> 3.应用教程</h3>
 <p>以搭建完整可用的SpringAI应用为目的，演示SpringAI的业务边界和表现，对应项目工都放在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects" target="_blank" rel="noopener noreferrer">app-projects</a> 下</p>
 <ul class="task-list-container">
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-23" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-23"> <a href="/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D01.%E4%BB%8E0%E5%88%B01%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%9F%BA%E4%BA%8E%E5%A4%A9%E6%B0%94%E7%9A%84%E6%97%85%E6%B8%B8%E7%BE%8E%E9%A3%9F%E6%8E%A8%E8%8D%90%E6%99%BA%E8%83%BD%E4%BD%93.html" target="blank">从0到1创建一个基于天气的旅游美食推荐智能体</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-24" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-24"> <a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">大模型应用开发实战：两百行实现一个自然语言地址提取智能体</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-25" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-25"> <a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-26" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-26"> <a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></label></li>
-<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-27" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-27"> <a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">我用SpringAI造了个「微信红包封面设计师」</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-26" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-26"> <a href="/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D01.%E4%BB%8E0%E5%88%B01%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%9F%BA%E4%BA%8E%E5%A4%A9%E6%B0%94%E7%9A%84%E6%97%85%E6%B8%B8%E7%BE%8E%E9%A3%9F%E6%8E%A8%E8%8D%90%E6%99%BA%E8%83%BD%E4%BD%93.html" target="blank">从0到1创建一个基于天气的旅游美食推荐智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-27" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-27"> <a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">大模型应用开发实战：两百行实现一个自然语言地址提取智能体</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-28" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-28"> <a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">再见，OCR模板！你好，发票智能体：基于SpringAI与大模型的零配置发票智能提取架构</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-29" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-29"> <a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></label></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-30" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-30"> <a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">我用SpringAI造了个「微信红包封面设计师」</a></label></li>
 </ul>
 <h3> 4.源码解读</h3>
 <p>以源码的视角，介绍SpringAI的核心实现，对应的项目工程以 <code>Yxx-</code> 开头</p>
-]]></content:encoded>
-    </item>
-    <item>
-      <title>LLM教程</title>
-      <link>https://ppai.top/ai-guides/tutorial/</link>
-      <guid>https://ppai.top/ai-guides/tutorial/</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
-      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
-      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
-      <content:encoded><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
 ]]></content:encoded>
     </item>
     <item>
@@ -1415,6 +1455,20 @@
 </ul>
 ]]></content:encoded>
       <enclosure url="https://spring.hhui.top/spring-blog/imgs/info/info.png" type="image/png"/>
+    </item>
+    <item>
+      <title>LLM教程</title>
+      <link>https://ppai.top/ai-guides/tutorial/</link>
+      <guid>https://ppai.top/ai-guides/tutorial/</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
+      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
+      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content:encoded>
     </item>
     <item>
       <title>01.创建一个SpringAI的示例工程</title>
