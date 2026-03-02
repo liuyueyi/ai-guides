@@ -9,7 +9,7 @@
   </author>
   <logo>https://ppai.top/ai-guides/favicon.ico</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-02-27T04:00:52.755Z</updated>
+  <updated>2026-03-02T09:38:46.615Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://ppai.top/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://ppai.top/ai-guides/"/>
@@ -22,10 +22,208 @@
     <uri>https://ppai.top</uri>
   </contributor>
   <entry>
+    <title type="text">D06.手把手搭建实时语音翻译机器人</title>
+    <id>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D06.%E6%89%8B%E6%8A%8A%E6%89%8B%E6%90%AD%E5%BB%BA%E5%AE%9E%E6%97%B6%E8%AF%AD%E9%9F%B3%E7%BF%BB%E8%AF%91%E6%9C%BA%E5%99%A8%E4%BA%BA.html</id>
+    <link href="https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D06.%E6%89%8B%E6%8A%8A%E6%89%8B%E6%90%AD%E5%BB%BA%E5%AE%9E%E6%97%B6%E8%AF%AD%E9%9F%B3%E7%BF%BB%E8%AF%91%E6%9C%BA%E5%99%A8%E4%BA%BA.html"/>
+    <updated>2026-03-02T09:37:15.000Z</updated>
+    <summary type="html"><![CDATA[<h1> Spring AI 实战：手把手搭建实时语音翻译机器人</h1>
+<p>实时翻译的场景可以说应用很久了，当然在以前这个实现还是很有挑战的，不过现如今嘛，在AI的加持下，像我们这种普通的编程人员，可以非常方便的实现一个语音翻译机器人。</p>
+<p>今天，我将带你基于 Spring AI 框架，从零搭建一个支持音频转录与翻译的智能机器人。</p>
+<h2> 一、环境准备</h2>
+<p>在开始实战之前，我们需要准备好开发环境。以下是本文所使用的技术栈：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>版本/说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JDK</td>
+<td>17 及以上</td>
+</tr>
+<tr>
+<td>Spring Boot</td>
+<td>3.x</td>
+</tr>
+<tr>
+<td>Spring AI</td>
+<td>1.1.2</td>
+</tr>
+<tr>
+<td>音频转录模型</td>
+<td><code>FunAudioLLM/SenseVoiceSmall</code></td>
+</tr>
+<tr>
+<td>对话大模型</td>
+<td><code>Qwen/Qwen2.5-7B-Instruct</code></td>
+</tr>
+<tr>
+<td>API 平台</td>
+<td>SiliconFlow（需自行申请 API Key）</td>
+</tr>
+</tbody>
+</table>]]></summary>
+    <content type="html"><![CDATA[<h1> Spring AI 实战：手把手搭建实时语音翻译机器人</h1>
+<p>实时翻译的场景可以说应用很久了，当然在以前这个实现还是很有挑战的，不过现如今嘛，在AI的加持下，像我们这种普通的编程人员，可以非常方便的实现一个语音翻译机器人。</p>
+<p>今天，我将带你基于 Spring AI 框架，从零搭建一个支持音频转录与翻译的智能机器人。</p>
+<h2> 一、环境准备</h2>
+<p>在开始实战之前，我们需要准备好开发环境。以下是本文所使用的技术栈：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>版本/说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JDK</td>
+<td>17 及以上</td>
+</tr>
+<tr>
+<td>Spring Boot</td>
+<td>3.x</td>
+</tr>
+<tr>
+<td>Spring AI</td>
+<td>1.1.2</td>
+</tr>
+<tr>
+<td>音频转录模型</td>
+<td><code>FunAudioLLM/SenseVoiceSmall</code></td>
+</tr>
+<tr>
+<td>对话大模型</td>
+<td><code>Qwen/Qwen2.5-7B-Instruct</code></td>
+</tr>
+<tr>
+<td>API 平台</td>
+<td>SiliconFlow（需自行申请 API Key）</td>
+</tr>
+</tbody>
+</table>
+<h3> 1.1 APIKey申请</h3>
+<p>你需要 SiliconFlow 平台申请 API Key，并在 <code>application.yml</code> 中配置：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<p>这里选择SiliconFlow的主要原因是它的免费模型，对于想要复刻体验本项目的小伙伴最友好😊</p>
+<p>注册地址: <a href="https://cloud.siliconflow.cn/i/ge3VpPHH" target="_blank" rel="noopener noreferrer">https://cloud.siliconflow.cn/i/ge3VpPHH</a></p>
+<p>也可以直接通过二维码注册：<img src="https://imgbed.ppai.top/file/1772435807988_silicon_reqr.png" alt="image.png" loading="lazy"></p>
+</blockquote>
+<h3> 1.2 核心依赖</h3>
+<p>直接使用<code>openai-starter</code>来实现大模型的交互，在这个项目的实现中，主要包含两类的大模型交互过程</p>
+<ul>
+<li>音频识别：识别语音文件的内容</li>
+<li>文字翻译：将语音内容翻译为目标语言</li>
+</ul>
+<p>有需要的小伙伴也可以在实现 <code>文字转语音</code> TTS的实现，从而获取更好的使用体验</p>
+<p>对应的pom核心依赖如下</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 1.3 配置</h3>
+<p>我们在配置文件 <code>resources/application.yml</code> 维护上模型和apikey</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 二、核心实现</h2>
+<h3> 2.0 整体方案设计</h3>
+<p>在具体的实现之前，我们先看一下这个实时翻译功能可以怎么设计，下面是一个简单的业务流程图</p>
+<figure><img src="https://imgbed.ppai.top/file/1772437882441_D06-1.webp" alt="D06-1.webp" tabindex="0" loading="lazy"><figcaption>D06-1.webp</figcaption></figure>
+<p><strong>为什么采用异步？</strong></p>
+<p>考虑到交互体验，同步阻塞一直等待后端返回全部结果的方案不可取（因为耗时可能很久）；因此实时的交互必然是首选，因此异步的原因如下：</p>
+<ul>
+<li>音频处理耗时较长（通常几秒到几十秒）</li>
+<li>同步等待会让用户界面卡顿</li>
+<li>用户体验差，容易误认为系统无响应</li>
+</ul>
+<p><strong>解决方案：</strong></p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>SSE (Server-Sent Events) 选择理由：</strong></p>
+<ul>
+<li>🔸 单向推送，服务端主动</li>
+<li>🔸 HTTP协议，兼容性好</li>
+<li>🔸 自动重连机制</li>
+<li>🔸 比WebSocket轻量</li>
+</ul>
+<blockquote>
+<p>请注意SSE不支持POST请求，因此用户通过POST上传音频，拿到的是tastId，然后再基于taskId发起一个sse的请求，用户实时获取后端处理结果</p>
+</blockquote>
+<p><strong>推送时机设计：</strong></p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>接下来也可以根据下面的超详细的时序图，来看看这个实时语音翻译的实现思路</p>
+<figure><img src="https://imgbed.ppai.top/file/1772437555859_D06-2.webp" alt="D06-2.webp" tabindex="0" loading="lazy"><figcaption>D06-2.webp</figcaption></figure>
+<h3> 2.1 音频转录服务</h3>
+<blockquote>
+<p>对于SpringAI如何使用音频模型的，有兴趣的小伙伴可以查看 - <a href="https://www.ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/18.%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9E%8B%E4%B9%8B%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB.html" target="_blank" rel="noopener noreferrer">18.语音模型之语音识别 | Helllo LLM Guides</a></p>
+</blockquote>
+<p>首先，我们创建音频转录服务，利用 Spring AI 的 <code>TranscriptionModel</code> 接口调用 SenseVoiceSmall 模型：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>为什么要这样设计？</strong></p>
+<p>Spring AI 统一了 AI 模型的调用接口，<code>TranscriptionModel</code> 屏蔽了底层 API 的差异，我们只需关注业务逻辑即可。</p>
+<p>上面这个service实现识别音频文件内容，并直接返回结果给调用方（我们现在选中的模型主要支持中英文内容的识别）</p>
+<h3> 2.2 翻译服务 + SSE 实时推送</h3>
+<p>为了提供更好的用户体验，我们采用异步处理 + SSE（Server-Sent Events）实现实时推送：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>关键的处理逻辑如下：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<p>注：上面的代码主要显示核心的业务体现，真实的实现中还包含资源回收（sseEmitter关闭，清除缓存信息等）,详情请参考文末的项目源码</p>
+</blockquote>
+<h3> 2.3 前端交互</h3>
+<p>前端通过 EventSource 接收 SSE 推送，实现实时显示：</p>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 三、常见问题与解决方案</h2>
+<h3> Q1：长音频解析较慢问题</h3>
+<p><strong>问题</strong>：现在大模型的语音识别为同步调用，对于长音频解析较慢</p>
+<p><strong>解决</strong>：对音频进行切割，并行调用大模型接口，按照顺序返回给前端用户</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> Q2：转录结果为空</h3>
+<p><strong>问题</strong>：音频文件格式不被支持。</p>
+<p><strong>解决</strong>：确保音频格式为 MP3、WAV 或 M4A，且音频质量清晰。</p>
+<h3> Q3: 翻译结果朗读</h3>
+<p><strong>问题</strong>：现在翻译的结果是以文字的方式进行显示，我希望以语音播报的方式来呈现</p>
+<p><strong>解决</strong>：项目原型中提供了一个基于浏览器的语音合成来实现，如果有需要的话，也可以借助一些模型厂家提供的TTS模型来完成这个功能</p>
+<h2> 四、测试小结</h2>
+<p>启动应用后，访问 <code>http://localhost:8080/translate</code>，上传音频文件，整个过程延迟控制在秒级，体验还是比较流畅的</p>
+<figure><img src="https://imgbed.ppai.top/file/1772441431415_D06-3.gif" alt="D06-3.gif" tabindex="0" loading="lazy"><figcaption>D06-3.gif</figcaption></figure>
+<p>除了上面的传输音频之外，还是支持语音录入翻译的，如下</p>
+<figure><img src="https://imgbed.ppai.top/file/1772442648403_D06-4.gif" alt="D06-4.gif" tabindex="0" loading="lazy"><figcaption>D06-4.gif</figcaption></figure>
+<p>本文中所有的源码，都可以在下面仓库中获取</p>
+<ul>
+<li><a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/v2/T05-voice-chat-robot" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/tree/master/v2/T05-voice-chat-robot</a></li>
+</ul>
+<p>整体实现下来基本上没有太大的难度，对于熟练调用API的小伙伴，会惊人的发现，这AI应用看起来和调接口没有什么太大的区别啊，为啥还会有专门的大模型开发岗？和传统的后端开放到底有啥不一样的？如果有此疑问的话，不妨花个几分钟看看下面的内容，相信会有不一样的感触😊</p>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章 LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章 Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章 从 “堆上下文” 到 “管理上下文”</a></li>
+<li><a href="https://mp.weixin.qq.com/s/z5qaLtjChsvjhWNs8Nw05Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第八章 记忆策略的工程化选择</a></li>
+<li><a href="https://mp.weixin.qq.com/s/MFvE8ahSyIhMZIFeSI91kg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第九章 上下文工程在企业知识库助手中的落地</a></li>
+</ul>
+<hr>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">实战 | 两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">实战 | 基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
+<li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
+<li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+</ul>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="SpringAI"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-03-02T12:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
     <title type="text">18.语音模型之语音识别</title>
     <id>https://ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/18.%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9E%8B%E4%B9%8B%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB.html</id>
     <link href="https://ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/18.%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9E%8B%E4%B9%8B%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB.html"/>
-    <updated>2026-02-27T03:59:30.000Z</updated>
+    <updated>2026-03-02T09:37:15.000Z</updated>
     <summary type="html"><![CDATA[<h1> 18.语音模型之语音识别</h1>
 <p>现在的大模型应用中，语音输入是一个非常常见的场景，因此语音识别就是一个很基础的要求了；当然在没有大模型的时代，语音识别也不算少见，接下来我们看一下，如何使用SpringAI来实现语音识别</p>
 <p>下面的演示，我们将基于 <a href="https://cloud.siliconflow.cn/me/models?types=speech" target="_blank" rel="noopener noreferrer">硅基流动</a> 的免费语音识别模型来完成</p>
@@ -42,7 +240,7 @@
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后在资源目录(resources)下，准备一个用于测试的音频文件 <a href="https://github.com/liuyueyi/spring-ai-demo/blob/master/S19-audio-transaction/src/main/resources/" target="_blank" rel="noopener noreferrer">test.mp3</a></p>
 <h3> 2. 测试端点</h3>
 <p>然后创建一个 <code>Controller</code> 用于测试，这里直接使用注入的 <code>TranscriptionModel</code> 来进行语音模型的交互</p>
-<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 获取语音识别内容</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 获取语音识别内容</h3>
 <p>接下来我们直接使用<code>transcriptionModel</code>来进行大模型的交互，看看语音识别效果</p>
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>整体的使用方式和文本模型大差不差，使用 音频文件 + <code>AudioTranscriptionOptions</code> 来构建提示词 <code>AudioTranscriptionPrompt</code>，然后直接通过 <code>model.call()</code> 进行大模型调用，获取返回结果</p>
 <p>对于 <code>AudioTranscriptionOptions</code> 可以设置语音、温度、模型、返回格式等各种参数（当然不同的模型厂家支持情况并不一样）</p>
@@ -71,6 +269,7 @@
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>所以你会在项目源码的 Application 中看到 <code>RestClient.Builder</code> 的注册，就是为了解决上面这个问题而出现的</p>
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 二、小结</h2>
 <p>本文介绍了语音大模型的使用方式，目前spring-ai官方也只针对OpenAI进行的支撑，不同的厂商的语音模型可能会有自己的特定交互方式，大家在使用的时候需要注意甄别</p>
+<p>本文对应的项目源码为： <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/S19-audio-transaction" target="_blank" rel="noopener noreferrer">S19-audio-transaction</a></p>
 ]]></content>
     <author>
       <name>一灰灰blog</name>
@@ -1531,6 +1730,34 @@
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
+    <title type="text">LLM教程</title>
+    <id>https://ppai.top/ai-guides/tutorial/</id>
+    <link href="https://ppai.top/ai-guides/tutorial/"/>
+    <updated>2026-01-22T08:45:40.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></summary>
+    <content type="html"><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-01-22T08:45:40.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
     <title type="text">关于我</title>
     <id>https://ppai.top/ai-guides/me/</id>
     <link href="https://ppai.top/ai-guides/me/"/>
@@ -1617,34 +1844,6 @@
 <li>邮箱 : <a href="mailto:bangzewu@126.com">bangzewu@126.com</a></li>
 <li>微博 : 一灰灰blog (基本上不活跃)</li>
 </ul>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2026-01-22T08:45:40.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
-    <title type="text">LLM教程</title>
-    <id>https://ppai.top/ai-guides/tutorial/</id>
-    <link href="https://ppai.top/ai-guides/tutorial/"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></summary>
-    <content type="html"><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
 ]]></content>
     <author>
       <name>一灰灰blog</name>
