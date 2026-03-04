@@ -59,11 +59,11 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
                   </div>
               </a>
               <!-- 案例2 -->
-              <a class="llm-case-item "  style="text-decoration: none;"  href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank">
-                  <img src="https://ppai.top/ai-guides/imgs/info/home/ocr.webp" style="height: 170px;" alt="基于SpringAI与大模型的零配置发票智能提取架构" title="基于SpringAI与大模型的零配置发票智能提取架构">
+              <a class="llm-case-item "  style="text-decoration: none;"  href="https://mp.weixin.qq.com/s/qF0RfLts-fuMzv-uJZnBig" target="_blank">
+                  <img src="https://imgbed.ppai.top/file/1772441431415_D06-3.gif" style="height: 170px;" alt="Spring AI 集成语音识别，实现实时翻译机器人的完整指南" title="Spring AI 集成语音识别，实现实时翻译机器人的完整指南">
                   <div class="llm-case-item-content">
-                      <h4 class="llm-text-xl llm-font-semibold llm-mb-2">基于SpringAI与大模型的零配置发票智能提取架构</h4>
-                      <p class="llm-text-gray-600">引入大模型的能力，详细展示基于SpringAI的零模板解决方案</p>
+                      <h4 class="llm-text-xl llm-font-semibold llm-mb-2">Spring AI 集成语音识别，实现实时翻译机器人的完整指南</h4>
+                      <p class="llm-text-gray-600">基于 Spring AI 框架，从零搭建一个支持音频转录与翻译的智能机器人</p>
                   </div>
               </a>
               <!-- 案例3 -->
@@ -234,6 +234,17 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
                           <div>
                               <span class="llm-book-tag">LLM</span>
                               <a href="https://datawhalechina.github.io/llm-cookbook/#/" target="_blank" class="llm-link-primary llm-ml-2">查看详情</a>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="llm-book-item">
+                      <img src="https://imgbed.ppai.top/file/1770883789166_langchain.webp" alt="LLM Cookbook" class="llm-book-cover">
+                      <div class="llm-book-info">
+                          <h4 class="llm-book-title">Hello LangChain</h4>
+                          <p class="llm-book-desc">LangChain 实战开发系列教程</p>
+                          <div>
+                              <span class="llm-book-tag">LangChain</span>
+                              <a href="https://liuyueyi.github.io/langchain-demo/#/" target="_blank" class="llm-link-primary llm-ml-2">查看详情</a>
                           </div>
                       </div>
                   </div>
