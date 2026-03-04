@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Mon, 02 Mar 2026 09:38:46 GMT</pubDate>
-    <lastBuildDate>Mon, 02 Mar 2026 09:38:46 GMT</lastBuildDate>
+    <pubDate>Wed, 04 Mar 2026 09:29:34 GMT</pubDate>
+    <lastBuildDate>Wed, 04 Mar 2026 09:29:34 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -20,6 +20,323 @@
     <category>LLM</category>
     <category>AI</category>
     <category>Agent</category>
+    <item>
+      <title>A08.手把手教你实现 ReAct 智能体编程范式.md</title>
+      <link>https://ppai.top/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A08.%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E5%AE%9E%E7%8E%B0%20ReAct%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A08.%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E5%AE%9E%E7%8E%B0%20ReAct%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">A08.手把手教你实现 ReAct 智能体编程范式.md</source>
+      <description>Spring AI 实战：手把手教你实现 ReAct 智能体编程范式 A08-01.webp 摘要：本文通过一个完整的 Spring AI 项目实例，深入浅出地讲解 ReAct（Reasoning + Acting）智能体编程范式的核心工作原理。我们将从零开始实现一个轻量级的 ReAct Agent，并通过流式处理优化用户体验，让你彻底掌握智能体开发的核心技术。</description>
+      <category>SpringAI</category>
+      <pubDate>Wed, 04 Mar 2026 11:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> Spring AI 实战：手把手教你实现 ReAct 智能体编程范式</h1>
+<figure><img src="https://imgbed.ppai.top/file/1772612125519_A08-01.webp" alt="A08-01.webp" tabindex="0" loading="lazy"><figcaption>A08-01.webp</figcaption></figure>
+<blockquote>
+<p><strong>摘要</strong>：本文通过一个完整的 Spring AI 项目实例，深入浅出地讲解 ReAct（Reasoning + Acting）智能体编程范式的核心工作原理。我们将从零开始实现一个轻量级的 ReAct Agent，并通过流式处理优化用户体验，让你彻底掌握智能体开发的核心技术。</p>
+</blockquote>
+<hr>
+<h2> 📖 目录</h2>
+<ul>
+<li><a href="#%E4%BB%80%E4%B9%88%E6%98%AF-react-%E8%8C%83%E5%BC%8F">什么是 ReAct 范式？</a></li>
+<li><a href="#%E9%A1%B9%E7%9B%AE%E6%9E%B6%E6%9E%84%E6%80%BB%E8%A7%88">项目架构总览</a></li>
+<li><a href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E8%AF%A6%E8%A7%A3">核心组件详解</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E8%BD%BB%E9%87%8F%E7%BA%A7-react-agent">实现轻量级 ReAct Agent</a></li>
+<li><a href="#%E6%B5%81%E5%BC%8F%E5%A4%84%E7%90%86%E4%BC%98%E5%8C%96">流式处理优化</a></li>
+<li><a href="#%E5%AE%9E%E6%88%98%E6%BC%94%E7%A4%BA">实战演示</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E5%B1%95%E6%9C%9B">总结与展望</a></li>
+</ul>
+<hr>
+<h2> 什么是 ReAct 范式？</h2>
+<p><strong>ReAct</strong>（Reasoning + Acting）是一种先进的智能体编程范式，它将<strong>推理</strong>（Reasoning）和<strong>行动</strong>（Acting）有机结合，让 AI 系统能够像人类一样思考并执行任务。</p>
+<figure><img src="https://imgbed.ppai.top/file/1772612169817_A08-2.webp" alt="A08-2.webp" tabindex="0" loading="lazy"><figcaption>A08-2.webp</figcaption></figure>
+<p><em>图 1: ReAct 核心循环流程图 - Thinking → Acting → Observing 顺时针闭环，展示智能体的基础运行模型</em></p>
+<h3> ReAct的核心循环</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 为什么需要 ReAct？</h3>
+<p>传统的 AI 对话系统存在以下局限：</p>
+<ul>
+<li>❌ 无法主动获取外部信息</li>
+<li>❌ 无法执行实际操作</li>
+<li>❌ 缺乏逻辑推理链条</li>
+<li>❌ 难以处理复杂多步任务</li>
+</ul>
+<p>而 ReAct 范式通过<strong>思考 - 行动 - 观察</strong>的循环机制，完美解决了这些问题。</p>
+<hr>
+<h2> 项目架构总览</h2>
+<p>让我们先看看项目的整体结构：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 技术栈</h3>
+<ul>
+<li><strong>框架</strong>: Spring Boot + Spring AI</li>
+<li><strong>模型</strong>: 支持多种大模型（默认使用 Qwen2.5-7B-Instruct）</li>
+<li><strong>工具</strong>: 基于 <code>ToolCallback</code> 机制的工具调用系统</li>
+<li><strong>响应式</strong>: Reactor（流式处理）</li>
+</ul>
+<hr>
+<h2> 核心组件详解</h2>
+<h3> 1️⃣ 工具定义：CalculatorTools</h3>
+<p>首先，我们需要定义一些工具供 AI 调用(也用于后续的测试示例）。 这里提供了几个基本的计算和一个模拟的天气查询工具，通过SpringAI的<code>@Tool</code>进行工具声明定义</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点解析</strong>：</p>
+<ol>
+<li><strong><code>@Tool</code> 注解</strong>：标记这是一个工具方法，<code>description</code> 会被大模型理解</li>
+<li><strong><code>@ToolParam</code> 注解</strong>：描述参数含义，帮助大模型正确使用</li>
+<li><strong><code>MethodToolCallbackProvider</code></strong>：自动将方法转换为工具回调</li>
+<li><strong>工具设计原则</strong>：单一职责、明确描述、类型安全</li>
+</ol>
+<hr>
+<h3> 2️⃣ 自定义日志顾问：MyLoggingAdvisor</h3>
+<p>为了更好地观察 ReAct 过程，我们实现了一个自定义的日志顾问，用于请求前后交互信息</p>
+<blockquote>
+<p>完整的代码实现请到文末的项目源码进行查看</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>作用</strong>：</p>
+<ul>
+<li>✅ 记录每次请求的完整上下文</li>
+<li>✅ 追踪工具调用链</li>
+<li>✅ 调试和排查问题</li>
+</ul>
+<hr>
+<h3> 3️⃣ LLM 服务封装：LlmService</h3>
+<p>统一管理 ChatClient 的创建和配置（支持根据切换使用不同的模型进行响应）</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 实现轻量级 ReAct Agent</h2>
+<p>这是整个项目的核心部分！让我们逐行分析 <code>SimpleReActAgent</code> 的实现。也希望大家可以基于这个简单的实现来理解ReAct的核心理念</p>
+<h3> 核心数据结构</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 主流程：ReAct 循环</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>流程解析</strong>：</p>
+<ol>
+<li><strong>初始化</strong>：将用户问题加入对话历史</li>
+<li><strong>循环开始</strong>：设置最大迭代次数防止无限循环</li>
+<li><strong>Thinking</strong>：调用大模型，让它思考下一步</li>
+<li><strong>判断</strong>：检查是否有工具调用
+<ul>
+<li>✅ 有 → 执行工具，记录结果，继续下一轮</li>
+<li>❌ 无 → 返回最终答案</li>
+</ul>
+</li>
+<li><strong>异常处理</strong>：捕获错误，安全退出</li>
+</ol>
+<blockquote>
+<p>请注意，上面这里判断是否结束是根据是否有工具调用来的，在真实的业务场景中，这样的方式显然不太友好，理应设计一套更符合实际场景的Observe（比如让大模型审查构建的返回是否满足需要，再多一轮对话让大模型整理输出结果等）</p>
+</blockquote>
+<h3> Thinking 阶段：构建系统提示</h3>
+<blockquote>
+<p>这是智能体的“内心独白”。它会分析当前情况、分解任务、制定下一步计划，或者反思上一步的结果。</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键技巧</strong>：</p>
+<ol>
+<li><strong>明确的指令</strong>：告诉 AI 如何使用 ReAct 范式</li>
+<li><strong>限制条件</strong>：一次只调用一个工具，避免混乱</li>
+<li><strong>终止条件</strong>：信息足够时直接给出答案</li>
+<li><strong>禁用自动执行</strong>：<code>internalToolExecutionEnabled(false)</code> 让我们手动控制</li>
+</ol>
+<h3> Act &amp; Observe 阶段：执行工具</h3>
+<blockquote>
+<p>这是智能体决定采取的具体动作，通常是调用一个工具，然后观察工具的执行结果，判断是否可以终止循环</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>执行流程</strong>：</p>
+<ol>
+<li>提取工具名称和参数</li>
+<li>遍历工具列表找到匹配的</li>
+<li>调用工具并获取结果</li>
+<li>返回结果用于下一轮思考</li>
+</ol>
+<hr>
+<h2> 流式处理优化</h2>
+<p>基础的 ReAct Agent 功能已经实现，但用户体验不够好——用户需要等待很长时间才能看到结果。让我们用流式处理优化它！</p>
+<figure><img src="https://imgbed.ppai.top/file/1772613764552_A08-6.webp" alt="A08-6.webp" tabindex="0" loading="lazy"><figcaption>A08-6.webp</figcaption></figure>
+<p><em>图 3: 流式处理 vs 非流式处理对比 - 左侧红色调展示传统方式的不足，右侧绿色调展示流式处理的优势，底部表格总结关键差异</em></p>
+<h3> StreamReActAgent 核心实现</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 流式 Thinking 实现</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>流式处理的优势</strong>：</p>
+<ul>
+<li>✅ <strong>实时反馈</strong>：用户可以看到 AI 的思考过程</li>
+<li>✅ <strong>更好体验</strong>：减少等待焦虑</li>
+<li>✅ <strong>调试友好</strong>：清晰展示每一步执行</li>
+</ul>
+<hr>
+<h2> 实战演示</h2>
+<p>接下来我们写个demo来看看这个基础的ReAct具体表现如何</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 示例 1：简单加法</h3>
+<p>其中示例1，比较简单，两轮对话即可返回最终的结果，执行记录如下</p>
+<p><strong>输入</strong>：<code>计算 25 + 37 等于多少？</code></p>
+<p><strong>执行日志</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>分析</strong>：</p>
+<ul>
+<li>AI 识别到需要加法运算</li>
+<li>调用 <code>add</code> 工具</li>
+<li>返回最终答案</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1772613150983_A08-3.png" alt="A08-3.png" tabindex="0" loading="lazy"><figcaption>A08-3.png</figcaption></figure>
+<hr>
+<h3> 示例 2：多步混合运算</h3>
+<p><strong>输入</strong>：<code>先计算 100 + 50，然后将结果乘以 2，最后除以 3；根据计算结果，是奇数就查询武汉天气、是偶数则查询北京天气</code></p>
+<p><strong>执行日志</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>分析</strong>：</p>
+<ul>
+<li>AI 正确分解了多步任务</li>
+<li>按顺序执行：加 → 乘 → 除 → 判断奇偶 → 查询天气</li>
+<li>展示了强大的逻辑推理能力</li>
+</ul>
+<p>示例2相对来说更复杂一些，除了计算之外，还有天气查询的工具调用，相应的循环次数会更多一些</p>
+<figure><img src="https://imgbed.ppai.top/file/1772613153953_A08-4.png" alt="A08-4.png" tabindex="0" loading="lazy"><figcaption>A08-4.png</figcaption></figure>
+<hr>
+<h3> 示例 3：复杂应用题</h3>
+<p>然后我们再扩展一下，使用一个需要使用计算的算钱的应用场景，看下这套ReAct的表现如何</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>执行日志</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>分析</strong>：</p>
+<ul>
+<li>AI 理解了应用题的场景</li>
+<li>第一步：计算总花费（3 × 12 = 36）</li>
+<li>第二步：计算剩余（50 - 36 = 14）</li>
+<li>第三步：返回结果，不调用工具进行结果返回</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1772613648542_A08-5.webp" alt="A08-5.webp" tabindex="0" loading="lazy"><figcaption>A08-5.webp</figcaption></figure>
+<blockquote>
+<p>虽然上面的截图结果是准确的，但是在实际测试时，发现不同模型的表现差距还是很明显的🤣</p>
+</blockquote>
+<hr>
+<h2> 关键技术要点总结</h2>
+<h3> 1. ReAct 循环三要素</h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>作用</th>
+<th>实现方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Thinking</strong></td>
+<td>分析情况，决定下一步</td>
+<td>调用大模型，传入对话历史和工具列表</td>
+</tr>
+<tr>
+<td><strong>Acting</strong></td>
+<td>执行具体操作</td>
+<td>查找并调用匹配的工具</td>
+</tr>
+<tr>
+<td><strong>Observing</strong></td>
+<td>获取操作结果</td>
+<td>捕获工具返回值，加入对话历史</td>
+</tr>
+</tbody>
+</table>
+<h3> 2. 系统提示设计技巧</h3>
+<div class="language-markdown line-numbers-mode" data-ext="md"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 工具调用控制</h3>
+<p><strong>禁用自动执行</strong>是关键：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这样做的好处：</p>
+<ul>
+<li>✅ 完全掌控执行流程</li>
+<li>✅ 可以记录和调试</li>
+<li>✅ 灵活处理异常情况</li>
+</ul>
+<h3> 4. 对话历史管理</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5. 流式处理核心价值</h3>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>非流式</th>
+<th>流式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户等待时间</td>
+<td>长</td>
+<td>短（实时可见）</td>
+</tr>
+<tr>
+<td>调试友好度</td>
+<td>一般</td>
+<td>优秀</td>
+</tr>
+<tr>
+<td>实现复杂度</td>
+<td>简单</td>
+<td>稍复杂</td>
+</tr>
+<tr>
+<td>推荐场景</td>
+<td>快速原型</td>
+<td>生产环境</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2> 总结与展望</h2>
+<h3> 本文核心收获</h3>
+<p>本文通过一个实现了一个基础的ReActAgent来演示现在Agent中广为使用的ReAct范式，其核心思想是模仿人类解决问题的方式，将推理和行动结合起来，然后通过代码的方式进行演绎。虽然我们实现的还比较初级，但通过这个项目，至少会有一些几个收获：</p>
+<ol>
+<li><strong>理解了 ReAct 范式</strong>：Thinking → Acting → Observing 循环</li>
+<li><strong>掌握了实现方法</strong>：基于Spring AI 手动控制工具调用</li>
+<li><strong>学会了流式优化</strong>：提升用户体验的关键技巧</li>
+<li><strong>获得了实战经验</strong>：完整的代码示例和调试日志</li>
+</ol>
+<h3> 进一步学习方向</h3>
+<p>如果我们想跟进一步的打造一个生产可用的ReActAgent，那么下面这些是我们不能绕过的点</p>
+<ol>
+<li><strong>更复杂的工具集</strong>：集成真实 API（天气、地图、支付等）</li>
+<li><strong>多 Agent 协作</strong>：多个 ReAct Agent 协同完成复杂任务</li>
+<li><strong>记忆系统</strong>：实现长期记忆和上下文学习</li>
+<li><strong>自我反思</strong>：让 Agent 能够评估和优化自己的行为</li>
+<li><strong>视觉能力</strong>：结合图像识别等多模态能力</li>
+</ol>
+<h3> 思考题</h3>
+<p>尝试扩展这个项目：</p>
+<ol>
+<li>添加一个 <code>CalendarTools</code>，支持日期计算和提醒设置</li>
+<li>实现一个简单的搜索引擎工具，查询网络信息</li>
+<li>设计一个数据库查询工具，支持 SQL 查询</li>
+<li>创建一个 Web 自动化测试工具集</li>
+</ol>
+<hr>
+<h2> 参考资源</h2>
+<h3> 项目源码</h3>
+<ul>
+<li>完整代码： <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/advance-projects/A06-ReAct-agent" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/tree/master/advance-projects/A06-ReAct-agent</a></li>
+<li>配置管理：使用你自己的模型，替换资源文件 <code>resources/application.yml</code> 下的大模型相关配置</li>
+<li>运行方式：Spring Boot 应用直接启动</li>
+</ul>
+<h3> 相关文档</h3>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章 LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章 Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章 从 “堆上下文” 到 “管理上下文”</a></li>
+<li><a href="https://mp.weixin.qq.com/s/z5qaLtjChsvjhWNs8Nw05Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第八章 记忆策略的工程化选择</a></li>
+<li><a href="https://mp.weixin.qq.com/s/MFvE8ahSyIhMZIFeSI91kg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第九章 上下文工程在企业知识库助手中的落地</a></li>
+</ul>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">实战 | 两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">实战 | 基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
+<li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
+<li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+</ul>
+<h3> 推荐阅读</h3>
+<ul>
+<li><a href="https://datawhalechina.github.io/hello-agents/#/./chapter4/%E7%AC%AC%E5%9B%9B%E7%AB%A0%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%8F%E5%85%B8%E8%8C%83%E5%BC%8F%E6%9E%84%E5%BB%BA?id=_421-react-%e7%9a%84%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b" target="_blank" rel="noopener noreferrer">第四章 智能体经典范式构建 | Hello Agent</a></li>
+</ul>
+<hr>
+<p><strong>作者</strong>：一灰<br>
+<strong>日期</strong>：2026 年 3 月 4 日<br>
+<strong>标签</strong>：#SpringAI #ReAct #AI-Agent #Java #智能体编程</p>
+<hr>
+<blockquote>
+<p>💬 <strong>互动环节</strong>：你在实践中遇到了什么问题？欢迎在评论区留言讨论！如果觉得这篇文章有帮助，请点赞 👍 收藏 ⭐ 转发 🔄 支持一下！</p>
+</blockquote>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1772612125519_A08-01.webp" type="image/webp"/>
+    </item>
     <item>
       <title>D06.手把手搭建实时语音翻译机器人</title>
       <link>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D06.%E6%89%8B%E6%8A%8A%E6%89%8B%E6%90%AD%E5%BB%BA%E5%AE%9E%E6%97%B6%E8%AF%AD%E9%9F%B3%E7%BF%BB%E8%AF%91%E6%9C%BA%E5%99%A8%E4%BA%BA.html</link>
@@ -1544,20 +1861,6 @@
 ]]></content:encoded>
     </item>
     <item>
-      <title>LLM教程</title>
-      <link>https://ppai.top/ai-guides/tutorial/</link>
-      <guid>https://ppai.top/ai-guides/tutorial/</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
-      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
-      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
-      <content:encoded><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content:encoded>
-    </item>
-    <item>
       <title>关于我</title>
       <link>https://ppai.top/ai-guides/me/</link>
       <guid>https://ppai.top/ai-guides/me/</guid>
@@ -1622,6 +1925,20 @@
 </ul>
 ]]></content:encoded>
       <enclosure url="https://spring.hhui.top/spring-blog/imgs/info/info.png" type="image/png"/>
+    </item>
+    <item>
+      <title>LLM教程</title>
+      <link>https://ppai.top/ai-guides/tutorial/</link>
+      <guid>https://ppai.top/ai-guides/tutorial/</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
+      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
+      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content:encoded>
     </item>
     <item>
       <title>01.创建一个SpringAI的示例工程</title>
