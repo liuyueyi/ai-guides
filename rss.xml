@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Wed, 04 Mar 2026 09:29:34 GMT</pubDate>
-    <lastBuildDate>Wed, 04 Mar 2026 09:29:34 GMT</lastBuildDate>
+    <pubDate>Mon, 09 Mar 2026 03:43:12 GMT</pubDate>
+    <lastBuildDate>Mon, 09 Mar 2026 03:43:12 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -20,6 +20,1138 @@
     <category>LLM</category>
     <category>AI</category>
     <category>Agent</category>
+    <item>
+      <title>01.Spring AI Alibaba 智能体开发基础示例</title>
+      <link>https://ppai.top/ai-guides/ai-dev/ALiAI/L01.Spring%20AI%20Alibaba%20%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%80%E5%8F%91%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/L01.Spring%20AI%20Alibaba%20%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%80%E5%8F%91%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">01.Spring AI Alibaba 智能体开发基础示例</source>
+      <description>Spring AI Alibaba 智能体开发实战：L01-Simple-Demo 教程 概述 L01-Simple-Demo 是基于 Spring AI Alibaba 框架开发的智能体（Agent）示例工程，展示了如何快速构建具备工具调用能力的 AI 应用。本项目面向希望入门大模型应用开发的程序员，通过两个典型的使用场景帮助读者理解 Spring AI Alibaba 的核心概念和开发模式。 核心特性 OpenAI 接口风格接入：通过 SiliconFlow API 兼容接入多种大模型 ReAct Agent：基于阿里巴巴 Graph 架构的推理代理 工具调用：支持自定义工具扩展 AI 能力边界 流式响应：实时返回处理进度，优化用户体验 状态管理：支持多线程会话与上下文传递</description>
+      <category>SpringAI</category>
+      <pubDate>Mon, 09 Mar 2026 10:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> Spring AI Alibaba 智能体开发实战：L01-Simple-Demo 教程</h1>
+<h2> 概述</h2>
+<p>L01-Simple-Demo 是基于 Spring AI Alibaba 框架开发的智能体（Agent）示例工程，展示了如何快速构建具备工具调用能力的 AI 应用。本项目面向希望入门大模型应用开发的程序员，通过两个典型的使用场景帮助读者理解 Spring AI Alibaba 的核心概念和开发模式。</p>
+<h3> 核心特性</h3>
+<ul>
+<li><strong>OpenAI 接口风格接入</strong>：通过 SiliconFlow API 兼容接入多种大模型</li>
+<li><strong>ReAct Agent</strong>：基于阿里巴巴 Graph 架构的推理代理</li>
+<li><strong>工具调用</strong>：支持自定义工具扩展 AI 能力边界</li>
+<li><strong>流式响应</strong>：实时返回处理进度，优化用户体验</li>
+<li><strong>状态管理</strong>：支持多线程会话与上下文传递</li>
+</ul>
+<hr>
+<h2> 环境准备</h2>
+<h3> 基础要求</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>版本要求</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JDK</td>
+<td>17+</td>
+<td>Spring Boot 3.x 要求</td>
+</tr>
+<tr>
+<td>Maven</td>
+<td>3.6+</td>
+<td>项目构建工具</td>
+</tr>
+<tr>
+<td>网络</td>
+<td>可访问 SiliconFlow API</td>
+<td>国内可直接访问</td>
+</tr>
+</tbody>
+</table>
+<h3> API Key 申请</h3>
+<p>本项目使用 <a href="https://siliconflow.cn" target="_blank" rel="noopener noreferrer">SiliconFlow</a> 提供的兼容 OpenAI API 的模型服务。访问其官网注册账号后，在控制台获取 API Key。</p>
+<blockquote>
+<p><strong>推荐模型</strong>：Qwen2.5-7B-Instruct（支持工具调用，性价比高）</p>
+</blockquote>
+<p>获取 API Key 后，有两种配置方式：</p>
+<p><strong>方式一：环境变量（推荐）</strong></p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>方式二：修改配置文件</strong></p>
+<p>编辑 <code>src/main/resources/application.yml</code>：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<p>⚠️ <strong>安全提示</strong>：生产环境务必使用环境变量或外部配置管理，切勿将 API Key 提交到代码仓库。</p>
+</blockquote>
+<hr>
+<h2> 核心概念</h2>
+<h3> Spring AI Alibaba</h3>
+<p>Spring AI Alibaba 是阿里巴巴开源的 AI 应用开发框架，基于 Spring AI 标准接口，深度集成阿里云大模型服务。核心优势包括：</p>
+<ol>
+<li><strong>统一抽象</strong>：提供与模型无关的编程接口，切换模型只需配置变更</li>
+<li><strong>工具生态</strong>：内置丰富的工具支持，减少重复开发</li>
+<li><strong>Graph 架构</strong>：基于状态图的 Agent 实现，支持复杂业务流程编排</li>
+</ol>
+<h3> ReAct Agent</h3>
+<p>ReAct（Reasoning + Acting）是一种融合推理与执行的大模型应用范式。其核心思想是：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>模型不再一次性生成完整答案，而是：</p>
+<ol>
+<li><strong>推理</strong>：分析当前问题，决定下一步行动</li>
+<li><strong>行动</strong>：调用工具或继续对话</li>
+<li><strong>观察</strong>：获取行动结果</li>
+<li><strong>迭代</strong>：基于观察结果继续推理</li>
+</ol>
+<p>这种模式使 AI 能够处理需要外部知识的复杂任务。</p>
+<h3> 流式响应</h3>
+<p>传统 HTTP 请求需要等待模型生成完整回答才能返回，体验较差。流式响应（Server-Sent Events）允许模型边生成边返回，用户无需等待完整结果即可看到AI的思考过程。</p>
+<hr>
+<h2> 项目结构</h2>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 关键依赖</h3>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 代码详解</h2>
+<h3> Demo 1：指令驱动的顾问 Agent</h3>
+<p><code>instructionUsage</code> 方法展示了最简单的 Agent 使用方式——通过系统指令定义 AI 的角色和能力。</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点解析</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>方法</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>定义角色</td>
+<td><code>.instruction()</code></td>
+<td>设置系统提示词，定义 Agent 行为</td>
+</tr>
+<tr>
+<td>构建 Agent</td>
+<td><code>ReactAgent.builder()</code></td>
+<td>创建 Agent 实例</td>
+</tr>
+<tr>
+<td>同步执行</td>
+<td><code>.invoke()</code></td>
+<td>阻塞等待完整结果</td>
+</tr>
+<tr>
+<td>获取结果</td>
+<td><code>OverAllState.value("messages")</code></td>
+<td>从状态中提取对话历史</td>
+</tr>
+</tbody>
+</table>
+<p><strong>调用示例</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><h3> Demo 2：工具调用的天气助手</h3>
+<p><code>toolUsage</code> 方法展示了 Agent 的核心能力——自主调用外部工具完成复杂任务。</p>
+<h4> 1. 定义工具</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>工具定义要点</strong>：</p>
+<ul>
+<li>使用 <code>@ToolParam</code> 描述参数用途，AI 会据此决定如何填充参数</li>
+<li><code>ToolContext</code> 提供执行上下文，可获取用户信息、会话状态等</li>
+<li>返回值必须是 <code>String</code>，AI 会将结果融入回答</li>
+</ul>
+<h4> 2. 注册工具</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 3. 构建 Agent 并配置上下文</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 4. 流式执行</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>输出类型说明</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>说明</th>
+<th>典型场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENT_MODEL_STREAMING</code></td>
+<td>模型正在生成</td>
+<td>实时显示回答</td>
+</tr>
+<tr>
+<td><code>AGENT_MODEL_FINISHED</code></td>
+<td>模型生成完成</td>
+<td>回答结束标志</td>
+</tr>
+<tr>
+<td><code>AGENT_TOOL_FINISHED</code></td>
+<td>工具执行完成</td>
+<td>显示工具返回结果</td>
+</tr>
+</tbody>
+</table>
+<p><strong>调用示例</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><hr>
+<h2> 运行指南</h2>
+<h3> 启动应用</h3>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 测试接口</h3>
+<p><strong>测试指令模式</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>返回如下</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>测试工具调用</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><h3> 预期输出</h3>
+<p>工具调用场景的流式输出类似：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 配置详解</h2>
+<h3> application.yml 完整配置</h3>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 可选配置项</h3>
+<table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>说明</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spring.ai.openai.base-url</code></td>
+<td>API 端点地址</td>
+<td><a href="http://api.openai.com" target="_blank" rel="noopener noreferrer">api.openai.com</a></td>
+</tr>
+<tr>
+<td><code>spring.ai.openai.api-key</code></td>
+<td>认证密钥</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>spring.ai.openai.chat.options.temperature</code></td>
+<td>生成随机性</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td><code>spring.ai.openai.chat.options.maxTokens</code></td>
+<td>最大生成 token 数</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>spring.ai.openai.chat.options.model</code></td>
+<td>指定模型</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2> 扩展实践</h2>
+<h3> 1. 添加更多工具</h3>
+<p>参考 <code>WeatherTool</code> 实现，可以添加：</p>
+<ul>
+<li><strong>数据库查询工具</strong>：查询业务数据</li>
+<li><strong>API 调用工具</strong>：调用外部服务</li>
+<li><strong>计算工具</strong>：执行复杂计算</li>
+<li><strong>文件操作工具</strong>：读写文件</li>
+</ul>
+<h3> 2. 多 Agent 协作</h3>
+<p>Spring AI Alibaba Graph 架构支持构建多 Agent 工作流：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 持久化会话</h3>
+<p>当前示例使用 <code>MemorySaver</code>，生产环境可替换为：</p>
+<ul>
+<li><strong>数据库存储</strong>：保存到 MySQL/PostgreSQL</li>
+<li><strong>Redis 缓存</strong>：高性能会话管理</li>
+<li><strong>文件系统</strong>：简单场景使用</li>
+</ul>
+<h3> 4. 接入阿里云模型</h3>
+<p>如需使用阿里云闭源模型：</p>
+<p>首先调整pom.xml依赖，直接引用 DashScope</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后配置 API Key</p>
+<p>推荐通过环境变量设置：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>当然也可以在应用配置文件中进行设置</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 常见问题</h2>
+<h3> Q1: 模型不支持工具调用？</h3>
+<p>确保使用的模型支持 Function Calling。推荐使用：</p>
+<ul>
+<li>Qwen2.5 系列</li>
+<li>GLM-4 系列</li>
+</ul>
+<p>以下模型不支持工具调用：</p>
+<ul>
+<li>DeepSeek-R1（纯推理模型）
+-glm-4-9b-chat</li>
+</ul>
+<h3> Q2: 工具调用失败？</h3>
+<ol>
+<li>检查工具定义是否正确，特别是 <code>@ToolParam</code> 描述</li>
+<li>确认模型输出格式是否符合工具输入要求</li>
+<li>查看日志中的具体错误信息</li>
+</ol>
+<h3> Q3: 流式输出乱码？</h3>
+<p>确保请求头正确设置：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><h3> Q4: 如何调试 Agent？</h3>
+<p>在代码中添加详细日志：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>观察 <code>OutputType</code> 和 <code>nodeOutput.node()</code> 的变化，理解 Agent 执行流程。</p>
+<hr>
+<h2> 总结</h2>
+<p>本教程通过两个典型场景，展示了 Spring AI Alibaba 的核心使用方式：</p>
+<ol>
+<li><strong>指令模式</strong>：通过系统提示定义 AI 角色，适合问答、辅导类场景</li>
+<li><strong>工具模式</strong>：赋予 AI 行动能力，适合需要访问外部数据的复杂任务</li>
+</ol>
+<p>这两个模式的组合，可以构建出功能强大的智能应用。后续教程将深入探讨多 Agent 协作、向量数据库集成、Guardrails 安全防护等高级主题。</p>
+<hr>
+<h2> 参考资料</h2>
+<ul>
+<li><a href="https://java2ai.com/docs" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 官方文档</a></li>
+<li><a href="https://docs.siliconflow.cn/" target="_blank" rel="noopener noreferrer">SiliconFlow API 文档</a></li>
+<li><a href="https://docs.spring.io/spring-ai/reference/index.html" target="_blank" rel="noopener noreferrer">Spring AI 官方文档</a></li>
+</ul>
+<p><strong>作者</strong>: 一灰<br>
+<strong>日期</strong>: 2026-03-09<br>
+<strong>标签</strong>: #SpringAI #Alibaba #Agent #ReAct #LLM</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>ALi</title>
+      <link>https://ppai.top/ai-guides/ai-dev/ALiAI/</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">ALi</source>
+      <description>这一节主要介绍的是如何使用Spring AI Alibaba的Agent Framework进行智能体开发 主要是直接借助Ali封装完善的 ReAct、Human-Loop、Workflow、A2A、RAG、Graph、Multi-Agent 等高级特性，减少应用开发中的二次开发成本和不确定性</description>
+      <pubDate>Mon, 09 Mar 2026 03:41:43 GMT</pubDate>
+      <content:encoded><![CDATA[<p>这一节主要介绍的是如何使用Spring AI Alibaba的<code>Agent Framework</code>进行智能体开发</p>
+<p>主要是直接借助Ali封装完善的 ReAct、Human-Loop、Workflow、A2A、RAG、Graph、Multi-Agent 等高级特性，减少应用开发中的二次开发成本和不确定性</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>19.Function Calling 高阶使用：手动控制工具执行与 ToolContext 实战</title>
+      <link>https://ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/19.Function%20Calling%E8%BF%9B%E9%98%B6%E4%BD%BF%E7%94%A8.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/%E5%9F%BA%E7%A1%80%E7%AF%87/19.Function%20Calling%E8%BF%9B%E9%98%B6%E4%BD%BF%E7%94%A8.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">19.Function Calling 高阶使用：手动控制工具执行与 ToolContext 实战</source>
+      <description>Spring AI Function Calling 高阶使用：手动控制工具执行与 ToolContext 实战 引言 在 Spring AI 的应用开发中，Function Calling（函数调用）是让大模型与外部世界交互的核心机制。大多数教程只展示了基础的自动工具调用，但在实际生产环境中，我们需要更精细地控制工具的执行流程、传递上下文信息、处理复杂的调用场景。 本文通过一个完整的实战项目 S20-manual-tool-execute，深入讲解 Spring AI Function Calling 的高阶使用技巧，包括：</description>
+      <category>SpringAI</category>
+      <pubDate>Fri, 06 Mar 2026 11:24:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> Spring AI Function Calling 高阶使用：手动控制工具执行与 ToolContext 实战</h1>
+<h2> 引言</h2>
+<p>在 Spring AI 的应用开发中，Function Calling（函数调用）是让大模型与外部世界交互的核心机制。大多数教程只展示了基础的自动工具调用，但在实际生产环境中，我们需要更精细地控制工具的执行流程、传递上下文信息、处理复杂的调用场景。</p>
+<p>本文通过一个完整的实战项目 <code>S20-manual-tool-execute</code>，深入讲解 Spring AI Function Calling 的高阶使用技巧，包括：</p>
+<ul>
+<li>✅ <strong>ToolContext 的使用</strong>：在工具调用中传递会话、用户等上下文信息</li>
+<li>✅ <strong>工具命名约束</strong>：避免同名工具导致的启动错误</li>
+<li>✅ <strong>两种执行模式对比</strong>：Spring AI 自动控制 vs 开发者手动编程控制</li>
+<li>✅ <strong>完整调用链路</strong>：从用户请求到工具执行再到结果总结的全流程</li>
+</ul>
+<p>通过本文的学习，你将掌握企业级 Spring AI 应用中工具调用的核心技能。</p>
+<figure><img src="https://imgbed.ppai.top/file/1772772399442_19-01.webp" alt="Spring AI Function Calling 核心概念全景图" tabindex="0" loading="lazy"><figcaption>Spring AI Function Calling 核心概念全景图</figcaption></figure>
+<hr>
+<h2> 一、项目概述与环境准备</h2>
+<h3> 1.1 项目结构</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 1.2 核心依赖</h3>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 1.3 配置说明</h3>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>启动参数</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 二、工具定义最佳实践</h2>
+<h3> 2.1 基础工具：WeatherTools</h3>
+<p>创建一个天气查询工具，演示标准的工具定义方式：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点解析</strong>：</p>
+<ol>
+<li>
+<p><strong>@Tool 注解</strong>：</p>
+<ul>
+<li><code>name</code>: 工具的唯一标识符（⚠️ 不能重复）</li>
+<li><code>description</code>: 工具功能描述，大模型根据此判断何时调用</li>
+</ul>
+</li>
+<li>
+<p><strong>@ToolResponseType</strong>：</p>
+<ul>
+<li>声明返回类型，便于前端渲染</li>
+<li>本例为 <code>"card"</code> 表示结构化卡片数据</li>
+</ul>
+</li>
+<li>
+<p><strong>ToolContext 参数</strong>：</p>
+<ul>
+<li>可选参数，用于传递会话、用户等上下文信息</li>
+<li>在多轮对话或需要认证的场景中非常有用</li>
+</ul>
+</li>
+<li>
+<p><strong>@ToolParam</strong>：</p>
+<ul>
+<li>为参数添加详细描述，帮助大模型理解参数含义</li>
+</ul>
+</li>
+</ol>
+<h3> 2.2 ⚠️ 重要约束：避免同名工具</h3>
+<p>在 <code>QuizTools.java</code> 中，有一段被注释掉的代码，演示了一个常见错误：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>为什么不能同名？</strong></p>
+<ol>
+<li><strong>注册冲突</strong>：Spring AI 在启动时会将所有工具注册到工具表中，同名工具会导致键冲突</li>
+<li><strong>调用歧义</strong>：大模型无法区分同名的不同工具，可能导致错误调用</li>
+<li><strong>调试困难</strong>：同名工具使得日志追踪和问题定位变得复杂</li>
+</ol>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>使用语义化的唯一名称，如 <code>queryWeather</code> vs <code>fetchWeatherData</code></li>
+<li>按功能模块组织工具类，避免交叉定义</li>
+<li>在团队开发中建立工具命名规范</li>
+</ul>
+<hr>
+<h2> 三、核心实现：两种工具执行模式对比</h2>
+<p>这是本文的重点！我们将对比两种不同的工具执行控制方式。</p>
+<h3> 3.1 方案一：Spring AI 自动控制工具执行</h3>
+<p><strong>特点</strong>：配置简单，适合标准场景，但缺乏灵活性</p>
+<figure><img src="https://imgbed.ppai.top/file/1772772398567_19-02.webp" alt="Spring AI 自动控制模式执行流程" tabindex="0" loading="lazy"><figcaption>Spring AI 自动控制模式执行流程</figcaption></figure>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>执行流程</strong>（如下图所示）：</p>
+<figure><img src="https://imgbed.ppai.top/file/1772772722764_19-6.webp" alt="19-6.webp" tabindex="0" loading="lazy"><figcaption>19-6.webp</figcaption></figure>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>✅ 代码简洁，一行搞定</li>
+<li>✅ Spring AI 处理所有细节</li>
+<li>✅ 适合简单的单次工具调用</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>❌ 黑盒执行，难以干预</li>
+<li>❌ 无法在工具执行前后添加自定义逻辑</li>
+<li>❌ 多个工具并行执行时无法控制顺序</li>
+<li>❌ 难以记录详细的调用链路</li>
+</ul>
+<h3> 3.2 方案二：开发者手动控制工具执行 🌟</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772772397143_19-03.webp" alt="开发者手动控制工具执行流程" tabindex="0" loading="lazy"><figcaption>开发者手动控制工具执行流程</figcaption></figure>
+<p><strong>特点</strong>：代码量增加，但完全掌控执行流程，适合复杂场景</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>执行流程</strong>（更清晰的分步控制）：</p>
+<figure><img src="https://imgbed.ppai.top/file/1772772718404_19-7.webp" alt="19-7.webp" tabindex="0" loading="lazy"><figcaption>19-7.webp</figcaption></figure>
+<p><strong>关键代码解析</strong>：</p>
+<ol>
+<li>
+<p><strong>第一次调用</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ul>
+<li>目的：获取大模型的调用意图（要调用哪个工具、参数是什么）</li>
+<li>结果：<code>AssistantMessage</code> 中包含 <code>List&lt;ToolCall&gt;</code></li>
+</ul>
+</li>
+<li>
+<p><strong>手动执行工具</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ul>
+<li>遍历所有工具调用请求</li>
+<li>根据名称匹配对应的 <code>ToolCallback</code></li>
+<li><strong>手动传入 <code>ToolContext</code></strong>，携带会话、用户等信息</li>
+<li>获得工具执行结果</li>
+</ul>
+</li>
+<li>
+<p><strong>第二次调用</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ul>
+<li>构建完整的对话历史</li>
+<li>让大模型基于工具结果生成自然语言响应</li>
+<li>保证上下文的连贯性</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2> 四、两种方案深度对比</h2>
+<h3> 4.1 代码复杂度对比</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Spring AI 自动控制</th>
+<th>手动控制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>代码行数</strong></td>
+<td>~5 行</td>
+<td>~50 行</td>
+</tr>
+<tr>
+<td><strong>配置难度</strong></td>
+<td>简单</td>
+<td>中等</td>
+</tr>
+<tr>
+<td><strong>理解成本</strong></td>
+<td>低</td>
+<td>较高</td>
+</tr>
+</tbody>
+</table>
+<h3> 4.2 执行灵活性对比</h3>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>Spring AI 自动控制</th>
+<th>手动控制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>工具执行前拦截</strong></td>
+<td>❌ 不支持</td>
+<td>✅ 可添加任意逻辑</td>
+</tr>
+<tr>
+<td><strong>工具执行后处理</strong></td>
+<td>❌ 不支持</td>
+<td>✅ 可修改结果、记录日志</td>
+</tr>
+<tr>
+<td><strong>工具调用顺序控制</strong></td>
+<td>❌ 并行执行不可控</td>
+<td>✅ 可串行、可条件执行</td>
+</tr>
+<tr>
+<td><strong>错误处理</strong></td>
+<td>❌ 统一异常</td>
+<td>✅ 细粒度 try-catch</td>
+</tr>
+<tr>
+<td><strong>ToolContext 传递</strong></td>
+<td>⚠️ 批量传递</td>
+<td>✅ 精确控制每个工具的上下文</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="https://imgbed.ppai.top/file/1772772397996_19-04.webp" alt="两种执行模式深度对比" tabindex="0" loading="lazy"><figcaption>两种执行模式深度对比</figcaption></figure>
+<h3> 4.3 适用场景</h3>
+<p><strong>Spring AI 自动控制</strong> 适合：</p>
+<ul>
+<li>✅ 快速原型开发</li>
+<li>✅ 简单的单次工具调用</li>
+<li>✅ 不需要特殊处理的场景</li>
+<li>✅ 对执行过程无特殊要求</li>
+</ul>
+<p><strong>手动控制</strong> 适合：</p>
+<ul>
+<li>✅ 企业级生产环境</li>
+<li>✅ 需要权限校验的场景</li>
+<li>✅ 工具调用有先后依赖</li>
+<li>✅ 需要详细日志和监控</li>
+<li>✅ 需要限流、熔断等保护机制</li>
+<li>✅ 多轮对话中的工具调用</li>
+</ul>
+<h3> 4.4 实际案例对比</h3>
+<p><strong>场景</strong>：用户查询"我和我朋友的北京天气对比一下"</p>
+<p><strong>自动控制的问题</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>手动控制的优势</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 五、ToolContext 的实战应用</h2>
+<h3> 5.1 ToolContext 是什么？</h3>
+<p><code>ToolContext</code> 是一个轻量级的上下文容器，用于在工具调用链中传递信息：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.2 典型使用场景</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772772401342_19-05.webp" alt="ToolContext 三大实战应用场景" tabindex="0" loading="lazy"><figcaption>ToolContext 三大实战应用场景</figcaption></figure>
+<h4> 场景 1：多用户会话隔离</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 场景 2：审计日志</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 场景 3：链路追踪</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.3 在两种模式中的差异</h3>
+<p><strong>自动控制模式</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>手动控制模式</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 六、高级技巧与注意事项</h2>
+<h3> 6.1 工具命名的约定</h3>
+<p><strong>好的命名</strong>：</p>
+<ul>
+<li>✅ <code>queryWeatherByCity</code> - 清晰表达功能</li>
+<li>✅ <code>createKnowledgeQuiz</code> - 动词 + 名词</li>
+<li>✅ <code>getUserProfileFromDB</code> - 包含数据源信息</li>
+</ul>
+<p><strong>糟糕的命名</strong>：</p>
+<ul>
+<li>❌ <code>weather</code> - 太笼统</li>
+<li>❌ <code>handle</code> - 毫无意义</li>
+<li>❌ <code>process</code> - 不知道处理什么</li>
+</ul>
+<h3> 6.2 错误处理最佳实践</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.3 性能优化建议</h3>
+<ol>
+<li>
+<p><strong>工具预热</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>异步执行</strong>（适用于多个独立工具调用）：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>结果缓存</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
+</ol>
+<h3> 6.4 安全考虑</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 七、完整示例与测试</h2>
+<h3> 7.1 启动项目</h3>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 7.2 测试接口</h3>
+<p><strong>测试 1：Spring AI 自动控制</strong></p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>预期响应：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>测试 2：手动控制工具执行</strong></p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>预期响应：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 7.3 查看日志</h3>
+<p>启动后访问日志会显示详细的调用过程：</p>
+<figure><img src="https://imgbed.ppai.top/file/1772773029384_image.png" alt="image.png" tabindex="0" loading="lazy"><figcaption>image.png</figcaption></figure>
+<div class="language-log line-numbers-mode" data-ext="log"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 八、总结与建议</h2>
+<h3> 8.1 核心要点回顾</h3>
+<ol>
+<li>
+<p><strong>工具命名唯一性</strong>：</p>
+<ul>
+<li>⚠️ 同一项目中不能有同名工具</li>
+<li>启动时会检查并抛出 <code>IllegalStateException</code></li>
+<li>建议建立命名规范</li>
+</ul>
+</li>
+<li>
+<p><strong>ToolContext 的价值</strong>：</p>
+<ul>
+<li>✅ 传递会话、用户、追踪等信息</li>
+<li>✅ 支持多租户、权限控制等场景</li>
+<li>✅ 手动控制模式下可精细化定制</li>
+</ul>
+</li>
+<li>
+<p><strong>两种执行模式的选择</strong>：</p>
+<ul>
+<li><strong>自动控制</strong>：快速开发、简单场景</li>
+<li><strong>手动控制</strong>：生产环境、复杂需求</li>
+</ul>
+</li>
+</ol>
+<h3> 8.2 技术选型建议</h3>
+<table>
+<thead>
+<tr>
+<th>项目阶段</th>
+<th>推荐模式</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PoC 验证</strong></td>
+<td>自动控制</td>
+<td>快速验证可行性</td>
+</tr>
+<tr>
+<td><strong>MVP 版本</strong></td>
+<td>自动控制</td>
+<td>聚焦核心功能</td>
+</tr>
+<tr>
+<td><strong>Beta 版本</strong></td>
+<td>手动控制</td>
+<td>开始需要日志、监控</td>
+</tr>
+<tr>
+<td><strong>生产版本</strong></td>
+<td>手动控制</td>
+<td>需要权限、限流、审计</td>
+</tr>
+</tbody>
+</table>
+<h3> 8.3 学习路线建议</h3>
+<ol>
+<li><strong>入门</strong>：先用自动控制模式理解 Function Calling 的基本概念</li>
+<li><strong>进阶</strong>：学习 ToolContext 的使用场景和实现原理</li>
+<li><strong>精通</strong>：掌握手动控制模式，能够应对各种复杂场景</li>
+<li><strong>专家</strong>：结合 AOP、拦截器等实现企业级工具治理</li>
+</ol>
+<h3> 8.4 扩展阅读</h3>
+<ul>
+<li><a href="https://docs.spring.io/spring-ai/reference/api/tools.html" target="_blank" rel="noopener noreferrer">Spring AI 官方文档 - Tool Calling</a></li>
+<li><a href="https://platform.openai.com/docs/guides/function-calling" target="_blank" rel="noopener noreferrer">Function Calling 原理详解</a></li>
+</ul>
+<hr>
+<h2> 附录：完整代码清单</h2>
+<h3> A.1 QaController 完整代码</h3>
+<p>参见项目源码：<a href="https://github.com/liuyueyi/spring-ai-demo/blob/master/S20-manual-tool-execute/src/main/java/com/git/hui/springai/mvc/QaController.java" target="_blank" rel="noopener noreferrer">QaController.java</a></p>
+<h3> A.2 WeatherTools 完整代码</h3>
+<p>参见项目源码：<a href="https://github.com/liuyueyi/spring-ai-demo/blob/master/S20-manual-tool-execute/src/main/java/com/git/hui/springai/tools/WeatherTools.java" target="_blank" rel="noopener noreferrer">WeatherTools.java</a></p>
+<h3> A.3 QuizTools 完整代码</h3>
+<p>参见项目源码：<a href="https://github.com/liuyueyi/spring-ai-demo/blob/master/S20-manual-tool-execute/src/main/java/com/git/hui/springai/tools/QuizTools.java" target="_blank" rel="noopener noreferrer">QuizTools.java</a></p>
+<h3> A.4 配置文件 application.yml</h3>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> <strong>作者</strong>：一灰<br>
+<strong>版权声明</strong>：本文采用 CC BY-NC-SA 4.0 协议发布，欢迎转载，请注明出处并保持非商业使用和相同方式共享。<br>
+<strong>项目地址</strong>：<a href="https://github.com/liuyueyi/spring-ai-demo" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a><br>
+<strong>最后更新</strong>：2026-03-06<br>
+<strong>标签</strong>：#SpringAI #ReAct #Agent #Java #智能体编程</h2>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1772772399442_19-01.webp" type="image/webp"/>
+    </item>
+    <item>
+      <title>D07.实战|实现支持结构化数据的流式对话系统</title>
+      <link>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D07.%E5%AE%9E%E7%8E%B0%E6%94%AF%E6%8C%81%E7%BB%93%E6%9E%84%E5%8C%96%E6%95%B0%E6%8D%AE%E7%9A%84%E6%B5%81%E5%BC%8F%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D07.%E5%AE%9E%E7%8E%B0%E6%94%AF%E6%8C%81%E7%BB%93%E6%9E%84%E5%8C%96%E6%95%B0%E6%8D%AE%E7%9A%84%E6%B5%81%E5%BC%8F%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">D07.实战|实现支持结构化数据的流式对话系统</source>
+      <description>一、引言 在传统的 AI 对话系统中，后端通常只能返回纯文本内容。然而，在实际应用场景中，我们往往需要展示更丰富的交互形式：天气卡片、知识问答题、数据图表、可点击选项等。 本文将介绍如何基于 Spring AI 实现一个简洁而强大的流式对话系统，该系统不仅支持文本的流式输出，还能通过 Prompt 工程让 AI 返回卡片、列表、选项等结构化数据，让对话框具备展示多样化 UI 的能力。 1.1 效果预览 我们的系统可以返回以下几种响应类型： text: 纯文本（如：&amp;quot;今天天气不错&amp;quot;） card: 卡片结构（如：天气卡片，包含标题、副标题、描述等） list: 列表结构（如：推荐书单，每本书有标题、描述） options: 选项结构（如：选择题，用户可点击选项进行交互）</description>
+      <category>SpringAI</category>
+      <pubDate>Mon, 02 Mar 2026 12:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h2> 一、引言</h2>
+<p>在传统的 AI 对话系统中，后端通常只能返回纯文本内容。然而，在实际应用场景中，我们往往需要展示更丰富的交互形式：天气卡片、知识问答题、数据图表、可点击选项等。</p>
+<p>本文将介绍如何基于 <strong>Spring AI</strong> 实现一个简洁而强大的流式对话系统，该系统不仅支持文本的流式输出，还能通过 Prompt 工程让 AI 返回卡片、列表、选项等结构化数据，让对话框具备展示多样化 UI 的能力。</p>
+<h3> 1.1 效果预览</h3>
+<p>我们的系统可以返回以下几种响应类型：</p>
+<ul>
+<li><strong>text</strong>: 纯文本（如："今天天气不错"）</li>
+<li><strong>card</strong>: 卡片结构（如：天气卡片，包含标题、副标题、描述等）</li>
+<li><strong>list</strong>: 列表结构（如：推荐书单，每本书有标题、描述）</li>
+<li><strong>options</strong>: 选项结构（如：选择题，用户可点击选项进行交互）</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1772788082383_D07-show.gif" alt="D07-show.gif" tabindex="0" loading="lazy"><figcaption>D07-show.gif</figcaption></figure>
+<h3> 1.2 技术亮点</h3>
+<ol>
+<li><strong>流式响应 (SSE)</strong>: 使用 Server-Sent Events 实现实时数据推送</li>
+<li><strong>Prompt 工程</strong>: 通过精心设计的 Prompt 引导 AI 返回结构化数据</li>
+<li><strong>简洁架构</strong>: 无需 Function Calling，降低实现复杂度</li>
+<li><strong>会话管理</strong>: 支持多轮对话上下文，实现连续交互</li>
+</ol>
+<hr>
+<h2> 二、系统架构</h2>
+<h3> 2.1 整体结构</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 2.2 核心组件</h3>
+<ul>
+<li><strong>Controller</strong>: 处理 HTTP 请求，暴露 RESTful API</li>
+<li><strong>ChatService</strong>: 核心业务逻辑，处理会话管理和事件流</li>
+<li><strong>DTOs</strong>: 数据传输对象，定义请求/响应格式</li>
+</ul>
+<hr>
+<h2> 三、环境准备</h2>
+<h3> 3.1 技术栈</h3>
+<ul>
+<li><strong>JDK</strong>: 17+</li>
+<li><strong>Spring Boot</strong>: 3.5.4</li>
+<li><strong>Spring AI</strong>: 1.1.2</li>
+<li><strong>LLM Provider</strong>: OpenAI（底层模型使用轨迹流动）</li>
+<li><strong>构建工具</strong>: Maven</li>
+</ul>
+<h3> 3.2 项目依赖</h3>
+<p><code>pom.xml</code> 核心依赖：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.3 配置 API Key</h3>
+<p>在 <code>src/main/resources/application.yml</code> 中配置 SiliconFlow（兼容 OpenAI 接口）：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>启动应用：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><hr>
+<h2> 四、核心实现详解</h2>
+<h3> 4.1 数据结构定义</h3>
+<p>首先定义请求和响应的数据结构：</p>
+<p><strong>ChatRequest.java</strong>:</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>ChatResponse.java</strong>:</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 4.2 核心服务：ChatService</h3>
+<p>这是整个系统的核心，负责处理流式聊天和 Prompt 工程。</p>
+<h4> 4.2.1 服务初始化</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点</strong>:</p>
+<ul>
+<li><code>ChatMemory</code> 接口支持多种实现（内存、Redis 等）,默认使用内存进行存储</li>
+<li><code>ObjectMapper</code> 用于 JSON 解析</li>
+</ul>
+<hr>
+<h4> 4.2.2 流式聊天主流程</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>流程说明</strong>:</p>
+<ol>
+<li><strong>获取会话 ID</strong>: 如果未提供则创建新的 UUID</li>
+<li><strong>构建 Prompt</strong>: 根据响应类型动态调整提示词</li>
+<li><strong>流式调用</strong>: 使用 <code>.stream().content()</code> 获取文本流</li>
+<li><strong>实时返回</strong>: 每收到一个文本片段就立即返回给前端</li>
+<li><strong>结构化解析</strong>: 流式结束后，尝试从完整内容中解析结构化数据</li>
+<li><strong>返回结果</strong>: 先返回结构化数据，再返回完成标记</li>
+</ol>
+<blockquote>
+<p>注意：我们这里是一个极其简单的实现方式，要求返回要么是文本，要么是结构化数据，对于混合返回的场景，请看下一篇的改造</p>
+</blockquote>
+<hr>
+<h4> 4.2.3 Prompt 工程：根据响应类型构建提示词</h4>
+<p>这是实现结构化数据返回的关键：（完全通过提示词来限制返回）</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点</strong>:</p>
+<ul>
+<li>根据 <code>responseType</code> 动态调整 Prompt</li>
+<li>明确告知 AI 需要返回的 JSON 格式</li>
+<li>保存对话历史用于多轮对话</li>
+</ul>
+<hr>
+<h4> 4.2.4 结构化数据解析：RspExtractor</h4>
+<p>从 AI 返回的文本中提取结构化数据：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 4.3 Controller 层：SimpleChatController</h3>
+<p>提供 RESTful API 接口：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 五、响应格式说明</h2>
+<h3> 5.1 流式响应格式</h3>
+<p>流式返回时，每个事件都是一个 <code>ChatResponse</code> JSON 对象：</p>
+<p><strong>文本片段流</strong>:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>结构化数据</strong>（流式结束后返回）:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>完成标记</strong>:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><hr>
+<h3> 5.2 完整响应格式</h3>
+<p>非流式请求返回完整的 JSON 对象：</p>
+<p><strong>文本响应</strong>:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>卡片响应</strong>:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>列表响应</strong>:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>选项响应</strong>:</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 六、使用示例</h2>
+<h3> 6.1 请求文本回复</h3>
+<p><strong>请求</strong>:</p>
+<div class="language-http line-numbers-mode" data-ext="http"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1772785384742_D07-o1.webp" alt="D07-o1.webp" tabindex="0" loading="lazy"><figcaption>D07-o1.webp</figcaption></figure>
+<p><strong>响应流</strong>:</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 6.2 请求卡片回复</h3>
+<p><strong>请求</strong>:</p>
+<div class="language-http line-numbers-mode" data-ext="http"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1772785378392_D07-o2.webp" alt="D07-o2.webp" tabindex="0" loading="lazy"><figcaption>D07-o2.webp</figcaption></figure>
+<p><strong>响应流</strong>:</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>AI 会先流式返回文本描述，然后在最后返回结构化的卡片数据。</p>
+<hr>
+<h3> 6.3 请求列表回复</h3>
+<p><strong>请求</strong>:</p>
+<div class="language-http line-numbers-mode" data-ext="http"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1772785378534_D07-o3.webp" alt="D07-o3.webp" tabindex="0" loading="lazy"><figcaption>D07-o3.webp</figcaption></figure>
+<p><strong>响应流</strong>:</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 6.4 请求选项回复</h3>
+<p><strong>请求</strong>:</p>
+<div class="language-http line-numbers-mode" data-ext="http"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1772785377039_D07-o4.webp" alt="D07-o4.webp" tabindex="0" loading="lazy"><figcaption>D07-o4.webp</figcaption></figure>
+<p><strong>响应流</strong>:</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 七、前端集成指南</h2>
+<h3> 7.1 使用 EventSource 接收 SSE 流</h3>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 7.2 渲染卡片示例</h3>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 7.3 渲染列表示例</h3>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 7.4 渲染选项示例</h3>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 7.5 完整的聊天界面示例</h3>
+<p>请直接到项目查看源码 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D06-ai-auto-chat" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D06-ai-auto-chat</a></p>
+<div class="language-html line-numbers-mode" data-ext="html"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 八、进阶技巧</h2>
+<h3> 8.1 会话历史管理</h3>
+<p>当前使用内存存储会话，生产环境建议使用 Redis/数据库：</p>
+<p><strong>MySql 集成建议</strong>:</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 8.2 Prompt 优化技巧</h3>
+<h4> 8.2.1 Few-Shot Prompting（少样本提示）</h4>
+<p>在 Prompt 中提供示例，帮助 AI 理解需要的格式：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 8.2.2 明确 JSON Schema</h4>
+<p>更详细地描述期望的 JSON 结构：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 8.3 错误处理与降级策略</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> 8.4 性能优化建议</h3>
+<ol>
+<li><strong>使用连接池</strong>: 配置 HTTP 连接池减少握手开销</li>
+<li><strong>流式压缩</strong>: 启用 SSE 压缩减少带宽</li>
+<li><strong>缓存常用响应</strong>: 对常见问题缓存 AI 响应</li>
+<li><strong>异步处理</strong>: 使用异步 IO 提高并发能力</li>
+</ol>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 九、常见问题 FAQ</h2>
+<h3> Q1: 为什么选择 SSE 而不是 WebSocket？</h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>简单性</strong>: SSE 基于 HTTP，无需额外握手，实现更简单</li>
+<li><strong>单向通信</strong>: 对话场景中主要是后端推前端，SSE 足够用</li>
+<li><strong>浏览器支持</strong>: 现代浏览器原生支持，无需 polyfill</li>
+<li><strong>断线重连</strong>: 自动重连机制，可靠性高</li>
+</ul>
+<p>如果需要双向通信（如前端主动发送心跳），可以选择 WebSocket。</p>
+<hr>
+<h3> Q2: Prompt 工程和 Function Calling 有什么区别？</h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li>
+<p><strong>Prompt 工程</strong>（本方案）:</p>
+<ul>
+<li>优势：实现简单，无需额外配置，兼容性强</li>
+<li>适用：快速原型，简单的结构化需求</li>
+</ul>
+</li>
+<li>
+<p><strong>Function Calling</strong>:</p>
+<ul>
+<li>优势：结构严谨，类型安全，可执行实际业务逻辑</li>
+<li>适用：复杂场景，需要调用外部 API 或执行操作</li>
+</ul>
+</li>
+</ul>
+<p>最佳实践：简单场景用 Prompt 工程，复杂场景用 Function Calling。</p>
+<hr>
+<h3> Q3: 如何处理 AI 返回的非标准 JSON？</h3>
+<p><strong>A</strong>:</p>
+<ol>
+<li><strong>JSON 提取</strong>: 从文本中提取 JSON 片段（使用正则或字符串匹配）</li>
+<li><strong>容错解析</strong>: 尝试多种解析策略（代码块、直接查找等）</li>
+<li><strong>降级处理</strong>: 解析失败时返回原始文本</li>
+<li><strong>Prompt 优化</strong>: 明确要求 AI 返回纯 JSON，不要额外说明</li>
+</ol>
+<p>示例提取逻辑：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h3> Q4: 如何扩展更多的响应类型？</h3>
+<p><strong>A</strong>: 按照以下步骤添加新类型：</p>
+<ol>
+<li><strong>修改响应类型枚举</strong>:</li>
+</ol>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><ol start="2">
+<li><strong>更新 Prompt 构建逻辑</strong>:</li>
+</ol>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ol start="3">
+<li><strong>添加对应的数据结构</strong>:</li>
+</ol>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ol start="4">
+<li><strong>前端渲染组件</strong>:</li>
+</ol>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 十、总结与展望</h2>
+<h3> 10.1 本文要点</h3>
+<ol>
+<li><strong>简洁架构</strong>: 无需 Function Calling，通过 Prompt 工程实现结构化数据返回</li>
+<li><strong>流式响应</strong>: 基于Spring AI + SSE 实现实时对话流</li>
+<li><strong>灵活扩展</strong>: 支持 text/card/list/options 多种响应类型</li>
+<li><strong>会话管理</strong>: 使用 ChatMemory 实现多轮对话上下文</li>
+<li><strong>易于集成</strong>: 前端使用标准 EventSource API 即可接入</li>
+</ol>
+<hr>
+<h3> 10.2 技术选型对比</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Prompt 工程方案</th>
+<th>Function Calling 方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>实现复杂度</td>
+<td>⭐⭐⭐⭐⭐ 简单</td>
+<td>⭐⭐⭐ 中等</td>
+</tr>
+<tr>
+<td>灵活性</td>
+<td>⭐⭐⭐⭐ 高</td>
+<td>⭐⭐⭐⭐⭐ 极高</td>
+</tr>
+<tr>
+<td>类型安全</td>
+<td>⭐⭐⭐ 一般</td>
+<td>⭐⭐⭐⭐⭐ 强</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>⭐⭐⭐⭐⭐ 优</td>
+<td>⭐⭐⭐⭐ 良</td>
+</tr>
+<tr>
+<td>学习曲线</td>
+<td>⭐⭐⭐⭐⭐ 平缓</td>
+<td>⭐⭐⭐ 陡峭</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3> 10.3 后续优化方向</h3>
+<ol>
+<li><strong>多模态支持</strong>: 集成图片识别、语音输入等多模态能力</li>
+<li><strong>RAG 集成</strong>: 结合知识库实现检索增强生成</li>
+<li><strong>会话持久化</strong>: 使用 Redis 等存储会话历史</li>
+<li><strong>鉴权机制</strong>: 添加用户认证和权限控制</li>
+<li><strong>监控告警</strong>: 集成 Prometheus + Grafana 监控体系</li>
+<li><strong>性能优化</strong>: 响应缓存、连接池优化等</li>
+</ol>
+<hr>
+<h3> 10.4 源码地址</h3>
+<p>完整代码已开源：</p>
+<ul>
+<li><strong>GitHub</strong>: <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D06-ai-auto-chat" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D06-ai-auto-chat</a></li>
+</ul>
+<hr>
+<h2> 推荐阅读</h2>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章 LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章 Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章 从 “堆上下文” 到 “管理上下文”</a></li>
+<li><a href="https://mp.weixin.qq.com/s/z5qaLtjChsvjhWNs8Nw05Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第八章 记忆策略的工程化选择</a></li>
+<li><a href="https://mp.weixin.qq.com/s/MFvE8ahSyIhMZIFeSI91kg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第九章 上下文工程在企业知识库助手中的落地</a></li>
+</ul>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">实战 | 两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">实战 | 基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
+<li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
+<li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+</ul>
+<p>参考资料</p>
+<ul>
+<li><a href="https://docs.spring.io/spring-ai/reference/" target="_blank" rel="noopener noreferrer">Spring AI 官方文档</a></li>
+<li><a href="https://siliconflow.cn/" target="_blank" rel="noopener noreferrer">SiliconFlow 平台</a></li>
+<li><a href="https://html.spec.whatwg.org/multipage/server-sent-events.html" target="_blank" rel="noopener noreferrer">SSE 规范</a></li>
+<li><a href="https://projectreactor.io/docs/core/release/reference/" target="_blank" rel="noopener noreferrer">Project Reactor 编程指南</a></li>
+</ul>
+<hr>
+<h2> <strong>作者</strong>：一灰<br>
+<strong>项目地址</strong>：<a href="https://github.com/liuyueyi/spring-ai-demo" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a><br>
+<strong>最后更新</strong>：2026-03-06<br>
+<strong>标签</strong>: #SpringAI #流式响应 #智能对话 #前后端分离 #结构化数据</h2>
+<p><strong>欢迎关注我获取更多 AI 开发实战技巧！</strong> 🚀</p>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1772788082383_D07-show.gif" type="image/gif"/>
+    </item>
+    <item>
+      <title>D08.拒绝「笨拙」的 AI 对话！用 SpringAI + 自定义协议实现真正的智能交互</title>
+      <link>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D08.SpringAI%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%99%BA%E8%83%BD%E4%BA%A4%E4%BA%92.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/%E5%BA%94%E7%94%A8%E7%AF%87/D08.SpringAI%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%99%BA%E8%83%BD%E4%BA%A4%E4%BA%92.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">D08.拒绝「笨拙」的 AI 对话！用 SpringAI + 自定义协议实现真正的智能交互</source>
+      <description>想象一下这样的场景：用户问「北京天气怎么样」，AI 不是回复一段文字，而是直接弹出一个精美的天气卡片；用户说「考考我 Spring」，AI 抛出一道选择题，用户点击选项后还能看到正确答案和解析；用户想看销售数据，AI 直接画出一张柱状图——这才是真正的智能助手，而不是一个更聪明的搜索引擎。 你是否受够了 AI 永远只会返回一大段文本？让我们来点不一样的。 D08-1.webp</description>
+      <category>SpringAI</category>
+      <pubDate>Sat, 07 Mar 2026 10:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<blockquote>
+<p>想象一下这样的场景：用户问「北京天气怎么样」，AI 不是回复一段文字，而是直接弹出一个精美的天气卡片；用户说「考考我 Spring」，AI 抛出一道选择题，用户点击选项后还能看到正确答案和解析；用户想看销售数据，AI 直接画出一张柱状图——这才是真正的智能助手，而不是一个更聪明的搜索引擎。</p>
+</blockquote>
+<p>你是否受够了 AI 永远只会返回一大段文本？让我们来点不一样的。</p>
+<figure><img src="https://imgbed.ppai.top/file/1772850673484_D08-1.webp" alt="D08-1.webp" tabindex="0" loading="lazy"><figcaption>D08-1.webp</figcaption></figure>
+<h2> 为什么你的 AI 对话「不够智能」</h2>
+<p>大多数 AI 对话应用长这样：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><p>但 富文本AI对话 风格的 AI 应该长这样：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><p>核心差异在于：<strong>结构化响应 vs 文本堆砌</strong>。</p>
+<p>本文将带你实现后者。</p>
+<h2> 核心技术方案</h2>
+<h3> 技术栈一览</h3>
+<ul>
+<li>Spring Boot 3.x + Spring AI：AI 能力基石</li>
+<li>OpenAI GPT-4o：提供 Function Calling 能力</li>
+<li>NDJSON 流式传输：实现实时增量响应</li>
+<li>自定义 富文本AI对话 协议：统一前后端交互规范</li>
+</ul>
+<h3> 架构设计</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772850678619_D08-2.webp" alt="D08-2.webp" tabindex="0" loading="lazy"><figcaption>D08-2.webp</figcaption></figure>
+<h3> 业务流程</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772850672431_D08-4.webp" alt="D08-4.webp" tabindex="0" loading="lazy"><figcaption>D08-4.webp</figcaption></figure>
+<h2> 核心实现：让大模型学会「调用工具」</h2>
+<h3> 第一步：定义工具集</h3>
+<p>使用 Spring AI 的 <code>@Tool</code> 注解声明可调用的函数：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 第二步：实现智能路由服务</h3>
+<p>核心思路：<strong>让大模型自己决定什么时候调用工具、调用哪个工具</strong></p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 第三步：事件流构建器</h3>
+<p>NDJSON 事件是整个协议的核心：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 协议设计：NDJSON 事件流</h2>
+<h3> 为什么选择 NDJSON？</h3>
+<p>传统 REST 是这样：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>我们的方式是这样：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>优势</strong>：</p>
+<ol>
+<li><strong>实时性</strong>：文本逐字返回，体验流畅</li>
+<li><strong>可中断</strong>：前端可以随时终止连接</li>
+<li><strong>结构化</strong>：文本、工具调用、UI 卡片混合返回</li>
+<li><strong>可恢复</strong>：sequence 支持断点续传</li>
+</ol>
+<h3> 完整事件类型</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772850675449_D08-3.webp" alt="D08-3.webp" tabindex="0" loading="lazy"><figcaption>D08-3.webp</figcaption></figure>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>session.start</code></td>
+<td>会话创建</td>
+</tr>
+<tr>
+<td><code>message.delta</code></td>
+<td>文本增量（流式）</td>
+</tr>
+<tr>
+<td><code>message.complete</code></td>
+<td>文本发送完成</td>
+</tr>
+<tr>
+<td><code>ui.card</code></td>
+<td>信息卡片</td>
+</tr>
+<tr>
+<td><code>ui.options</code></td>
+<td>问答/表单</td>
+</tr>
+<tr>
+<td><code>ui.chart_bar</code></td>
+<td>柱状图</td>
+</tr>
+<tr>
+<td><code>status.waiting_user</code></td>
+<td>等待用户输入</td>
+</tr>
+<tr>
+<td><code>session.end</code></td>
+<td>会话结束</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>错误</td>
+</tr>
+</tbody>
+</table>
+<h2> 前端实现：事件驱动 UI</h2>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 数据模型：结构化响应</h2>
+<h3> 天气卡片</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 知识问答卡片</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 柱状图卡片</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 效果展示</h2>
+<h3> 天气查询</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772851185038_D08-5.webp" alt="D08-5.webp" tabindex="0" loading="lazy"><figcaption>D08-5.webp</figcaption></figure>
+<h3> 知识问答</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772851182206_D08-6.webp" alt="D08-6.webp" tabindex="0" loading="lazy"><figcaption>D08-6.webp</figcaption></figure>
+<h3> 数据对比</h3>
+<figure><img src="https://imgbed.ppai.top/file/1772851177829_D08-7.webp" alt="D08-7.webp" tabindex="0" loading="lazy"><figcaption>D08-7.webp</figcaption></figure>
+<h2> 配置与运行</h2>
+<h3> 依赖</h3>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 配置</h3>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 启动</h3>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>访问 <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">http://localhost:8080</a> 即可体验。</p>
+<h2> 进阶思考</h2>
+<ol>
+<li><strong>多轮对话</strong>：如何让大模型记住上下文，连续调用多个工具？</li>
+<li><strong>工具编排</strong>：复杂场景下，如何实现工具链（工具A的结果作为工具B的输入）？</li>
+<li><strong>流式恢复</strong>：网络中断后，如何从断点继续？</li>
+<li><strong>安全加固</strong>：工具权限如何控制，防止大模型「越权」？</li>
+</ol>
+<p>这些问题有兴趣的小伙伴可以尝试一下</p>
+<hr>
+<p><strong>源码地址</strong>：</p>
+<ul>
+<li><strong>GitHub</strong>: <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D07-ai-self-protocol-chat" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/tree/master/app-projects/D07-ai-self-protocol-chat</a></li>
+</ul>
+<p><strong>系列文章</strong>：</p>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章 LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章 Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章 从 “堆上下文” 到 “管理上下文”</a></li>
+<li><a href="https://mp.weixin.qq.com/s/z5qaLtjChsvjhWNs8Nw05Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第八章 记忆策略的工程化选择</a></li>
+<li><a href="https://mp.weixin.qq.com/s/MFvE8ahSyIhMZIFeSI91kg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第九章 上下文工程在企业知识库助手中的落地</a></li>
+</ul>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">实战 | 两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">实战 | 基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
+<li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
+<li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+</ul>
+<hr>
+<p><strong>作者</strong>：一灰<br>
+<strong>项目地址</strong>：<a href="https://github.com/liuyueyi/spring-ai-demo" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a><br>
+<strong>最后更新</strong>：2026-03-07<br>
+<strong>标签</strong>: #SpringAI #流式响应 #智能对话 #前后端分离 #结构化数据</p>
+<hr>
+<p><strong>欢迎关注我获取更多 AI 开发实战技巧！</strong> 🚀</p>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1772850673484_D08-1.webp" type="image/webp"/>
+    </item>
     <item>
       <title>A08.手把手教你实现 ReAct 智能体编程范式.md</title>
       <link>https://ppai.top/ai-guides/ai-dev/%E8%BF%9B%E9%98%B6%E7%AF%87/A08.%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E5%AE%9E%E7%8E%B0%20ReAct%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html</link>
@@ -1861,6 +2993,20 @@
 ]]></content:encoded>
     </item>
     <item>
+      <title>LLM教程</title>
+      <link>https://ppai.top/ai-guides/tutorial/</link>
+      <guid>https://ppai.top/ai-guides/tutorial/</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
+      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
+      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content:encoded>
+    </item>
+    <item>
       <title>关于我</title>
       <link>https://ppai.top/ai-guides/me/</link>
       <guid>https://ppai.top/ai-guides/me/</guid>
@@ -1925,20 +3071,6 @@
 </ul>
 ]]></content:encoded>
       <enclosure url="https://spring.hhui.top/spring-blog/imgs/info/info.png" type="image/png"/>
-    </item>
-    <item>
-      <title>LLM教程</title>
-      <link>https://ppai.top/ai-guides/tutorial/</link>
-      <guid>https://ppai.top/ai-guides/tutorial/</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml">LLM教程</source>
-      <description>技术专栏 ❤️ 扫盲 hello llm:零基础入门大模型应用开发 📝 AiCoding ai coding:氛围编程、项目实战</description>
-      <pubDate>Thu, 22 Jan 2026 08:45:40 GMT</pubDate>
-      <content:encoded><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content:encoded>
     </item>
     <item>
       <title>01.创建一个SpringAI的示例工程</title>
