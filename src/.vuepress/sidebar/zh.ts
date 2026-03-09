@@ -61,6 +61,12 @@ export const zhSidebar = sidebar({
       collapsible: true,
       prefix: "源码篇/",
       children: "structure",
+    },
+    {
+      text: "Alibaba-AI",
+      collapsible: true,
+      prefix: "ALiAI/",
+      children: "structure",
     }
   ],
 });
