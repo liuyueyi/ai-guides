@@ -67,3 +67,10 @@ icon: material
 ### 4.源码解读
 
 以源码的视角，介绍SpringAI的核心实现，对应的项目工程以 `Yxx-` 开头
+
+
+### 5.Alibaba AI示例
+
+SpringAI alibaba 开放框架示例工程，对应的示例工程放在 [ali](https://github.com/liuyueyi/spring-ai-demo/tree/master/ali) 下
+
+- [x] [01.Spring AI Alibaba 智能体开发基础示例 | Helllo LLM Guides](https://www.ppai.top/ai-guides/ai-dev/ALiAI/L01.Spring%20AI%20Alibaba%20%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%80%E5%8F%91%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C.html)
