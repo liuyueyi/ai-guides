@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Mon, 09 Mar 2026 03:43:12 GMT</pubDate>
-    <lastBuildDate>Mon, 09 Mar 2026 03:43:12 GMT</lastBuildDate>
+    <pubDate>Tue, 10 Mar 2026 02:18:27 GMT</pubDate>
+    <lastBuildDate>Tue, 10 Mar 2026 02:18:27 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -21,15 +21,250 @@
     <category>AI</category>
     <category>Agent</category>
     <item>
+      <title>02.Spring AI Alibaba实现自然语言转SQL与人工审批实战</title>
+      <link>https://ppai.top/ai-guides/ai-dev/ALiAI/L02.Spring%20AI%20Alibaba%E5%AE%9E%E7%8E%B0%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E8%BD%ACSQL%E4%B8%8E%E4%BA%BA%E5%B7%A5%E5%AE%A1%E6%89%B9%E5%AE%9E%E6%88%98.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/L02.Spring%20AI%20Alibaba%E5%AE%9E%E7%8E%B0%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E8%BD%ACSQL%E4%B8%8E%E4%BA%BA%E5%B7%A5%E5%AE%A1%E6%89%B9%E5%AE%9E%E6%88%98.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">02.Spring AI Alibaba实现自然语言转SQL与人工审批实战</source>
+      <description>从自然语言到SQL，再加一道人工防线：Spring AI Alibaba 实战 L02-cover.webp 1. 引言 在 AI 应用开发中，如何让大语言模型（LLM）安全地执行数据库操作是一个核心挑战。直接让 AI 执行 SQL 存在风险——一旦生成错误的 SQL 语句，可能导致数据丢失或泄露。本文将介绍如何基于 Spring AI Alibaba 实现一个带有人工审批机制的智能 SQL 查询助手，让 AI 在执行危险操作前必须经过人类确认。</description>
+      <category>SpringAI</category>
+      <pubDate>Mon, 09 Mar 2026 18:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> 从自然语言到SQL，再加一道人工防线：Spring AI Alibaba 实战</h1>
+<figure><img src="https://imgbed.ppai.top/file/1773108248383_L02-cover.webp" alt="L02-cover.webp" tabindex="0" loading="lazy"><figcaption>L02-cover.webp</figcaption></figure>
+<h2> 1. 引言</h2>
+<p>在 AI 应用开发中，如何让大语言模型（LLM）安全地执行数据库操作是一个核心挑战。直接让 AI 执行 SQL 存在风险——一旦生成错误的 SQL 语句，可能导致数据丢失或泄露。本文将介绍如何基于 Spring AI Alibaba 实现一个带有<strong>人工审批机制</strong>的智能 SQL 查询助手，让 AI 在执行危险操作前必须经过人类确认。</p>
+<p>本文涉及的项目完整代码可以在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/ali/L02-human-in-loop" target="_blank" rel="noopener noreferrer">/ali/L02-human-in-loop</a> 目录下找到。</p>
+<figure><img src="https://imgbed.ppai.top/file/1773107080653_L02-4.gif" alt="L02-4.gif" tabindex="0" loading="lazy"><figcaption>L02-4.gif</figcaption></figure>
+<h2> 2. 项目概述</h2>
+<p>本项目实现了一个智能 SQL 查询助手，核心特性包括：</p>
+<ul>
+<li><strong>自然语言转 SQL</strong>：用户可以用自然语言描述查询需求，AI 自动生成并执行 SQL</li>
+<li><strong>人工审批机制</strong>：所有 SQL 执行前需要用户确认（Human-in-the-loop）</li>
+<li><strong>安全防护</strong>：自动拦截危险 SQL 操作（如 DROP、TRUNCATE 等）</li>
+<li><strong>完整 CRUD 支持</strong>：支持 SELECT、INSERT、UPDATE、DELETE 四种操作</li>
+<li><strong>对话式交互</strong>：基于 Web 界面提供流畅的用户体验</li>
+</ul>
+<h3> 2.1 技术栈</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>技术选型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI 框架</td>
+<td>Spring AI Alibaba</td>
+</tr>
+<tr>
+<td>大模型</td>
+<td>通义千问 (Qwen/Qwen3-8B)</td>
+</tr>
+<tr>
+<td>Agent 架构</td>
+<td>Spring AI Graph (ReAct Agent)</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>H2 内存数据库</td>
+</tr>
+<tr>
+<td>Web 框架</td>
+<td>Spring Boot + Thymeleaf</td>
+</tr>
+</tbody>
+</table>
+<h2> 3. 核心概念解析</h2>
+<h3> 3.1 什么是 Human-in-the-loop？</h3>
+<p>Human-in-the-loop（人在循环中，简称 HITL）是一种人机协作模式，核心思想是在 AI 自动化流程中引入人类决策节点。在本项目中体现为：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>这种设计适用于以下场景：</p>
+<ul>
+<li>金融交易需要人工审核</li>
+<li>数据删除操作需要二次确认</li>
+<li>敏感数据查询需要授权</li>
+<li>AI 置信度不高时需要人工判断</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1773103057594_L02-1.webp" alt="Human-in-the-loop 工作流程" tabindex="0" loading="lazy"><figcaption>Human-in-the-loop 工作流程</figcaption></figure>
+<h3> 3.2 Spring AI Graph 架构</h3>
+<p>Spring AI Alibaba 提供了基于 Graph（图结构）的 Agent 架构，核心组件包括：</p>
+<ul>
+<li><strong>Node（节点）</strong>：Agent 中的处理单元</li>
+<li><strong>Edge（边）</strong>：节点之间的连接逻辑</li>
+<li><strong>State（状态）</strong>：整个对话的上下文信息</li>
+<li><strong>Checkpointer（检查点）</strong>：保存状态快照，支持中断恢复</li>
+<li><strong>Hook（钩子）</strong>：在特定时机插入自定义逻辑（如人工审批）</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1773103051888_L02-2.webp" alt="Spring AI Graph 架构组件" tabindex="0" loading="lazy"><figcaption>Spring AI Graph 架构组件</figcaption></figure>
+<h2> 4. 核心实现</h2>
+<h3> 4.0. 架构流程图</h3>
+<p>我们先从整体的交互来看看这个自然语言转sql、并支持sql执行审批的流程是怎么运转的</p>
+<figure><img src="https://imgbed.ppai.top/file/1773104171736_L02-3.png" alt="L02-3.png" tabindex="0" loading="lazy"><figcaption>L02-3.png</figcaption></figure>
+<h3> 4.1 项目依赖</h3>
+<p>首先需要在 <code>pom.xml</code> 中引入相关依赖：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.2 数据库配置</h3>
+<p>在 <code>application.yml</code> 中配置 H2 数据库和 AI 模型：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.3 订单实体类</h3>
+<p>定义订单表对应的 JPA 实体：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.4 CURD 工具实现</h3>
+<p>这是核心组件之一，负责实际执行 SQL 操作：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.5 人工审批 Hook</h3>
+<p>这是实现 Human-in-the-loop 的关键组件(借助HumanInTheLoopHook，要求在执行 execute_sql 工具之前，必须完成人工的确认机制，只有再次接收到用户的反馈之后，才会继续往后面执行动作)</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.6 Agent 初始化与配置</h3>
+<p>将所有组件组装在一起，创建完整的 Agent：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.7 审批流程处理</h3>
+<p>处理用户的首次请求和审批决策：</p>
+<blockquote>
+<p>注意：首次请求，触发审批之后，我们新增了一个接口用于接收用户的审批结果；很容易想到，审批结果的实现中，需要续上第一次的请求，怎么维护这个完整的请求状态呢？</p>
+<p>这就是 <code>MemorySaver</code> 的重要作用了，其次就是下面的实现是由后端来维护审批状态；这里也可以将相关状态给前端，让前端在调用 <code>/sq/approval</code> 接口时，一并返回给后端，这样后端就可以基于请求参数来恢复上次的请求状态了😊</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 5. 前端交互实现</h2>
+<h3> 5.1 审批界面</h3>
+<p>当 Agent 检测到需要执行 SQL 时，会暂停并返回审批信息给前端：</p>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.2 界面效果</h3>
+<p>审批界面包含以下元素：</p>
+<ul>
+<li>SQL 语句预览（代码高亮）</li>
+<li>操作说明描述</li>
+<li>批准/拒绝按钮</li>
+<li>审批状态标签（等待审批/已批准/已拒绝）</li>
+<li>执行结果展示</li>
+</ul>
+<h2> 6. 使用示例</h2>
+<h3> 6.1 查询数据</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>AI 会生成类似这样的 SQL：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>然后弹出审批卡片，用户确认后执行。</p>
+<figure><img src="https://imgbed.ppai.top/file/1773107296130_L02-5.webp" alt="L02-5.webp" tabindex="0" loading="lazy"><figcaption>L02-5.webp</figcaption></figure>
+<h3> 6.2 插入数据</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>生成的 SQL：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1773107360544_L02-6.webp" alt="L02-6.webp" tabindex="0" loading="lazy"><figcaption>L02-6.webp</figcaption></figure>
+<h3> 6.3 更新数据</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>生成的 SQL：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1773107486026_L02-7.webp" alt="L02-7.webp" tabindex="0" loading="lazy"><figcaption>L02-7.webp</figcaption></figure>
+<h3> 6.4 删除数据</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>生成的 SQL：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1773107608441_L02-8.webp" alt="L02-8.webp" tabindex="0" loading="lazy"><figcaption>L02-8.webp</figcaption></figure>
+<h2> 7. 安全机制</h2>
+<h3> 7.1 SQL 危险操作拦截</h3>
+<p>系统自动拦截以下危险操作：</p>
+<table>
+<thead>
+<tr>
+<th>操作类型</th>
+<th>示例</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DROP</td>
+<td>DROP TABLE</td>
+<td>直接拒绝</td>
+</tr>
+<tr>
+<td>TRUNCATE</td>
+<td>TRUNCATE TABLE</td>
+<td>直接拒绝</td>
+</tr>
+<tr>
+<td>ALTER</td>
+<td>ALTER TABLE</td>
+<td>直接拒绝</td>
+</tr>
+<tr>
+<td>GRANT</td>
+<td>GRANT ALL</td>
+<td>直接拒绝</td>
+</tr>
+<tr>
+<td>REVOKE</td>
+<td>REVOKE ALL</td>
+<td>直接拒绝</td>
+</tr>
+<tr>
+<td>读写文件</td>
+<td>INTO OUTFILE</td>
+<td>直接拒绝</td>
+</tr>
+</tbody>
+</table>
+<h3> 7.2 参数化查询</h3>
+<p>推荐使用参数化查询防止 SQL 注入：</p>
+<div class="language-sql line-numbers-mode" data-ext="sql"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 8. 扩展思考</h2>
+<h3> 8.1 进阶功能</h3>
+<p>基于当前架构，可以进一步扩展：</p>
+<ol>
+<li><strong>多工具审批</strong>：对不同工具设置不同的审批规则</li>
+<li><strong>批量审批</strong>：支持一次性审批多个操作</li>
+<li><strong>审批历史</strong>：记录所有审批操作用于审计</li>
+<li><strong>自动审批</strong>：对安全查询（如只读 SELECT）设置白名单</li>
+<li><strong>LLM 预审</strong>：用另一个 AI 模型先做初步风险评估</li>
+</ol>
+<h3> 8.2 生产环境注意事项</h3>
+<ul>
+<li>使用生产级数据库（MySQL/PostgreSQL）替换 H2</li>
+<li>添加完整的日志和审计功能</li>
+<li>实现超时机制防止审批无限等待</li>
+<li>添加权限控制，不同用户有不同审批权限</li>
+<li>考虑使用消息队列实现异步审批</li>
+</ul>
+<h2> 9. 总结</h2>
+<p>本文详细介绍了如何基于 Spring AI Alibaba 实现一个带有 Human-in-the-loop 特性的智能 SQL 查询助手。核心要点包括：</p>
+<ol>
+<li><strong>人工审批机制</strong>：通过 <code>HumanInTheLoopHook</code> 在危险操作执行前插入人工确认节点</li>
+<li><strong>检查点保存</strong>：使用 <code>MemorySaver</code> 保存状态，支持中断恢复</li>
+<li><strong>安全防护</strong>：多层防护确保只有安全的 SQL 能被执行</li>
+<li><strong>用户体验</strong>：前后端配合实现流畅的审批交互流程</li>
+</ol>
+<p>这种设计模式不仅适用于 SQL 执行，在任何 AI 执行敏感操作的场景中都可以参考借鉴。</p>
+<h2> 参考资料</h2>
+<ul>
+<li><a href="https://java2ai.com/docs/overview" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 官方文档</a></li>
+</ul>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章 LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章 Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章 从 “堆上下文” 到 “管理上下文”</a></li>
+<li><a href="https://mp.weixin.qq.com/s/z5qaLtjChsvjhWNs8Nw05Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第八章 记忆策略的工程化选择</a></li>
+<li><a href="https://mp.weixin.qq.com/s/MFvE8ahSyIhMZIFeSI91kg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第九章 上下文工程在企业知识库助手中的落地</a></li>
+</ul>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">实战 | 两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">实战 | 基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
+<li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
+<li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+</ul>
+<hr>
+<p><strong>Author</strong>: 一灰
+<strong>Date</strong>: 2026-03-09
+<strong>Tags</strong>: [Spring AI, Human-in-the-loop, AI Agent, SQL, 通义千问]</p>
+<hr>
+<blockquote>
+<p>💬 <strong>互动环节</strong>：自然语言转SQL，若有数千张表，大模型如何知道查询哪张表呢？如果涉及到多表联合统计，又应该怎么实现呢？欢迎在评论区留言讨论！</p>
+<p>如果觉得这篇文章有帮助，请点赞 👍 收藏 ⭐ 转发 🔄 支持一下！</p>
+</blockquote>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1773108248383_L02-cover.webp" type="image/webp"/>
+    </item>
+    <item>
       <title>01.Spring AI Alibaba 智能体开发基础示例</title>
       <link>https://ppai.top/ai-guides/ai-dev/ALiAI/L01.Spring%20AI%20Alibaba%20%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%80%E5%8F%91%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C.html</link>
       <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/L01.Spring%20AI%20Alibaba%20%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%80%E5%8F%91%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C.html</guid>
       <source url="https://ppai.top/ai-guides/rss.xml">01.Spring AI Alibaba 智能体开发基础示例</source>
-      <description>Spring AI Alibaba 智能体开发实战：L01-Simple-Demo 教程 概述 L01-Simple-Demo 是基于 Spring AI Alibaba 框架开发的智能体（Agent）示例工程，展示了如何快速构建具备工具调用能力的 AI 应用。本项目面向希望入门大模型应用开发的程序员，通过两个典型的使用场景帮助读者理解 Spring AI Alibaba 的核心概念和开发模式。 核心特性 OpenAI 接口风格接入：通过 SiliconFlow API 兼容接入多种大模型 ReAct Agent：基于阿里巴巴 Graph 架构的推理代理 工具调用：支持自定义工具扩展 AI 能力边界 流式响应：实时返回处理进度，优化用户体验 状态管理：支持多线程会话与上下文传递</description>
+      <description>Spring AI Alibaba 智能体开发实战：L01-Simple-Demo 教程 一、概述 L01-Simple-Demo 是基于 Spring AI Alibaba 框架开发的智能体（Agent）示例工程，展示了如何快速构建具备工具调用能力的 AI 应用。本项目面向希望入门大模型应用开发的程序员，通过两个典型的使用场景帮助读者理解 Spring AI Alibaba 的核心概念和开发模式。 核心特性 OpenAI 接口风格接入：通过 SiliconFlow API 兼容接入多种大模型 ReAct Agent：基于阿里巴巴 Graph 架构的推理代理 工具调用：支持自定义工具扩展 AI 能力边界 流式响应：实时返回处理进度，优化用户体验 状态管理：支持多线程会话与上下文传递</description>
       <category>SpringAI</category>
       <pubDate>Mon, 09 Mar 2026 10:15:07 GMT</pubDate>
       <content:encoded><![CDATA[<h1> Spring AI Alibaba 智能体开发实战：L01-Simple-Demo 教程</h1>
-<h2> 概述</h2>
+<h2> 一、概述</h2>
 <p>L01-Simple-Demo 是基于 Spring AI Alibaba 框架开发的智能体（Agent）示例工程，展示了如何快速构建具备工具调用能力的 AI 应用。本项目面向希望入门大模型应用开发的程序员，通过两个典型的使用场景帮助读者理解 Spring AI Alibaba 的核心概念和开发模式。</p>
 <h3> 核心特性</h3>
 <ul>
@@ -40,8 +275,8 @@
 <li><strong>状态管理</strong>：支持多线程会话与上下文传递</li>
 </ul>
 <hr>
-<h2> 环境准备</h2>
-<h3> 基础要求</h3>
+<h2> 二、环境准备</h2>
+<h3> 2.1 基础要求</h3>
 <table>
 <thead>
 <tr>
@@ -68,7 +303,7 @@
 </tr>
 </tbody>
 </table>
-<h3> API Key 申请</h3>
+<h3> 2.2 API Key 申请</h3>
 <p>本项目使用 <a href="https://siliconflow.cn" target="_blank" rel="noopener noreferrer">SiliconFlow</a> 提供的兼容 OpenAI API 的模型服务。访问其官网注册账号后，在控制台获取 API Key。</p>
 <blockquote>
 <p><strong>推荐模型</strong>：Qwen2.5-7B-Instruct（支持工具调用，性价比高）</p>
@@ -81,8 +316,8 @@
 <p>⚠️ <strong>安全提示</strong>：生产环境务必使用环境变量或外部配置管理，切勿将 API Key 提交到代码仓库。</p>
 </blockquote>
 <hr>
-<h2> 核心概念</h2>
-<h3> Spring AI Alibaba</h3>
+<h2> 三、核心概念</h2>
+<h3> 3.1 Spring AI Alibaba</h3>
 <p>Spring AI Alibaba 是阿里巴巴开源的 AI 应用开发框架，基于 Spring AI 标准接口，深度集成阿里云大模型服务。核心优势包括：</p>
 <ol>
 <li><strong>统一抽象</strong>：提供与模型无关的编程接口，切换模型只需配置变更</li>
@@ -99,13 +334,13 @@
 <li><strong>迭代</strong>：基于观察结果继续推理</li>
 </ol>
 <p>这种模式使 AI 能够处理需要外部知识的复杂任务。</p>
-<h3> 流式响应</h3>
+<h3> 3.2 流式响应</h3>
 <p>传统 HTTP 请求需要等待模型生成完整回答才能返回，体验较差。流式响应（Server-Sent Events）允许模型边生成边返回，用户无需等待完整结果即可看到AI的思考过程。</p>
 <hr>
-<h2> 项目结构</h2>
+<h2> 四、项目结构</h2>
 <div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 关键依赖</h3>
 <div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
-<h2> 代码详解</h2>
+<h2> 五、代码详解</h2>
 <h3> Demo 1：指令驱动的顾问 Agent</h3>
 <p><code>instructionUsage</code> 方法展示了最简单的 Agent 使用方式——通过系统指令定义 AI 的角色和能力。</p>
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点解析</strong>：</p>
@@ -182,16 +417,16 @@
 </table>
 <p><strong>调用示例</strong>：</p>
 <div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><hr>
-<h2> 运行指南</h2>
-<h3> 启动应用</h3>
-<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 测试接口</h3>
+<h2> 六、运行指南</h2>
+<h3> 6.1 启动应用</h3>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.2 测试接口</h3>
 <p><strong>测试指令模式</strong>：</p>
 <div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>返回如下</p>
 <div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>测试工具调用</strong>：</p>
-<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><h3> 预期输出</h3>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><h3> 6.3 预期输出</h3>
 <p>工具调用场景的流式输出类似：</p>
 <div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
-<h2> 配置详解</h2>
+<h2> 七、配置详解</h2>
 <h3> application.yml 完整配置</h3>
 <div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 可选配置项</h3>
 <table>
@@ -231,8 +466,8 @@
 </tbody>
 </table>
 <hr>
-<h2> 扩展实践</h2>
-<h3> 1. 添加更多工具</h3>
+<h2> 八、扩展实践</h2>
+<h3> 8.1 添加更多工具</h3>
 <p>参考 <code>WeatherTool</code> 实现，可以添加：</p>
 <ul>
 <li><strong>数据库查询工具</strong>：查询业务数据</li>
@@ -240,23 +475,23 @@
 <li><strong>计算工具</strong>：执行复杂计算</li>
 <li><strong>文件操作工具</strong>：读写文件</li>
 </ul>
-<h3> 2. 多 Agent 协作</h3>
+<h3> 8.2 多 Agent 协作</h3>
 <p>Spring AI Alibaba Graph 架构支持构建多 Agent 工作流：</p>
-<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 持久化会话</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 8.3 持久化会话</h3>
 <p>当前示例使用 <code>MemorySaver</code>，生产环境可替换为：</p>
 <ul>
 <li><strong>数据库存储</strong>：保存到 MySQL/PostgreSQL</li>
 <li><strong>Redis 缓存</strong>：高性能会话管理</li>
 <li><strong>文件系统</strong>：简单场景使用</li>
 </ul>
-<h3> 4. 接入阿里云模型</h3>
+<h3> 8.4 接入阿里云模型</h3>
 <p>如需使用阿里云闭源模型：</p>
 <p>首先调整pom.xml依赖，直接引用 DashScope</p>
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后配置 API Key</p>
 <p>推荐通过环境变量设置：</p>
 <div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>当然也可以在应用配置文件中进行设置</p>
 <div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
-<h2> 常见问题</h2>
+<h2> 九、常见问题</h2>
 <h3> Q1: 模型不支持工具调用？</h3>
 <p>确保使用的模型支持 Function Calling。推荐使用：</p>
 <ul>
@@ -280,15 +515,14 @@
 <p>在代码中添加详细日志：</p>
 <div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>观察 <code>OutputType</code> 和 <code>nodeOutput.node()</code> 的变化，理解 Agent 执行流程。</p>
 <hr>
-<h2> 总结</h2>
+<h2> 十、总结</h2>
 <p>本教程通过两个典型场景，展示了 Spring AI Alibaba 的核心使用方式：</p>
 <ol>
 <li><strong>指令模式</strong>：通过系统提示定义 AI 角色，适合问答、辅导类场景</li>
 <li><strong>工具模式</strong>：赋予 AI 行动能力，适合需要访问外部数据的复杂任务</li>
 </ol>
 <p>这两个模式的组合，可以构建出功能强大的智能应用。后续教程将深入探讨多 Agent 协作、向量数据库集成、Guardrails 安全防护等高级主题。</p>
-<hr>
-<h2> 参考资料</h2>
+<h3> 参考资料</h3>
 <ul>
 <li><a href="https://java2ai.com/docs" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 官方文档</a></li>
 <li><a href="https://docs.siliconflow.cn/" target="_blank" rel="noopener noreferrer">SiliconFlow API 文档</a></li>
@@ -300,10 +534,10 @@
 ]]></content:encoded>
     </item>
     <item>
-      <title>ALi</title>
+      <title>ALi篇</title>
       <link>https://ppai.top/ai-guides/ai-dev/ALiAI/</link>
       <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml">ALi</source>
+      <source url="https://ppai.top/ai-guides/rss.xml">ALi篇</source>
       <description>这一节主要介绍的是如何使用Spring AI Alibaba的Agent Framework进行智能体开发 主要是直接借助Ali封装完善的 ReAct、Human-Loop、Workflow、A2A、RAG、Graph、Multi-Agent 等高级特性，减少应用开发中的二次开发成本和不确定性</description>
       <pubDate>Mon, 09 Mar 2026 03:41:43 GMT</pubDate>
       <content:encoded><![CDATA[<p>这一节主要介绍的是如何使用Spring AI Alibaba的<code>Agent Framework</code>进行智能体开发</p>
@@ -2990,6 +3224,11 @@
 </ul>
 <h3> 4.源码解读</h3>
 <p>以源码的视角，介绍SpringAI的核心实现，对应的项目工程以 <code>Yxx-</code> 开头</p>
+<h3> 5.Alibaba AI示例</h3>
+<p>SpringAI alibaba 开放框架示例工程，对应的示例工程放在 <a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/ali" target="_blank" rel="noopener noreferrer">ali</a> 下</p>
+<ul class="task-list-container">
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" id="task-item-31" checked="checked" disabled="disabled"><label class="task-list-item-label" for="task-item-31"> <a href="https://www.ppai.top/ai-guides/ai-dev/ALiAI/L01.Spring%20AI%20Alibaba%20%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%80%E5%8F%91%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C.html" target="_blank" rel="noopener noreferrer">01.Spring AI Alibaba 智能体开发基础示例 | Helllo LLM Guides</a></label></li>
+</ul>
 ]]></content:encoded>
     </item>
     <item>
