@@ -21,6 +21,13 @@ export const zhSidebar = sidebar({
       collapsible: true,
       children: "structure",
     },
+    {
+      text: "AiTalking",
+      icon: "wechat",
+      prefix: "ai-talking/",
+      collapsible: true,
+      children: "structure",
+    },
      {
         text: "Hello LLM",
         icon: "define",

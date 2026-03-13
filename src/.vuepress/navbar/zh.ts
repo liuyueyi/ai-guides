@@ -16,7 +16,7 @@ export const zhNavbar = navbar([
       {
         text: "AI Coding",
         prefix: "",
-        children: ["ai-coding/"],
+        children: ["ai-coding/", "ai-talking/"],
       },
     ],
   },
