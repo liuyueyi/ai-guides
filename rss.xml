@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Tue, 10 Mar 2026 02:18:27 GMT</pubDate>
-    <lastBuildDate>Tue, 10 Mar 2026 02:18:27 GMT</lastBuildDate>
+    <pubDate>Fri, 13 Mar 2026 06:36:27 GMT</pubDate>
+    <lastBuildDate>Fri, 13 Mar 2026 06:36:27 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -16,10 +16,767 @@
       <url>https://ppai.top/ai-guides/favicon.ico</url>
       <link>https://ppai.top/ai-guides/</link>
     </image>
+    <category>Agent</category>
     <category>SpringAI</category>
     <category>LLM</category>
     <category>AI</category>
-    <category>Agent</category>
+    <item>
+      <title>01.AI Agent Google白皮书</title>
+      <link>https://ppai.top/ai-guides/tutorial/ai-talking/01.OpenClaw%20%E7%88%86%E7%81%AB%E8%83%8C%E5%90%8E%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90.html</link>
+      <guid>https://ppai.top/ai-guides/tutorial/ai-talking/01.OpenClaw%20%E7%88%86%E7%81%AB%E8%83%8C%E5%90%8E%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">01.AI Agent Google白皮书</source>
+      <description>OpenClaw 爆火背后的原因分析 Author: 一灰 Date: 2026-03-10 Tags: [OpenClaw, AI-Agent, 开源, 技术趋势, 私有化部署] 1. 引言 2026年初，开源AI智能体项目 OpenClaw（网友昵称&amp;quot;龙虾&amp;quot;）以惊人的速度席卷全球科技圈。短短两个月内，GitHub Star 数突破25万，一举超越 React 和 Linux，成为 GitHub 历史上增长最快的开源项目。</description>
+      <category>Agent</category>
+      <pubDate>Thu, 06 Nov 2025 10:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> OpenClaw 爆火背后的原因分析</h1>
+<p><strong>Author</strong>: 一灰<br>
+<strong>Date</strong>: 2026-03-10<br>
+<strong>Tags</strong>: [OpenClaw, AI-Agent, 开源, 技术趋势, 私有化部署]</p>
+<h2> 1. 引言</h2>
+<p>2026年初，开源AI智能体项目 OpenClaw（网友昵称"龙虾"）以惊人的速度席卷全球科技圈。短短两个月内，GitHub Star 数突破25万，一举超越 React 和 Linux，成为 GitHub 历史上增长最快的开源项目。</p>
+<p>更令人瞩目的是，这股热潮已从技术极客圈扩散至普通大众：深圳腾讯大厦北广场排起近千人的长队等待免费安装，闲鱼平台上"代部署龙虾"的服务收费数百元仍供不应求，"你养虾了吗"成为AI圈新的问候语。</p>
+<figure><img src="https://imgbed.ppai.top/file/1773126124037_T01-1.jpg" alt="T01-1.jpg" tabindex="0" loading="lazy"><figcaption>T01-1.jpg</figcaption></figure>
+<p>本文将深入剖析 OpenClaw 爆火背后的技术逻辑、市场时机与社会心理因素，揭示这一现象级开源项目成功的深层原因。</p>
+<h2> 2. OpenClaw 是什么</h2>
+<h3> 2.1 项目起源</h3>
+<p>OpenClaw 由奥地利资深开发者 Peter Steinberger 创立。他14岁开始编程，曾创办服务全球超10亿台设备的 PDF 处理工具公司 PSPDFKit，2021年出售公司后经历了三年职业倦怠，直到2025年接触 Claude Code 才重新找回编程热情。</p>
+<p>2025年11月24日，Peter 仅用10天时间开发出 OpenClaw 的前身（最初名为 WhatsApp Relay，后更名为 Clawdbot），一个能帮他回消息、管日程的小工具。</p>
+<h3> 2.2 核心定位</h3>
+<p>与传统 AI 助手不同，OpenClaw 的核心定位是 <strong>"能真正干活的 AI Agent"</strong>：</p>
+<ul>
+<li><strong>从"对话"到"执行"</strong>：不仅回答问题，更能直接操作电脑、读写文件、控制浏览器、发送邮件、管理日历</li>
+<li><strong>24/7 主动交互</strong>：后台常驻、心跳监控、支持定时任务（cron）</li>
+<li><strong>完全自托管</strong>：可部署在个人电脑、家庭 NAS 或私有云服务器，数据完全自主可控</li>
+</ul>
+<h3> 2.3 技术架构</h3>
+<p>OpenClaw 采用**"微核+插件"架构**：</p>
+<ul>
+<li><strong>核心引擎</strong>：轻量级 Agent Loop，负责决策和调度</li>
+<li><strong>Skills 生态</strong>：社区已贡献超过5000个技能插件（ClawHub），涵盖数据分析、内容创作、办公自动化、智能家居等场景</li>
+<li><strong>模型兼容</strong>：支持 Claude、Kimi、MiniMax 等多种大模型接入</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1773126123956_T01-2.jpg" alt="T01-2.jpg" tabindex="0" loading="lazy"><figcaption>T01-2.jpg</figcaption></figure>
+<h2> 3. 爆火的五大深层原因</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773126122804_T01-3.jpg" alt="T01-3.jpg" tabindex="0" loading="lazy"><figcaption>T01-3.jpg</figcaption></figure>
+<h3> 3.1 隐私焦虑的集中爆发</h3>
+<p>2025-2026年，多起 AI 数据安全事件引发用户信任危机：某主流 AI 公司被曝用用户对话训练模型、语音助手后台持续录音、多起企业数据泄露涉及 AI 服务商。</p>
+<p>用户的隐私意识空前觉醒。根据 OpenClaw 官方调查，用户选择 OpenClaw 的前三大原因中，<strong>数据本地化占比高达68%</strong>。</p>
+<p>OpenClaw 的开源特性提供了完美的解决方案：</p>
+<ul>
+<li>代码透明，任何人可审查</li>
+<li>私有化部署，数据不出本地</li>
+<li>敏感操作有明确的权限控制</li>
+</ul>
+<p>正如一位 Discord 社区用户所言："我不是不信任 AI，我是不信任把数据交给陌生人。"</p>
+<h3> 3.2 AI 疲劳症的解药</h3>
+<p>"AI 很强，但用不起来"——这是当前许多用户的真实感受：</p>
+<table>
+<thead>
+<tr>
+<th>痛点</th>
+<th>传统 AI 产品</th>
+<th>OpenClaw 方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>功能分散</td>
+<td>每个平台单独登录、单独付费</td>
+<td>统一入口 + 自动化工作流</td>
+</tr>
+<tr>
+<td>操作门槛</td>
+<td>需要手动切换5个 App 完成工作</td>
+<td>一句话指令，自动执行完整流程</td>
+</tr>
+<tr>
+<td>订阅成本</td>
+<td>ChatGPT Plus $20/月 + 各类 SaaS 工具</td>
+<td>框架免费，API 按需付费，节省80%+</td>
+</tr>
+</tbody>
+</table>
+<p>OpenClaw 通过 <strong>"统一入口 + 自动化 + 技能扩展"</strong> 的组合，将碎片化 AI 能力整合为连贯的工作流。例如"每日新闻推送"任务，传统方式需30-40分钟，OpenClaw 仅需5分钟配置即可永久自动化。</p>
+<figure><img src="https://imgbed.ppai.top/file/1773126138250_T01-4.jpg" alt="T01-4.jpg" tabindex="0" loading="lazy"><figcaption>T01-4.jpg</figcaption></figure>
+<h3> 3.3 技能生态的飞轮效应</h3>
+<p>OpenClaw 的 Skills 市场（ClawHub）是其核心护城河。与手机应用商店不同，Skills 可直接被 AI 调用，无需人工操作。</p>
+<p>技能增长曲线呈现典型的飞轮效应：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>热门技能分类包括：热点监控（180+）、内容创作（320+）、数据分析（250+）、浏览器自动化（150+）、社交媒体管理（280+）、办公效率（400+）等。</p>
+<p>一位技能开发者分享："我写了一个 B 站数据分析技能，上架3天有500+安装，有用户反馈说帮他们节省了每周2小时的数据统计时间。"</p>
+<p><strong>更多技能 → 吸引更多用户 → 更多开发者贡献 → 更多技能</strong>，这一飞轮一旦启动便难以逆转。</p>
+<h3> 3.4 成本优势的降维打击</h3>
+<p>在经济下行周期，成本优势就是核心竞争力。对比传统方案与 OpenClaw 方案的年费：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>传统方案</th>
+<th>OpenClaw 方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI 订阅</td>
+<td>ChatGPT Plus $240 + 其他工具 ¥3000+</td>
+<td>框架免费，API ¥600-1200</td>
+</tr>
+<tr>
+<td>SaaS 工具</td>
+<td>各类自动化工具 ¥2400+</td>
+<td>Skills 大部分免费</td>
+</tr>
+<tr>
+<td><strong>总计</strong></td>
+<td><strong>¥6000+</strong></td>
+<td><strong>¥0-1200</strong></td>
+</tr>
+<tr>
+<td><strong>节省</strong></td>
+<td>-</td>
+<td><strong>80%+</strong></td>
+</tr>
+</tbody>
+</table>
+<p>一位企业用户评价："我们团队10个人，之前买各种 SaaS 工具花了3万/年，换成 OpenClaw 后成本降到5000/年，功能还更强了。"</p>
+<h3> 3.5 开源社区的信任红利</h3>
+<p>OpenClaw 的开源属性构建了独特的信任机制：</p>
+<table>
+<thead>
+<tr>
+<th>风险维度</th>
+<th>闭源产品</th>
+<th>OpenClaw</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公司倒闭</td>
+<td>服务终止</td>
+<td>社区可维护</td>
+</tr>
+<tr>
+<td>政策变更</td>
+<td>用户被动接受</td>
+<td>可 fork 自部署</td>
+</tr>
+<tr>
+<td>安全漏洞</td>
+<td>依赖厂商修复</td>
+<td>社区共同修复</td>
+</tr>
+<tr>
+<td>功能需求</td>
+<td>等排期</td>
+<td>自己提 PR</td>
+</tr>
+</tbody>
+</table>
+<p>一位安全研究员评价："我审查过 OpenClaw 的代码，架构设计很清晰，敏感操作都有明确的权限控制，比很多闭源产品透明多了。"</p>
+<p>开源不只是情怀，更是<strong>信任基础设施</strong>。</p>
+<h2> 4. 传播与破圈的关键节点</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773126120411_T01-5.jpg" alt="T01-5.jpg" tabindex="0" loading="lazy"><figcaption>T01-5.jpg</figcaption></figure>
+<h3> 4.1 技术节点的引爆</h3>
+<p>2026年1月24日，OpenClaw 登上 Hacker News 首页，成为关键转折点：</p>
+<ul>
+<li>72小时内，GitHub Star 从不足1万涨到6万</li>
+<li>一周后突破18万</li>
+<li>4个月后达到25万，超越 Linux 和 React</li>
+</ul>
+<p>这一爆发精准踩中了<strong>AI Agent 从对话到执行的范式转移</strong>——阶跃星辰 CTO 朱亦博评价："AI Agent 终于从少数垂类走向通用，这意味着比之前广阔得多的 AI 落地场景。"</p>
+<h3> 4.2 云厂商的推波助澜</h3>
+<p>国内云厂商的快速响应极大降低了使用门槛：</p>
+<ul>
+<li><strong>阿里云</strong>：推出首月7.9元起的 Coding Plan Lite 套餐</li>
+<li><strong>腾讯云</strong>：深圳大厦免费安装活动，近千人排队</li>
+<li><strong>火山引擎</strong>：定价9.9元起，Token 消耗爆发式增长</li>
+</ul>
+<p>云厂商的竞争本质是<strong>锁定算力消耗</strong>——一个24小时运行的 AI 助手意味着稳定的云服务消费。</p>
+<h3> 4.3 "养虾"文化的病毒式传播</h3>
+<p>OpenClaw 的红色龙虾图标极具辨识度，中国网友创造了"养虾人"文化：</p>
+<ul>
+<li><strong>代部署产业链</strong>：闲鱼远程安装100-200元，本地上门400-500元</li>
+<li><strong>社交货币</strong>："你养虾了吗"成为身份认同标签</li>
+<li><strong>教育焦虑</strong>：甚至有初一学生家长购买服务，担心孩子"输在 AI 起跑线"</li>
+</ul>
+<p>这种文化现象将技术产品转化为<strong>社交话题和生活方式</strong>。</p>
+<h2> 5. 隐忧与反思</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773126118842_T01-6.jpg" alt="T01-6.jpg" tabindex="0" loading="lazy"><figcaption>T01-6.jpg</figcaption></figure>
+<h3> 5.1 安全风险被低估</h3>
+<p>OpenClaw 需要系统级权限才能执行操作，这带来严重安全隐患：</p>
+<ul>
+<li>Reddit 用户评价："它之所以强大，是因为没有安全措施，可以做任何事情"</li>
+<li>安全研究报告显示，商业扫描器对91%的已知 OpenClaw 威胁失效</li>
+<li>即便运行在沙盒中，也无法完全消除对外部系统的攻击面</li>
+</ul>
+<p><strong>"全权限放开"是体验好的核心原因，也是最大的风险。</strong></p>
+<h3> 5.2 注意力经济的泡沫</h3>
+<p>GitHub Star 已超越单纯的技术背书，成为<strong>注意力经济的货币</strong>：</p>
+<ul>
+<li>点星成本极低，介于收藏、点赞与已读之间</li>
+<li>React 用13年积累24万星，OpenClaw 仅用100天</li>
+<li>真实使用率与 Star 数之间存在巨大鸿沟</li>
+</ul>
+<p>我们需要区分<strong>社区曝光度</strong>与<strong>技术成熟度</strong>。</p>
+<h3> 5.3 产业链的可持续性</h3>
+<p>"卖铲人"生意火爆背后存在隐忧：</p>
+<ul>
+<li>代部署服务的技术门槛将被一键部署工具抹平</li>
+<li>热度来得快去得也快，Manus、DeepSeek 的前车之鉴</li>
+<li>真正的价值在于<strong>持续运营能力</strong>，而非一次性安装</li>
+</ul>
+<h2> 6. 结论</h2>
+<p>OpenClaw 的爆火不是偶然，而是<strong>技术成熟度、隐私焦虑、成本压力、开源信任、传播势能</strong>多重因素叠加的结果。</p>
+<p>它解决的不是"有没有 AI 助手"的问题，而是 <strong>"AI 助手属于谁"</strong> 的问题——将控制权从大公司交还给用户。</p>
+<p>这可能是 AI 助手领域的"Linux 时刻"。正如 Linux 改变了服务器市场，OpenClaw 可能改变 AI 助手市场的权力结构。</p>
+<p>当然，它还有很长的路要走：图形界面不够友好、移动端支持缺失、企业级功能不足、安全风险待解。但<strong>方向是对的，而趋势一旦形成，就很难逆转</strong>。</p>
+<p>对于开发者，OpenClaw 代表了 Agent 架构的新范式；对于企业，它是降本增效的新工具；对于普通用户，它是"数字员工"的初次体验。</p>
+<p>而对于整个 AI 行业，OpenClaw 证明了：<strong>开源、私有化、可扩展的 Agent 架构，可能是下一代 AI 操作系统的重要形态</strong>。</p>
+<hr>
+<p><strong>参考资源</strong>：</p>
+<ul>
+<li>OpenClaw GitHub: <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener noreferrer">https://github.com/openclaw/openclaw</a></li>
+<li>官方文档: <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer">https://docs.openclaw.ai</a></li>
+<li>技能市场: <a href="https://clawhub.com" target="_blank" rel="noopener noreferrer">https://clawhub.com</a></li>
+</ul>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1773126124037_T01-1.jpg" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>AI杂谈</title>
+      <link>https://ppai.top/ai-guides/tutorial/ai-talking/</link>
+      <guid>https://ppai.top/ai-guides/tutorial/ai-talking/</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">AI杂谈</source>
+      <pubDate>Fri, 13 Mar 2026 06:35:01 GMT</pubDate>
+    </item>
+    <item>
+      <title>03.Spring AI Alibaba Skill 注册机制详解与实战指南</title>
+      <link>https://ppai.top/ai-guides/ai-dev/ALiAI/L03.Spring%20AI%20Alibaba%20Skill%20%E6%B3%A8%E5%86%8C%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3%E4%B8%8E%E5%AE%9E%E6%88%98%E6%8C%87%E5%8D%97.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/L03.Spring%20AI%20Alibaba%20Skill%20%E6%B3%A8%E5%86%8C%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3%E4%B8%8E%E5%AE%9E%E6%88%98%E6%8C%87%E5%8D%97.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">03.Spring AI Alibaba Skill 注册机制详解与实战指南</source>
+      <description>Spring AI Alibaba Skill 注册机制详解与实战指南 1. 引言 在构建基于大语言模型的智能 Agent 应用时，如何有效地管理和组织 Agent 的能力是一个关键挑战。Spring AI Alibaba 提供了一套完整的 Skill（技能）注册和使用机制，使得我们可以模块化地管理 Agent 的各种能力，并支持渐进式的能力披露。本文将深入解析这套机制的原理和实际使用方法。 你将学到什么 Spring AI Alibaba 中 Skill 的概念和作用 如何定义和注册 Skill SkillsAgentHook 的工作原理 如何将工具与 Skill 绑定实现渐进式披露 实际项目中的最佳实践</description>
+      <category>SpringAI</category>
+      <pubDate>Wed, 11 Mar 2026 12:15:07 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> Spring AI Alibaba Skill 注册机制详解与实战指南</h1>
+<h2> 1. 引言</h2>
+<p>在构建基于大语言模型的智能 Agent 应用时，如何有效地管理和组织 Agent 的能力是一个关键挑战。Spring AI Alibaba 提供了一套完整的 Skill（技能）注册和使用机制，使得我们可以模块化地管理 Agent 的各种能力，并支持渐进式的能力披露。本文将深入解析这套机制的原理和实际使用方法。</p>
+<h3> 你将学到什么</h3>
+<ul>
+<li>Spring AI Alibaba 中 Skill 的概念和作用</li>
+<li>如何定义和注册 Skill</li>
+<li>SkillsAgentHook 的工作原理</li>
+<li>如何将工具与 Skill 绑定实现渐进式披露</li>
+<li>实际项目中的最佳实践</li>
+</ul>
+<h2> 2. 核心概念解析</h2>
+<h3> 2.1 什么是 Skill？</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773200914172_L03-1.jpg" alt="L03-1.jpg" tabindex="0" loading="lazy"><figcaption>L03-1.jpg</figcaption></figure>
+<p>在 Spring AI Alibaba 的语境中，**Skill（技能）**是指 Agent 可以执行的特定任务或能力的封装。一个 Skill 通常包含：</p>
+<ul>
+<li><strong>技能描述文件（<a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a>）</strong>：定义技能的名称、描述、适用场景等元信息</li>
+<li><strong>执行逻辑</strong>：具体的业务实现代码</li>
+<li><strong>工具集合</strong>：技能执行过程中可能用到的工具（可选）</li>
+</ul>
+<h3> 2.2 为什么需要 Skill 注册机制？</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773200913523_L03-2.jpg" alt="L03-2.jpg" tabindex="0" loading="lazy"><figcaption>L03-2.jpg</figcaption></figure>
+<p>传统的 Agent 实现方式往往将所有工具和能力一次性暴露给大模型，这会导致：</p>
+<ol>
+<li><strong>Token 浪费</strong>：大量工具描述占用上下文窗口</li>
+<li><strong>决策困难</strong>：过多的选择可能让模型难以做出最优决策</li>
+<li><strong>维护困难</strong>：缺乏模块化的组织结构</li>
+</ol>
+<p>通过 Skill 注册机制，我们可以实现：</p>
+<ul>
+<li>✅ <strong>按需加载</strong>：只在需要时才暴露具体工具</li>
+<li>✅ <strong>模块化管理</strong>：每个 Skill 独立维护和测试</li>
+<li>✅ <strong>渐进式披露</strong>：根据对话进展逐步展示能力</li>
+</ul>
+<h2> 3. 项目结构说明</h2>
+<p>让我们通过一个实际项目来理解 Skill 的使用：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 4. 技能定义文件详解</h2>
+<h3> 4.1 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 文件结构</h3>
+<p>每个技能都需要一个 <code>SKILL.md</code> 文件来定义其元数据。以 <code>modern_poetry</code> 为例：</p>
+<div class="language-markdown line-numbers-mode" data-ext="md"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.2 关键字段说明</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>技能的唯一标识符</td>
+<td><code>modern_poetry</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>技能的详细描述</td>
+<td>"创作优美的现代诗歌..."</td>
+</tr>
+<tr>
+<td><code>allowed-tools</code></td>
+<td>允许使用的工具列表</td>
+<td><code>[Read, Write, Shell]</code></td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>技能标签，便于分类检索</td>
+<td><code>[poetry, creative-writing]</code></td>
+</tr>
+</tbody>
+</table>
+<h2> 5. 技能注册与使用</h2>
+<h3> 5.1 基础配置</h3>
+<p>首先配置必要的依赖：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.2 应用配置</h3>
+<p>在 <code>application.yml</code> 中配置模型信息：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.3 技能注册代码实现</h3>
+<h4> 步骤一：创建 SkillRegistry</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>说明</strong>：</p>
+<ul>
+<li><code>ClasspathSkillRegistry</code>：适合打包在 JAR 中的技能</li>
+<li><code>FileSystemSkillRegistry</code>：适合动态添加/修改的技能场景</li>
+</ul>
+<h4> 步骤二：创建 SkillsAgentHook</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><figure><img src="https://imgbed.ppai.top/file/1773200914900_L03-3.jpg" alt="L03-3.jpg" tabindex="0" loading="lazy"><figcaption>L03-3.jpg</figcaption></figure>
+<p><strong>工作原理</strong>：</p>
+<ol>
+<li><code>SkillsAgentHook</code> 会自动向 Agent 注册一个 <code>read_skill</code> 工具</li>
+<li>该工具会将所有可用技能的元数据（名称、描述）注入到系统提示中</li>
+<li>当模型调用 <code>read_skill(skill_name)</code> 时，会返回对应技能的完整内容</li>
+<li>技能被激活后，其关联的工具也会在后续对话中可用</li>
+</ol>
+<h4> 步骤三：添加其他工具 Hook</h4>
+<p>如果技能需要执行 shell 命令或其他操作，需要注册相应的工具：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 步骤四：构建 ReactAgent</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 步骤五：调用 Agent 执行任务</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 6. 进阶用法：工具与技能绑定</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773200920717_L03-4.jpg" alt="L03-4.jpg" tabindex="0" loading="lazy"><figcaption>L03-4.jpg</figcaption></figure>
+<h3> 6.1 渐进式工具披露</h3>
+<p>通过将工具与特定 Skill 绑定，可以实现更精细的控制：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>工作流程</strong>：</p>
+<ol>
+<li>初始状态：只暴露 <code>read_skill</code> 工具和技能列表</li>
+<li>模型调用：<code>read_skill("technical-writing")</code></li>
+<li>系统响应：返回 <code>technical-writing</code> 技能的完整描述</li>
+<li>工具激活：同时暴露与该技能绑定的 <code>webFetchTool</code></li>
+<li>后续对话：模型可以使用已激活的工具完成写作任务</li>
+</ol>
+<h3> 6.2 优势分析</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>传统方式</th>
+<th>Skill 绑定方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token 消耗</td>
+<td>所有工具描述</td>
+<td>仅激活技能的工具</td>
+</tr>
+<tr>
+<td>决策效率</td>
+<td>选择过多</td>
+<td>聚焦相关工具</td>
+</tr>
+<tr>
+<td>可维护性</td>
+<td>分散</td>
+<td>模块化组织</td>
+</tr>
+<tr>
+<td>扩展性</td>
+<td>困难</td>
+<td>容易</td>
+</tr>
+</tbody>
+</table>
+<h2> 7. 执行流程图解</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773208979108_L03-5.jpg" alt="L03-5.jpg" tabindex="0" loading="lazy"><figcaption>L03-5.jpg</figcaption></figure>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 8. 最佳实践建议</h2>
+<h3> 8.1 技能设计原则</h3>
+<ol>
+<li>
+<p><strong>单一职责</strong>：每个 Skill 专注于一个特定领域</p>
+<ul>
+<li>✅ 好：<code>blog_creator</code>（博客创作）</li>
+<li>❌ 差：<code>everything_helper</code>（什么都做）</li>
+</ul>
+</li>
+<li>
+<p><strong>清晰描述</strong>：在 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 中明确说明使用场景</p>
+<div class="language-markdown line-numbers-mode" data-ext="md"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>合理分组工具</strong>：将相关工具绑定到同一技能</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
+</ol>
+<h3> 8.2 性能优化</h3>
+<ol>
+<li>
+<p><strong>使用 MemorySaver</strong>：保持对话上下文</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>启用日志</strong>：便于调试和监控</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>合理设置模型</strong>：根据任务复杂度选择</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
+</ol>
+<h3> 8.3 安全考虑</h3>
+<ol>
+<li>
+<p><strong>限制 Shell 命令范围</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>审查技能内容</strong>：确保 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 不包含恶意指令</p>
+</li>
+<li>
+<p><strong>API Key 管理</strong>：使用环境变量</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+</ol>
+<h2> 9. 常见问题解答</h2>
+<h3> Q1: 技能文件放在哪里？</h3>
+<p><strong>A</strong>: 有两种方式：</p>
+<ul>
+<li><strong>Classpath</strong>：<code>src/main/resources/skills/</code>（打包在 JAR 中）</li>
+<li><strong>文件系统</strong>：任意目录（支持热更新）</li>
+</ul>
+<h3> Q2: 如何调试技能调用过程？</h3>
+<p><strong>A</strong>: 启用日志记录：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>查看控制台输出，了解模型的思考过程和工具调用详情。</p>
+<h3> Q3: 多个技能之间如何协作？</h3>
+<p><strong>A</strong>: 模型可以依次调用多个技能：</p>
+<ol>
+<li>先调用 <code>read_skill("data-analysis")</code> 分析数据</li>
+<li>再调用 <code>read_skill("blog_creator")</code> 生成报告</li>
+</ol>
+<h3> Q4: 如何自定义技能的加载逻辑？</h3>
+<p><strong>A</strong>: 实现自己的 <code>SkillRegistry</code>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 10. 总结</h2>
+<p>Spring AI Alibaba 的 Skill 注册机制提供了一套优雅的方式来管理和使用 Agent 的能力。通过本文的学习，你应该掌握了：</p>
+<ol>
+<li>✅ Skill 的概念和价值</li>
+<li>✅ 如何定义和注册 Skill</li>
+<li>✅ SkillsAgentHook 的工作原理</li>
+<li>✅ 工具与技能绑定的渐进式披露</li>
+<li>✅ 实际应用中的最佳实践</li>
+</ol>
+<h3> 下一步学习建议</h3>
+<ul>
+<li>尝试创建自己的 Skill</li>
+<li>实验不同的工具组合</li>
+<li>探索更复杂的 Agent 编排模式</li>
+<li>参考官方文档了解更多高级特性</li>
+</ul>
+<h2> 参考资料</h2>
+<ol>
+<li><a href="https://java2ai.com/docs/frameworks/agent-framework/tutorials/skills" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 官方文档</a></li>
+<li>[ReAct Agent 思考框架详解](<a href="https://www.ppai.top/ai-guides/tutorial/hello-agent/03.Agent" target="_blank" rel="noopener noreferrer">https://www.ppai.top/ai-guides/tutorial/hello-agent/03.Agent</a> 思考框架-ReAct.html)</li>
+<li><a href="https://github.com/liuyueyi/spring-ai-demo/tree/main/ali/L03-skill-creator" target="_blank" rel="noopener noreferrer">项目源码：liuyueyi/spring-ai-demo</a></li>
+</ol>
+<p>零基础入门：</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/qCn8x2XO2shA8MheYbHq0w" target="_blank" rel="noopener noreferrer">LLM 应用开发是什么：零基础也可以读懂的科普文(极简版)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/2GXBNOUq3jlysipftz8TpA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：序-为什么你“会用 LLM”，但做不出复杂应用？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/v-z6EHY300ElOxdGPdzc0w" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第一章 LLM到底在做什么？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/t_BuAW9i0npcaJdua3Am2Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第二章 模型不是重点，参数才是你真正的控制面板</a></li>
+<li><a href="https://mp.weixin.qq.com/s/vzt0bGwcfnASOiBa0Kc7VQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第三章 为什么我的Prompt表现很糟？</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Nk-N34TLJVCTI5F4k5rGaQ" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第四章 Prompt 的工程化结构设计</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ZQbztqBq7_PzynG06N4-mg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第五章 从 Prompt 到 Prompt 模板与工程治理</a></li>
+<li><a href="https://mp.weixin.qq.com/s/nnKspRO87xbrn4-LBV3RNA" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第六章 上下文窗口的真实边界</a></li>
+<li><a href="https://mp.weixin.qq.com/s/_5D2tF6CPnafj5mlmlwLNw" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第七章 从 “堆上下文” 到 “管理上下文”</a></li>
+<li><a href="https://mp.weixin.qq.com/s/z5qaLtjChsvjhWNs8Nw05Q" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第八章 记忆策略的工程化选择</a></li>
+<li><a href="https://mp.weixin.qq.com/s/MFvE8ahSyIhMZIFeSI91kg" target="_blank" rel="noopener noreferrer">大模型应用开发系列教程：第九章 上下文工程在企业知识库助手中的落地</a></li>
+</ul>
+<p>实战</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/96rHyp_gBUgmA2dhSbzNww" target="_blank" rel="noopener noreferrer">实战 | 两百行实现一个自然语言地址提取智能体</a></li>
+<li><a href="https://mp.weixin.qq.com/s/SnXdTB6tYqAzG7HgbnTSAQ" target="_blank" rel="noopener noreferrer">实战 | 基于SpringAI与大模型的零配置发票智能提取架构</a></li>
+<li><a href="https://mp.weixin.qq.com/s/NHqLJbos-_nrxNNmhg7IBQ" target="_blank" rel="noopener noreferrer">实战 | 零基础搭建知识库问答机器人：基于SpringAI+RAG的完整实现</a></li>
+<li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
+<li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
+<li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+<li><a href="https://mp.weixin.qq.com/s/qF0RfLts-fuMzv-uJZnBig?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">实战干货！Spring AI 集成语音识别，实现实时翻译机器人的完整指南</a></li>
+<li><a href="https://mp.weixin.qq.com/s/mJIibMdAFSDgXZBsM3tuPw?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">深入理解 ReAct 模式：基于Spring AI从0到1实现一个ReAct Agent</a></li>
+<li><a href="https://mp.weixin.qq.com/s/TbTnpPkVPY_bTts_l8ltGQ?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">Spring AI工具调用如何对接真实业务？从自动到手动控制的完整链路剖析</a></li>
+<li><a href="https://mp.weixin.qq.com/s/U6ua-dpkVZTYT1n5JXiYDg?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">告别纯文本聊天：基于Spring AI，打造支持富UI的流式对话系统</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Kr-Va-TOG2uYPlWTW59WAQ?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">拒绝「笨拙」的 AI 对话！用 SpringAI + 自定义协议实现真正的智能交互</a></li>
+<li><a href="https://mp.weixin.qq.com/s/454LmLMAVDuZfi6t-DgSqg?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">从自然语言到SQL，再加一道人工防线：Spring AI Alibaba 实战</a></li>
+<li><a href="https://mp.weixin.qq.com/s/TfTfQx1e661s6-cgVP8lwg" target="_blank" rel="noopener noreferrer">从零掌握 Spring AI Alibaba Skill：定义、注册与渐进式披露</a></li>
+</ul>
+<hr>
+<p><strong>作者</strong>：一灰<br>
+<strong>创建日期</strong>：2026-03-11<br>
+<strong>最后更新</strong>：2026-03-11<br>
+<strong>版本</strong>：v1.0</p>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1773200914172_L03-1.jpg" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</title>
+      <link>https://ppai.top/ai-guides/ai-dev/ALiAI/L04.Spring%20AI%20Alibaba%20%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%AE%9E%E7%8E%B0%E5%BF%AB%E9%80%92%E4%B8%8B%E5%8D%95%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%8A%A9%E6%89%8B.html</link>
+      <guid>https://ppai.top/ai-guides/ai-dev/ALiAI/L04.Spring%20AI%20Alibaba%20%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%AE%9E%E7%8E%B0%E5%BF%AB%E9%80%92%E4%B8%8B%E5%8D%95%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%8A%A9%E6%89%8B.html</guid>
+      <source url="https://ppai.top/ai-guides/rss.xml">Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</source>
+      <description>Spring AI Alibaba 实战：从零实现快递下单多轮对话助手 Author: [一灰] Date: 2026-03-12 Tags: [Spring AI, Alibaba, 多轮对话，Agent, 工具调用] 1. 引言 在人工智能应用的开发中，多轮对话交互是一个常见且重要的场景。现在市面上的AI应用，有不少都可以直接在对话框中，执行一些交互动作，比如“帮我买杯奶茶”，作为一个“古老”的研发人员，自然会有些好奇，这个是怎么实现的呢？</description>
+      <pubDate>Fri, 13 Mar 2026 06:32:20 GMT</pubDate>
+      <content:encoded><![CDATA[<h1> Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</h1>
+<p><strong>Author</strong>: [一灰]<br>
+<strong>Date</strong>: 2026-03-12<br>
+<strong>Tags</strong>: [Spring AI, Alibaba, 多轮对话，Agent, 工具调用]</p>
+<h2> 1. 引言</h2>
+<p>在人工智能应用的开发中，多轮对话交互是一个常见且重要的场景。现在市面上的AI应用，有不少都可以直接在对话框中，执行一些交互动作，比如“帮我买杯奶茶”，作为一个“古老”的研发人员，自然会有些好奇，这个是怎么实现的呢？</p>
+<p>怎么就从调用大模型的API接口，进化到可以直接通过多轮对话，完成下单的操作呢？</p>
+<p>比如用户想要通过对话完成快递下单，需要依次提供收件人信息、发件人信息、物品信息等。</p>
+<p>如何优雅地管理这个分步骤的交互流程？又如何讲这些分步骤的过程数据，最终汇总一个完整的下单请求体呢？</p>
+<p>本文将介绍如何使用 <strong>Spring AI Alibaba</strong> 框架，结合 <strong>React Agent</strong> 和 <strong>Model Hook</strong> 机制，实现一个基于对话框进行多次问答，支持分步流程控制的快递下单助手。</p>
+<p>通过本文的学习，你将掌握如何基于大模型，如何将一个复杂的业务场景，拆解为一步一步的小任务，然后通过多轮对话，引导用户逐一完成任务，并最终实现业务场景的功能覆盖</p>
+<figure><img src="https://imgbed.ppai.top/file/1773369770594_L04-1.jpg" alt="L04-1.jpg" tabindex="0" loading="lazy"><figcaption>L04-1.jpg</figcaption></figure>
+<ul>
+<li>Spring AI Alibaba 的基础使用方法</li>
+<li>React Agent 的创建与配置</li>
+<li>Model Hook 机制实现分步流程控制</li>
+<li>工具调用（Tool Calling）的最佳实践</li>
+<li>对话上下文的持久化管理</li>
+</ul>
+<h2> 2. 项目背景</h2>
+<h3> 2.1 业务场景</h3>
+<p>快递下单是一个典型的多轮对话场景，要想完成寄件工作，我们需要手机收件人、发件人信息、需要寄送的物品信息等，因此我们可以创建一个多轮对话，依次进行收件人信息、发件人信息、物品信息收集，最后确认下单并创建订单。</p>
+<ol>
+<li><strong>第一步</strong>：收集收件人信息（姓名、电话、地址）</li>
+<li><strong>第二步</strong>：收集发件人信息（姓名、电话、地址）</li>
+<li><strong>第三步</strong>：收集物品信息（类型、数量、重量等）</li>
+<li><strong>第四步</strong>：确认订单并创建</li>
+</ol>
+<h3> 2.2 技术挑战</h3>
+<p>实现这个场景，作为一个传统的古老java开发，很容易想到的是有下面这些问题</p>
+<ul>
+<li><strong>状态管理</strong>：如何记录当前收集到哪一步的信息？</li>
+<li><strong>流程控制</strong>：如何确保用户按顺序提供信息，不能跳跃？</li>
+<li><strong>上下文记忆</strong>：如何在多轮对话中记住之前收集的信息？</li>
+<li><strong>工具调用</strong>：如何让 AI 在合适的时机调用正确的工具？</li>
+</ul>
+<h3> 2.3 解决方案概述</h3>
+<p>本项目使用 Spring AI Alibaba 提供的核心能力：</p>
+<figure><img src="https://imgbed.ppai.top/file/1773370040680_L04-6.jpg" alt="L04-6.jpg" tabindex="0" loading="lazy"><figcaption>L04-6.jpg</figcaption></figure>
+<h2> 3. 环境准备</h2>
+<h3> 3.1 技术栈</h3>
+<ul>
+<li><strong>JDK</strong>: 17+</li>
+<li><strong>Spring Boot</strong>: 3.x</li>
+<li><strong>Spring AI</strong>: 1.1.2</li>
+<li><strong>Spring AI Alibaba</strong>: 1.1.2.1</li>
+<li><strong>Maven</strong>: 依赖管理</li>
+<li><strong>Thymeleaf</strong>: Web 界面展示</li>
+</ul>
+<h3> 3.2 创建项目</h3>
+<p>首先创建 Maven 项目，在 <code>pom.xml</code> 中添加必要的依赖：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.3 配置文件</h3>
+<p>在 <code>application.yml</code> 中配置模型连接信息：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>说明</strong>：</p>
+<ul>
+<li>使用 SiliconFlow 平台提供的通义千问模型，使用OpenAI接口风格进行大模型访问</li>
+<li>API Key 通过环境变量注入，保证安全性</li>
+<li>选择支持 Function Calling 的模型版本</li>
+</ul>
+<h2> 4. 核心实现</h2>
+<h3> 4.1 整体架构设计</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773369777796_L04-2.jpg" alt="infographic-project-structure" tabindex="0" loading="lazy"><figcaption>infographic-project-structure</figcaption></figure>
+<p>项目的核心组件包括：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.2 定义状态常量</h3>
+<p>首先定义快递下单流程的状态常量，用于管理对话进度：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>设计要点</strong>：</p>
+<ul>
+<li>使用常量管理类统一维护所有状态键和步骤标识</li>
+<li>当前阶段索引（KEY_ORDER_STEP、KEY_CURRENT_STEP）用于记录当前所处的流程阶段与整体的进度情况</li>
+<li>状态键（KEY_RECEIVE_INFO、KEY_SEND_INFO、KEY_EXPRESS_INFO）用于在对话上下文中存储和检索数据</li>
+<li>步骤标识（STEP_RECEIVE_INFO_COLLECTOR、STEP_SEND_INFO_COLLECTOR、STEP_EXPRESS_INFO_COLLECTOR、STEP_ORDER_CONFIRMATION）用于标识当前所处的流程阶段</li>
+</ul>
+<p>这里需要重点介绍一下，这几个常量的设计</p>
+<p><strong>point1: 执行阶段</strong></p>
+<p>快递下单的流程是一个多轮对话的过程，那么就必然需要有一个能识别当前进行到哪一个阶段的方式，怎么做呢？</p>
+<p>一个朴素的想法就是从第一步开始，每执行一步就往后面+1 ——&gt; 所以就有了 <code>KEY_ORDER_STEP</code>，用于记录当前的进度（1/2/3/4）</p>
+<p>实际上有这个进度就够了，但是当我们想知道当前的执行进度时，发现这个数字不太直观，所以干脆就把当前的阶段打印出来好了 ——&gt; 所以就有了 <code>KEY_CURRENT_STEP</code>，用于记录当前所处的流程阶段</p>
+<p><strong>point2: 数据共享</strong></p>
+<p>所以整个下单被我们显示的拆分成了多个阶段，但是每个阶段的数据都会用于最后的订单创建，那么怎么才能共享数据呢？</p>
+<p>这里借助的是 <code>Spring AI alibaba</code> 框架 <code>Graph</code> 中的 <code>state</code> 来实现数据共享的，我们将每个阶段的数据保存到上下文中，对应的每个阶段的数据存储设计一个索引，方便后续的查询和覆盖</p>
+<p>所以就有了 <code>KEY_RECEIVE_INFO</code>、<code>KEY_SEND_INFO</code>、<code>KEY_EXPRESS_INFO</code> 分别用于存储 收件人信息、发件人信息、快递物品信息</p>
+<p><strong>point3: 步骤标识</strong></p>
+<p>步骤标识用于标识当前所处的流程阶段，这里定义了 4 个步骤：</p>
+<ul>
+<li>收件人信息收集: <code>STEP_RECEIVE_INFO_COLLECTOR</code></li>
+<li>发件人信息收集: <code>STEP_SEND_INFO_COLLECTOR</code></li>
+<li>快递物品信息收集: <code>STEP_EXPRESS_INFO_COLLECTOR</code></li>
+<li>订单确认与创建: <code>STEP_ORDER_CONFIRMATION</code></li>
+</ul>
+<h3> 4.3 实现工具类</h3>
+<p>工具类负责具体的业务逻辑处理，包括信息的保存和订单的创建，当然这个demo主要是以模拟的方案进行提供（所以用户传的啥，我们存储啥）</p>
+<blockquote>
+<p>在实际的应用场景中，可以借助大模型的能力，将输入的自然语言进行结构化输出，在上下文中直接存储结构化的解析结果</p>
+</blockquote>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键设计</strong>：</p>
+<ol>
+<li><strong>工具注解</strong>：使用 <code>@Tool</code> 注解标记可被 AI 调用的方法 （这个是SpringAI提供的工具能力）</li>
+<li><strong>参数描述</strong>：使用 <code>@ToolParam</code> 详细描述参数用途，帮助 AI 理解</li>
+<li><strong>上下文管理</strong>：通过 <code>ToolContext</code> 在对话过程中传递和保存状态</li>
+<li><strong>流程推进</strong>：每个工具执行完成后自动更新步骤状态</li>
+</ol>
+<blockquote>
+<p>重点需要注意的是，上下文中数据的更新，需要借助 <code>ToolContextHelper.getStateForUpdate(toolContext)</code> 来做增量覆盖，不要直接拿上下文的Map，直接对map的数据的覆盖不会改变原数据。</p>
+<p>此外，当订单创建成功之后，需要将上下文数据重置，避免数据污染。但是目前对alibaba的框架学习还比较浅陋，没有找到合适的重置上下文策略，这里就实现了一个不优雅的置空操作🤣</p>
+</blockquote>
+<h3> 4.4 实现步骤配置拦截器</h3>
+<p>这是整个设计的核心，通过拦截器机制实现分步流程控制：</p>
+<figure><img src="https://imgbed.ppai.top/file/1773369771690_L04-3.jpg" alt="flowchart-step-transition" tabindex="0" loading="lazy"><figcaption>flowchart-step-transition</figcaption></figure>
+<p><strong>关键设计</strong>：</p>
+<p>在这里，我们借助框架的按需注册方式，结合当前的步骤，给大模型推荐最适合的工具，同样的，不同的步骤、执行的目的也不尽相同，所以为了更好的控制大模型的表现情况，每个阶段我们设置了不同的系统提示词</p>
+<p>基于上面这个目的，所以实现了一个 <code>StepConfig</code> 类，用于存储不同阶段的相关信息；仔细看下面的实现，你会发现这里还有一个 <code>requiredKeys</code> 属性，它是干嘛的呢？</p>
+<p>因为我们严格制定了执行步骤，为了简化整体的流程，我们希望是按照顺序进行执行，当前面的步骤没有执行完毕时，不要跳着执行后面的步骤，所以这里就定义了一个 <code>requiredKeys</code> 属性，用于记录当前步骤所依赖的前置动作，当前置动作还没有执行时，那就拦截掉，让用户先完成前置的任务</p>
+<p><strong>关键实现</strong>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心功能</strong>：</p>
+<ol>
+<li><strong>动态系统提示词</strong>：根据当前步骤注入不同的系统提示词</li>
+<li><strong>工具过滤</strong>：只暴露当前步骤需要的工具给 AI</li>
+<li><strong>前置条件检查</strong>：确保流程按顺序执行，不能跳跃</li>
+</ol>
+<h3> 4.5 实现流程控制 Hook</h3>
+<p>Hook 是连接各个组件的桥梁，定义每个步骤的具体配置：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>设计亮点</strong>：</p>
+<ol>
+<li><strong>提示词工程</strong>：为每个步骤精心设计系统提示词，明确 AI 的职责</li>
+<li><strong>工具隔离</strong>：每个步骤只能访问特定的工具，避免误用</li>
+<li><strong>流程约束</strong>：通过前置条件检查确保流程顺序执行</li>
+</ol>
+<h3> 4.6 创建 React Agent</h3>
+<p>最后，将所有组件组装成一个完整的 Agent：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点</strong>：</p>
+<ol>
+<li><strong>Agent Builder 模式</strong>：使用流式 API 构建 Agent，代码清晰易读</li>
+<li><strong>MemorySaver</strong>：提供对话记忆的持久化能力</li>
+<li><strong>Hooks 机制</strong>：注入自定义的流程控制逻辑</li>
+</ol>
+<h2> 5. Web 界面集成</h2>
+<p>为了让用户可以实际使用这个应用，我们提供了一个简单的 Web 聊天界面。</p>
+<h3> 5.1 REST 控制器</h3>
+<p>实现 RESTful API 接口处理聊天请求：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.2 HTML 聊天界面</h3>
+<p>提供一个便于交互的聊天界面（完整代码见 <code>src/main/resources/static/express-chat.html</code>）：</p>
+<p>主要功能：</p>
+<ul>
+<li>实时消息显示</li>
+<li>会话 ID 管理</li>
+<li>消息发送和接收</li>
+<li>重置对话功能</li>
+<li>加载动画提示</li>
+</ul>
+<h2> 6. 运行与测试</h2>
+<h3> 6.1 启动应用</h3>
+<p>确保已经配置好环境变量 <code>silicon-api-key</code>，然后运行：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.2 测试命令行模式</h3>
+<p>应用启动后会自动执行 <code>CommandLineRunner</code> 中定义的测试流程，查看控制台输出：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.3 测试 Web 界面</h3>
+<p>浏览器访问：<code>http://localhost:8080/express-chat.html</code></p>
+<figure><img src="https://imgbed.ppai.top/file/1773374203452_L04-7.webp" alt="L04-7.webp" tabindex="0" loading="lazy"><figcaption>L04-7.webp</figcaption></figure>
+<p>体验完整的对话流程：</p>
+<ol>
+<li>输入"我要寄快递"</li>
+<li>按提示依次提供收件人、发件人、物品信息</li>
+<li>查看订单详情</li>
+<li>确认下单</li>
+</ol>
+<h2> 7. 核心原理详解</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773369774325_L04-4.jpg" alt="L04-4.jpg" tabindex="0" loading="lazy"><figcaption>L04-4.jpg</figcaption></figure>
+<h3> 7.1 React Agent 工作原理</h3>
+<p>React Agent 是基于 ReAct 模式（Reasoning + Acting）实现的智能体，其核心流程：</p>
+<figure><img src="https://imgbed.ppai.top/file/1773374389282_L04-8.webp" alt="L04-8.webp" tabindex="0" loading="lazy"><figcaption>L04-8.webp</figcaption></figure>
+<h3> 7.2 Hook 机制</h3>
+<p>Hook 允许我们在 Agent 执行的不同阶段插入自定义逻辑：</p>
+<ul>
+<li><strong>ModelHook</strong>：在模型调用前后进行拦截</li>
+<li><strong>ModelInterceptor</strong>：修改模型请求和响应</li>
+<li><strong>KeyStrategy</strong>：定义状态数据的合并策略</li>
+</ul>
+<h3> 7.3 状态管理</h3>
+<p>对话状态通过 <code>MemorySaver</code> 进行持久化：</p>
+<ul>
+<li><strong>Thread ID</strong>：标识一个对话线程</li>
+<li><strong>Checkpoint</strong>：保存对话的历史状态</li>
+<li><strong>State</strong>：存储当前的业务数据（如收件人信息）</li>
+</ul>
+<p>每次对话都会：</p>
+<ol>
+<li>从 MemorySaver 加载上次的状态</li>
+<li>执行对话逻辑</li>
+<li>保存新的状态到 MemorySaver</li>
+</ol>
+<p>这样即使应用重启，对话也能继续。</p>
+<h2> 8. 扩展思考</h2>
+<figure><img src="https://imgbed.ppai.top/file/1773369776048_L04-5.jpg" alt="L04-5.jpg" tabindex="0" loading="lazy"><figcaption>L04-5.jpg</figcaption></figure>
+<h3> 8.1 适用场景</h3>
+<p>这种"渐进式信息收集"模式适用于：</p>
+<ul>
+<li>客服对话系统</li>
+<li>表单填写引导</li>
+<li>复杂业务流程办理</li>
+<li>多轮问答系统</li>
+</ul>
+<h3> 8.2 优化方向</h3>
+<ol>
+<li><strong>流式输出</strong>：使用 SSE 实现打字机效果</li>
+<li><strong>状态持久化</strong>：从 MemorySaver 改为数据库存储</li>
+<li><strong>异常处理</strong>：增强前端错误提示</li>
+<li><strong>上下文记忆</strong>：支持更复杂的状态恢复逻辑</li>
+</ol>
+<h3> 8.3 与 RAG 结合</h3>
+<p>可以结合 RAG 技术，让 Agent 能够：</p>
+<ul>
+<li>查询快递价格表</li>
+<li>推荐最优快递方案</li>
+<li>回答常见问题</li>
+</ul>
+<h2> 9. 常见问题</h2>
+<h3> Q1: 如何切换不同的模型？</h3>
+<p>修改 <code>application.yml</code> 中的 <code>model</code> 配置：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>注意：确保新模型支持 Function Calling 功能。</p>
+<h3> Q2: 如何实现多会话管理？</h3>
+<p>每个会话使用不同的 <code>threadId</code>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> Q3: 如何清空会话状态？</h3>
+<p>调用工具的 reset 方法或重新创建 Agent：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 10. 总结</h2>
+<p>本文详细介绍了如何使用 Spring AI Alibaba 实现一个支持分步流程控制的快递下单助手。通过这个项目，我们学习了：</p>
+<ol>
+<li><strong>React Agent</strong> 的构建和使用</li>
+<li><strong>Model Hook</strong> 机制实现流程控制</li>
+<li><strong>Tool Calling</strong> 的设计模式</li>
+<li><strong>对话状态管理</strong> 的最佳实践</li>
+<li><strong>Web 界面集成</strong> 的完整方案</li>
+</ol>
+<p>这种分步式对话交互模式可以应用到很多场景，如：</p>
+<ul>
+<li>在线预订（餐厅、酒店、机票）</li>
+<li>客户服务（问题诊断、故障排除）</li>
+<li>数据录入（表单填写、信息收集）</li>
+<li>教育培训（问答练习、考试评估）</li>
+</ul>
+<p>希望本文能为你在开发 AI 应用时提供有价值的参考！</p>
+<h2> 参考文献</h2>
+<ol>
+<li><a href="https://docs.spring.io/spring-ai/reference/" target="_blank" rel="noopener noreferrer">Spring AI 官方文档</a></li>
+<li><a href="https://github.com/alibaba/spring-ai-alibaba" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 项目仓库</a></li>
+<li><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener noreferrer">ReAct Agent 论文</a></li>
+<li><a href="https://siliconflow.cn/" target="_blank" rel="noopener noreferrer">SiliconFlow 模型平台</a></li>
+</ol>
+<hr>
+<p><strong>项目源码</strong>：<a href="https://github.com/hui-project/spring-ai-demo/tree/master/ali/L04-handsoff" target="_blank" rel="noopener noreferrer">https://github.com/hui-project/spring-ai-demo/tree/master/ali/L04-handsoff</a></p>
+<p><strong>作者博客</strong>：<a href="https://ppai.top" target="_blank" rel="noopener noreferrer">一灰的技术博客</a></p>
+<p><strong>欢迎交流</strong>：如有问题或建议，欢迎在评论区留言讨论！</p>
+]]></content:encoded>
+      <enclosure url="https://imgbed.ppai.top/file/1773369770594_L04-1.jpg" type="image/jpeg"/>
+    </item>
     <item>
       <title>02.Spring AI Alibaba实现自然语言转SQL与人工审批实战</title>
       <link>https://ppai.top/ai-guides/ai-dev/ALiAI/L02.Spring%20AI%20Alibaba%E5%AE%9E%E7%8E%B0%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E8%BD%ACSQL%E4%B8%8E%E4%BA%BA%E5%B7%A5%E5%AE%A1%E6%89%B9%E5%AE%9E%E6%88%98.html</link>
@@ -242,6 +999,13 @@
 <li><a href="https://mp.weixin.qq.com/s/ujxVleNhjxzUgL-rjfFcVA" target="_blank" rel="noopener noreferrer">告别传统AI开发！SpringAI Agent + Skills重新定义智能应用</a></li>
 <li><a href="https://mp.weixin.qq.com/s/LcvmiIERs6aOIlRAKGGnFg" target="_blank" rel="noopener noreferrer">Spring AI中的多轮对话艺术：让大模型主动提问获取明确需求</a></li>
 <li><a href="https://mp.weixin.qq.com/s/QyuWZ4EZ32pbcWn3fVphHQ" target="_blank" rel="noopener noreferrer">实战 | 我用SpringAI造了个「微信红包封面设计师」</a></li>
+<li><a href="https://mp.weixin.qq.com/s/qF0RfLts-fuMzv-uJZnBig?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">实战干货！Spring AI 集成语音识别，实现实时翻译机器人的完整指南</a></li>
+<li><a href="https://mp.weixin.qq.com/s/mJIibMdAFSDgXZBsM3tuPw?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">深入理解 ReAct 模式：基于Spring AI从0到1实现一个ReAct Agent</a></li>
+<li><a href="https://mp.weixin.qq.com/s/TbTnpPkVPY_bTts_l8ltGQ?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">Spring AI工具调用如何对接真实业务？从自动到手动控制的完整链路剖析</a></li>
+<li><a href="https://mp.weixin.qq.com/s/U6ua-dpkVZTYT1n5JXiYDg?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">告别纯文本聊天：基于Spring AI，打造支持富UI的流式对话系统</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Kr-Va-TOG2uYPlWTW59WAQ?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">拒绝「笨拙」的 AI 对话！用 SpringAI + 自定义协议实现真正的智能交互</a></li>
+<li><a href="https://mp.weixin.qq.com/s/454LmLMAVDuZfi6t-DgSqg?token=498918922&amp;lang=zh_CN" target="_blank" rel="noopener noreferrer">从自然语言到SQL，再加一道人工防线：Spring AI Alibaba 实战</a></li>
+<li><a href="https://mp.weixin.qq.com/s/TfTfQx1e661s6-cgVP8lwg" target="_blank" rel="noopener noreferrer">从零掌握 Spring AI Alibaba Skill：定义、注册与渐进式披露</a></li>
 </ul>
 <hr>
 <p><strong>Author</strong>: 一灰
