@@ -9,18 +9,1256 @@
   </author>
   <logo>https://ppai.top/ai-guides/favicon.ico</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-03-15T09:03:31.564Z</updated>
+  <updated>2026-03-23T06:16:17.440Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://ppai.top/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://ppai.top/ai-guides/"/>
-  <category term="Agent"/>
   <category term="SpringAI"/>
+  <category term="Agent"/>
   <category term="LLM"/>
   <category term="AI"/>
   <contributor>
     <name>一灰灰blog</name>
     <uri>https://ppai.top</uri>
   </contributor>
+  <entry>
+    <title type="text">05.Spring AI Alibaba 多智能体Multi-Agent</title>
+    <id>https://ppai.top/ai-guides/ai-dev/ALiAI/L05.Spring%20AI%20Alibaba%20%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93Multi-Agent%E4%BB%8B%E7%BB%8D.html</id>
+    <link href="https://ppai.top/ai-guides/ai-dev/ALiAI/L05.Spring%20AI%20Alibaba%20%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93Multi-Agent%E4%BB%8B%E7%BB%8D.html"/>
+    <updated>2026-03-23T06:11:32.000Z</updated>
+    <summary type="html"><![CDATA[<h1> Spring AI Alibaba 实战：多智能体（Multi-agent）系统科普与实现指南</h1>
+<h2> 1. 引言</h2>
+<p>在单体智能体（Single-agent）架构中，一个 Agent 需要处理所有任务——从理解用户意图、规划步骤、调用工具到生成最终答案。随着任务复杂度的提升，这种“全能型” Agent 往往会面临<strong>上下文爆炸</strong>、<strong>工具选择困难</strong>和<strong>专业化不足</strong>等问题。</p>
+<p><strong>多智能体（Multi-agent）系统</strong>通过将复杂任务分解为多个协同工作的专业化 Agent，有效解决了这些问题。本文将基于 Spring AI Alibaba，深入浅出地讲解 Multi-agent 的核心概念、实现模式及最佳实践，并提供完整的代码示例。</p>]]></summary>
+    <content type="html"><![CDATA[<h1> Spring AI Alibaba 实战：多智能体（Multi-agent）系统科普与实现指南</h1>
+<h2> 1. 引言</h2>
+<p>在单体智能体（Single-agent）架构中，一个 Agent 需要处理所有任务——从理解用户意图、规划步骤、调用工具到生成最终答案。随着任务复杂度的提升，这种“全能型” Agent 往往会面临<strong>上下文爆炸</strong>、<strong>工具选择困难</strong>和<strong>专业化不足</strong>等问题。</p>
+<p><strong>多智能体（Multi-agent）系统</strong>通过将复杂任务分解为多个协同工作的专业化 Agent，有效解决了这些问题。本文将基于 Spring AI Alibaba，深入浅出地讲解 Multi-agent 的核心概念、实现模式及最佳实践，并提供完整的代码示例。</p>
+<blockquote>
+<p><strong>本文代码示例</strong>基于 Spring AI Alibaba 1.0.0+ 版本，完整项目代码可参考 <a href="https://java2ai.com/docs/frameworks/agent-framework/advanced/multi-agent" target="_blank" rel="noopener noreferrer">Java2AI Multi-agent 文档</a>。</p>
+</blockquote>
+<hr>
+<h2> 2. 什么是 Multi-agent？</h2>
+<h3> 2.1 核心定义</h3>
+<p><strong>Multi-agent</strong> 是指由多个智能体组成的系统，这些智能体通过协作完成复杂任务。与单体智能体不同，Multi-agent 系统中的每个 Agent 通常具备特定的专业领域或职责。</p>
+<h3> 2.2 与单体智能体的对比</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>单体智能体 (Single-agent)</th>
+<th>多智能体 (Multi-agent)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>职责</strong></td>
+<td>全能型，处理所有任务</td>
+<td>专业化，分工明确</td>
+</tr>
+<tr>
+<td><strong>上下文</strong></td>
+<td>所有信息集中在一个 Agent</td>
+<td>上下文按需分配给不同 Agent</td>
+</tr>
+<tr>
+<td><strong>工具数量</strong></td>
+<td>可能过多，导致选择困难</td>
+<td>每个 Agent 拥有少量专用工具</td>
+</tr>
+<tr>
+<td><strong>扩展性</strong></td>
+<td>随任务复杂度线性增长</td>
+<td>通过增加 Agent 横向扩展</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>简单任务、快速原型</td>
+<td>复杂工作流、企业级应用</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2> 3. Multi-agent 能解决什么问题？</h2>
+<h3> 3.1 单体智能体的局限性</h3>
+<ol>
+<li><strong>上下文窗口限制</strong>：长对话历史会迅速填满上下文窗口，导致模型性能下降。</li>
+<li><strong>工具选择困难</strong>：当 Agent 拥有几十个工具时，LLM 很难准确选择最合适的工具。</li>
+<li><strong>专业化不足</strong>：一个 Agent 难以同时精通写作、编程、数据分析等多个领域。</li>
+<li><strong>状态管理复杂</strong>：复杂任务的状态追踪困难，容易丢失中间步骤。</li>
+</ol>
+<h3> 3.2 Multi-agent 的优势</h3>
+<ol>
+<li><strong>上下文隔离</strong>：每个 Agent 只关注自己需要的信息，减少上下文污染。</li>
+<li><strong>工具精简</strong>：每个 Agent 只配备必要的工具，提高工具调用准确率。</li>
+<li><strong>专业化分工</strong>：不同 Agent 专注不同领域，提升任务处理质量。</li>
+<li><strong>灵活编排</strong>：通过组合不同模式（顺序、并行、路由），构建复杂工作流。</li>
+</ol>
+<hr>
+<h2> 4. Spring AI Alibaba 中的 Multi-agent 模式</h2>
+<p>Spring AI Alibaba 支持多种 Multi-agent 模式，每种模式适用于不同的场景：</p>
+<h3> 4.1 顺序执行（Sequential Agent）</h3>
+<p><strong>场景</strong>：任务需要按固定顺序执行，前一步的输出是后一步的输入。</p>
+<p><strong>流程</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>示例</strong>：写作工作流</p>
+<ol>
+<li><strong>Writer Agent</strong>：根据用户需求撰写文章</li>
+<li><strong>Reviewer Agent</strong>：评审并修改文章</li>
+<li><strong>Translator Agent</strong>：翻译成目标语言</li>
+</ol>
+<h3> 4.2 并行执行（Parallel Agent）</h3>
+<p><strong>场景</strong>：多个任务可以同时进行，最后合并结果。</p>
+<p><strong>流程</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>示例</strong>：研究工作流</p>
+<ol>
+<li><strong>Web Research Agent</strong>：从互联网搜索信息</li>
+<li><strong>DB Research Agent</strong>：从数据库查询信息</li>
+<li><strong>Merge Agent</strong>：合并所有来源的数据</li>
+</ol>
+<h3> 4.3 路由模式（LlmRoutingAgent）</h3>
+<p><strong>场景</strong>：根据用户输入动态选择最合适的 Agent。</p>
+<p><strong>流程</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>示例</strong>：客服系统</p>
+<ul>
+<li>用户问技术问题 →路由到 <strong>Technical Support Agent</strong></li>
+<li>用户问账单问题 →路由到 <strong>Billing Agent</strong></li>
+<li>用户问退货问题 →路由到 <strong>Return Agent</strong></li>
+</ul>
+<h3> 4.4 监督者模式（SupervisorAgent）</h3>
+<p><strong>场景</strong>：复杂多步骤任务，需要动态决策下一步执行哪个 Agent。</p>
+<p><strong>流程</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>示例</strong>：内容处理工作流</p>
+<ol>
+<li>Supervisor 接收"写一篇关于春天的文章并翻译成英文"</li>
+<li>路由到 Writer Agent 写文章</li>
+<li>Writer 完成后返回 Supervisor</li>
+<li>Supervisor 路由到 Translator Agent 翻译</li>
+<li>返回最终结果</li>
+</ol>
+<hr>
+<h2> 5. 技术实现：基于 Spring AI Alibaba</h2>
+<h3> 5.1 项目依赖</h3>
+<p>首先在 <code>pom.xml</code> 中引入 Spring AI Alibaba 依赖：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.2 核心概念：OverAllState</h3>
+<p>在 Multi-agent 系统中，<strong>OverAllState</strong> 是贯穿所有 Agent 的共享状态容器。它存储了对话历史、中间结果和全局变量。</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.3 Instruction 占位符</h3>
+<p>Agent 之间的数据传递通过 <strong>Instruction 占位符</strong> 实现：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>在alibaba的框架中，<strong>支持的占位符</strong></p>
+<table>
+<thead>
+<tr>
+<th>占位符</th>
+<th>说明</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td input=""></td>
+<td>用户输入的原始内容</td>
+<td>第一个Agent或需要用户输入的 Agent</td>
+</tr>
+<tr>
+<td outputkey=""></td>
+<td>引用其他Agent通过 outputKey 存储的输出</td>
+<td>顺序执行中，后续Agent引用前面Agent的输出</td>
+</tr>
+<tr>
+<td statekey=""></td>
+<td>引用状态中的任意键值</td>
+<td>访问状态中的任何数据</td>
+</tr>
+</tbody>
+</table>
+<p><strong>占位符工作原理</strong></p>
+<p>自动替换：系统会在执行 Agent 的 instruction 时，自动将占位符替换为对应的实际值
+状态查找：占位符会从当前状态（OverAllState）中查找对应的值
+类型安全：占位符的值会被转换为字符串并插入到 instruction 中</p>
+<hr>
+<h2> 6. 实战示例：写作与评审工作流</h2>
+<p>我们将实现一个<strong>顺序执行</strong>的 Multi-agent 系统：Writer Agent 负责写作，Reviewer Agent 负责评审。</p>
+<h3> 6.1 创建 Writer Agent</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.2 创建 Reviewer Agent</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.3 创建顺序执行工作流</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.4 执行工作流</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 6.5 运行结果示例</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 7. 实现注意事项</h2>
+<h3> 7.1 上下文工程（Context Engineering）</h3>
+<p><strong>核心原则</strong>：确保每个 Agent 只看到它需要的信息。</p>
+<ul>
+<li><strong>避免上下文污染</strong>：不要将所有历史记录都传递给每个 Agent</li>
+<li><strong>合理使用 outputKey</strong>：明确每个 Agent 的输出键名</li>
+<li><strong>控制推理内容</strong>：通过 <code>returnReasoningContents</code> 控制是否包含中间推理</li>
+</ul>
+<h3> 7.2 Agent 描述的重要性</h3>
+<p>在路由模式（LlmRoutingAgent）中，Agent 的 <code>description</code> 至关重要：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 7.3 错误处理与重试</h3>
+<ul>
+<li><strong>最大迭代次数</strong>：设置合理的最大迭代次数防止无限循环</li>
+<li><strong>异常捕获</strong>：捕获工具调用异常，返回友好错误信息</li>
+<li><strong>状态恢复</strong>：使用 <code>MemorySaver</code> 保存状态，支持中断恢复</li>
+</ul>
+<h3> 7.4 性能优化</h3>
+<ol>
+<li><strong>并行执行</strong>：独立任务使用 ParallelAgent 并行处理</li>
+<li><strong>缓存机制</strong>：对重复查询结果进行缓存</li>
+<li><strong>流式输出</strong>：使用流式处理提升用户体验</li>
+</ol>
+<hr>
+<h2> 8. 扩展应用场景</h2>
+<h3> 8.1 智能客服系统</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 8.2 数据分析工作流</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 8.3 研究助手</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><hr>
+<h2> 9. 最佳实践总结</h2>
+<ol>
+<li><strong>明确职责</strong>：每个 Agent 只做一件事，做到极致</li>
+<li><strong>合理编排</strong>：根据任务特点选择合适的模式（顺序/并行/路由）</li>
+<li><strong>上下文隔离</strong>：通过 outputKey 和占位符控制信息流动</li>
+<li><strong>描述清晰</strong>：为每个 Agent 编写明确的描述，便于路由决策</li>
+<li><strong>错误处理</strong>：设置最大迭代次数，捕获异常，提供友好提示</li>
+<li><strong>性能优化</strong>：并行执行独立任务，使用流式输出</li>
+</ol>
+<hr>
+<h2> 10. 总结</h2>
+<p>Multi-agent 系统通过专业化分工和灵活编排，有效解决了单体智能体在复杂任务中的局限性。Spring AI Alibaba 提供了丰富的 Multi-agent 模式（Sequential、Parallel、Routing、Supervisor），让开发者能够轻松构建复杂的 AI 应用。</p>
+<p>本文的示例行对比较简单，主要是介绍了SpringAI Alibaba的Multi-Agent的相关知识点：</p>
+<ul>
+<li>✅ Multi-agent 的核心概念与优势</li>
+<li>✅ Spring AI Alibaba 中的各种模式</li>
+<li>✅ 顺序执行工作流的实现方法</li>
+<li>✅ 上下文工程和 Agent 设计的最佳实践</li>
+</ul>
+<p>那么在真实的项目系统中，多Agent的写作时，如何抉择这些模式（路由还是监督者？或者简单的串行/并行？），接下来我们将以结合具体的应用场景，来演示一下如何实现要给生产可用的多Agent协作示例</p>
+<hr>
+<h2> 参考资料</h2>
+<ul>
+<li><a href="https://java2ai.com/docs/frameworks/agent-framework/advanced/multi-agent" target="_blank" rel="noopener noreferrer">Spring AI Alibaba Multi-agent 文档</a></li>
+<li><a href="https://docs.spring.io/spring-ai/reference/index.html" target="_blank" rel="noopener noreferrer">Spring AI 官方文档</a></li>
+</ul>
+<hr>
+<p><strong>作者</strong>：一灰<br>
+<strong>日期</strong>：2026 年 3 月 15 日<br>
+<strong>标签</strong>：#SpringAI #Multi-agent #AI-Agent #Java #智能体协作</p>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="SpringAI"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-03-15T17:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">06.基于 Spring AI Alibaba 实现故事创作的智能体</title>
+    <id>https://ppai.top/ai-guides/ai-dev/ALiAI/L06.Spring%20AI%20Alibaba%20%E5%AE%9E%E7%8E%B0%E6%95%85%E4%BA%8B%E5%88%9B%E4%BD%9C%E7%9A%84%E6%99%BA%E8%83%BD%E4%BD%93.html</id>
+    <link href="https://ppai.top/ai-guides/ai-dev/ALiAI/L06.Spring%20AI%20Alibaba%20%E5%AE%9E%E7%8E%B0%E6%95%85%E4%BA%8B%E5%88%9B%E4%BD%9C%E7%9A%84%E6%99%BA%E8%83%BD%E4%BD%93.html"/>
+    <updated>2026-03-23T06:11:32.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 多智能体实战|基于 Spring AI Alibaba 实现故事创作的智能体</h1>
+<h2> 1. 引言</h2>
+<p>前面介绍了多智能体的相关知识点，相比较于大而全的单智能体，分而治之的多智能体显然更适合真实的业务场景。上一篇文章 <a href="https://mp.weixin.qq.com/s/wrKymQhomKCf9yi-bHbmyg" target="_blank" rel="noopener noreferrer">当 Spring AI Alibaba 遇上 Multi-Agent：解锁智能体的团队协作模式</a> 介绍了四种多智能体执行模式，接下来我们有必要通过实际的应用场景来体验一下多智能体系统。</p>]]></summary>
+    <content type="html"><![CDATA[<h1> 多智能体实战|基于 Spring AI Alibaba 实现故事创作的智能体</h1>
+<h2> 1. 引言</h2>
+<p>前面介绍了多智能体的相关知识点，相比较于大而全的单智能体，分而治之的多智能体显然更适合真实的业务场景。上一篇文章 <a href="https://mp.weixin.qq.com/s/wrKymQhomKCf9yi-bHbmyg" target="_blank" rel="noopener noreferrer">当 Spring AI Alibaba 遇上 Multi-Agent：解锁智能体的团队协作模式</a> 介绍了四种多智能体执行模式，接下来我们有必要通过实际的应用场景来体验一下多智能体系统。</p>
+<p>本文将通过一个故事创作系统，介绍如何使用 Spring AI Alibaba 的 SequentialAgent 实现一个多智能体系统。</p>
+<h2> 2. 背景与动机</h2>
+<h3> 2.1 为什么需要多智能体？</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773734746592_L06-1.jpg" alt="L06-1.jpg" tabindex="0" loading="lazy"><figcaption>L06-1.jpg</figcaption></figure>
+<p>在实际业务场景中，我们经常遇到需要多个步骤、多种专业能力才能完成的复杂任务。例如：</p>
+<ul>
+<li>文章创作：需要先构思大纲，再填充内容，最后润色优化</li>
+<li>代码开发：需要需求分析、架构设计、编码实现、代码审查</li>
+<li>数据分析：需要数据清洗、特征工程、模型训练、结果解释</li>
+</ul>
+<p>单一的大模型虽然功能强大，但在面对这类复杂任务时，往往难以保证每个环节的质量。而多智能体系统通过将任务分解，让每个 Agent 专注于自己最擅长的环节，可以显著提升最终结果的质量。</p>
+<h3> 2.2 SequentialAgent 的优势</h3>
+<p>Spring AI Alibaba 提供了多种多智能体编排方式，其中 SequentialAgent（顺序执行代理）是最基础也是最常用的一种。它的特点包括：</p>
+<ul>
+<li><strong>线性流程</strong>：按照预设顺序依次执行各个子 Agent</li>
+<li><strong>数据传递</strong>：前一个 Agent 的输出可以作为后一个 Agent 的输入</li>
+<li><strong>职责分离</strong>：每个 Agent 专注于单一职责</li>
+<li><strong>易于理解</strong>：流程清晰，便于调试和维护</li>
+</ul>
+<h2> 3. 项目架构与设计</h2>
+<h3> 3.1 系统架构</h3>
+<p>我们的故事创作系统包含三个专业 Agent，按顺序执行：</p>
+<figure><img src="https://imgbed.ppai.top/file/1773734745323_L06-2.jpg" alt="L06-2.jpg" tabindex="0" loading="lazy"><figcaption>L06-2.jpg</figcaption></figure>
+<h3> 3.2 Agent 职责划分</h3>
+<h4> OutlineAgent（大纲生成专家）</h4>
+<ul>
+<li><strong>职责</strong>：根据用户提供的主题，生成结构化的文章大纲</li>
+<li><strong>输入</strong>：文章主题</li>
+<li><strong>输出</strong>：包含章节和核心要点的大纲</li>
+<li><strong>能力要求</strong>：逻辑性强，善于结构化思考</li>
+</ul>
+<h4> WriterAgent（专业作家）</h4>
+<ul>
+<li><strong>职责</strong>：根据大纲撰写完整的文章初稿</li>
+<li><strong>输入</strong>：文章大纲 + 用户主题</li>
+<li><strong>输出</strong>：完整的文章初稿</li>
+<li><strong>能力要求</strong>：文笔流畅，善于表达</li>
+</ul>
+<h4> ReviewAgent（资深编辑）</h4>
+<ul>
+<li><strong>职责</strong>：对初稿进行评审和润色优化</li>
+<li><strong>输入</strong>：文章初稿</li>
+<li><strong>输出</strong>：优化后的最终文章</li>
+<li><strong>能力要求</strong>：文字功底深厚，善于发现和修正问题</li>
+</ul>
+<h3> 3.3 数据流转</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773734745345_L06-3.jpg" alt="L06-3.jpg" tabindex="0" loading="lazy"><figcaption>L06-3.jpg</figcaption></figure>
+<h2> 4. 技术栈与依赖</h2>
+<h3> 4.1 核心技术栈</h3>
+<ul>
+<li><strong>JDK 17+</strong></li>
+<li><strong>Spring Boot 3.x</strong></li>
+<li><strong>Spring AI Alibaba</strong></li>
+<li><strong>Alibaba LangGraph4j</strong></li>
+<li><strong>Maven</strong></li>
+</ul>
+<h3> 4.2 Maven 依赖配置</h3>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.3 应用配置</h3>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 5. 核心实现</h2>
+<h3> 5.1 OutlineAgent - 大纲生成专家</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键参数说明：</strong></p>
+<ul>
+<li><code>name</code>：Agent 的唯一标识名称</li>
+<li><code>model</code>：使用的大模型</li>
+<li><code>instruction</code>：Agent 的指令提示词</li>
+<li><code>outputKey</code>：输出结果的键名，用于后续 Agent 引用</li>
+<li><code>includeContents</code>：是否包含父流程的上下文（false 表示只基于自己的 instruction）</li>
+<li><code>returnReasoningContents</code>：是否返回推理过程内容</li>
+</ul>
+<h3> 5.2 WriterAgent - 专业作家</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点：</strong></p>
+<ul>
+<li>使用 <code>{outline}</code> 占位符引用 OutlineAgent 的输出</li>
+<li>使用 <code>{input}</code> 占位符接收用户的原始输入</li>
+<li><code>outputKey</code> 设置为 <code>article_draft</code>，供 ReviewAgent 使用</li>
+</ul>
+<h3> 5.3 ReviewAgent - 资深编辑</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>上面这三个Agent即为完成故事创作的子Agent，各司其职，前者的输出作为后面的输入</p>
+<figure><img src="https://imgbed.ppai.top/file/1773734750800_L06-4.jpg" alt="L06-4.jpg" tabindex="0" loading="lazy"><figcaption>L06-4.jpg</figcaption></figure>
+<p>接下来则是需要使用<code>SequentialAgent</code>来将三个子Agent串联起来</p>
+<h3> 5.4 SeqAgent - 顺序执行编排器</h3>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心配置：</strong></p>
+<ul>
+<li><code>subAgents</code>：按执行顺序排列的子 Agent 列表</li>
+<li>数据会自动通过 <code>outputKey</code> 在 Agent 之间传递</li>
+</ul>
+<h3> 5.5 流式接口实现 - WriterController</h3>
+<p>为了实时展示创作过程，我们提供了一个基于 SSE 的流式接口：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>流式处理关键点：</strong></p>
+<ol>
+<li>使用 <code>sequentialAgent.stream(topic)</code> 获取流式输出</li>
+<li>过滤掉 <code>AGENT_MODEL_FINISHED</code> 类型的输出</li>
+<li>从 <code>StreamingOutput</code> 中提取消息内容</li>
+<li>使用 Jackson 的 <code>ObjectMapper</code> 进行正确的 JSON 序列化</li>
+<li>通过 <code>determineStage</code> 方法识别当前创作阶段</li>
+<li>完善的错误处理和日志记录</li>
+</ol>
+<h3> 5.6 前端页面 - 实时展示创作过程</h3>
+<p>前端页面位于 <code>src/main/resources/templates/writer.html</code>，主要特性：</p>
+<h4> 核心功能</h4>
+<ul>
+<li><strong>三栏布局</strong>：分别展示大纲、初稿、最终稿</li>
+<li><strong>实时流式更新</strong>：使用 EventSource 接收 SSE 数据</li>
+<li><strong>动态激活面板</strong>：高亮当前创作阶段</li>
+<li><strong>Markdown 渲染</strong>：使用 marked.js 解析 Markdown 格式</li>
+<li><strong>代码高亮</strong>：使用 highlight.js 进行语法高亮</li>
+</ul>
+<h4> SSE 连接处理</h4>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键实现细节：</strong></p>
+<ol>
+<li>使用 <code>isCreationComplete</code> 标志追踪创作完成状态</li>
+<li>在收到 review 阶段数据时标记为即将完成</li>
+<li>连接关闭时智能判断是正常完成还是异常断开</li>
+<li>移除独立的 <code>error</code> 事件监听器，避免误报错误</li>
+<li>内容累加器持续拼接流式返回的文本片段</li>
+</ol>
+<h2> 6. 运行与测试</h2>
+<h3> 6.1 环境准备</h3>
+<ol>
+<li>
+<p><strong>配置 API Key</strong></p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>启动应用</strong></p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+</ol>
+<h3> 6.2 访问前端页面</h3>
+<p>浏览器打开：<code>http://localhost:8080</code></p>
+<p>操作步骤：</p>
+<ol>
+<li>在输入框中输入文章主题，例如："春天的童话故事"</li>
+<li>点击"开始创作"按钮</li>
+<li>实时观看三个智能体的协作过程</li>
+</ol>
+<h3> 6.3 API 调用示例</h3>
+<p>使用 curl 命令测试流式接口：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>预期输出格式：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>web操作体验如下</p>
+<figure><img src="https://imgbed.ppai.top/file/1773735585254_L06-5.webp" alt="L06-5.webp" tabindex="0" loading="lazy"><figcaption>L06-5.webp</figcaption></figure>
+<figure><img src="https://imgbed.ppai.top/file/1773735477256_L06-out.gif" alt="L06-out.gif" tabindex="0" loading="lazy"><figcaption>L06-out.gif</figcaption></figure>
+<h2> 7. 最佳实践与经验总结</h2>
+<h3> 7.1 Prompt 设计原则</h3>
+<ol>
+<li><strong>明确职责</strong>：每个 Agent 的 instruction 应该清晰定义其职责范围</li>
+<li><strong>输入输出明确</strong>：使用占位符明确标注输入来源和输出去向</li>
+<li><strong>格式约束</strong>：明确要求返回内容的格式，避免多余解释</li>
+<li><strong>风格统一</strong>：保持相似的任务使用相似的 prompt 结构</li>
+</ol>
+<h3> 7.2 数据传递技巧</h3>
+<ol>
+<li><strong>合理使用 outputKey</strong>：为每个 Agent 的输出设置清晰的键名</li>
+<li><strong>最小化上下文</strong>：设置 <code>includeContents=false</code> 避免不必要的上下文干扰</li>
+<li><strong>保护推理过程</strong>：设置 <code>returnReasoningContents=false</code> 减少 token 消耗</li>
+</ol>
+<h3> 7.3 错误处理策略</h3>
+<ol>
+<li><strong>流式错误捕获</strong>：使用 <code>onErrorResume</code> 处理流式传输中的错误</li>
+<li><strong>友好的错误提示</strong>：将技术错误转换为用户友好的提示信息</li>
+<li><strong>状态管理</strong>：在前端维护清晰的状态机，区分正常完成和异常中断</li>
+</ol>
+<h3> 7.4 性能优化建议</h3>
+<ol>
+<li><strong>选择合适的模型</strong>：不同 Agent 可以选择不同能力和成本的模型</li>
+<li><strong>控制输出长度</strong>：在 prompt 中明确输出长度要求</li>
+<li><strong>并发考虑</strong>：对于不依赖前序结果的 Agent，可以考虑并行执行</li>
+</ol>
+<h2> 8. 常见问题解答</h2>
+<h3> Q1: 如何调整 Agent 的执行顺序？</h3>
+<p>修改 <code>SeqAgent</code> 中的 <code>subAgents</code> 列表顺序即可：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> Q2: 如何让后一个 Agent 看到前一个 Agent 的推理过程？</h3>
+<p>设置 <code>returnReasoningContents=true</code>：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> Q3: 如何实现条件分支而不是顺序执行？</h3>
+<p>可以使用 Spring AI Alibaba 提供的其他编排方式，如：</p>
+<ul>
+<li><strong>ParallelAgent</strong>：并行执行多个 Agent</li>
+<li><strong>RouterAgent</strong>：根据条件路由到不同的 Agent</li>
+<li><strong>LoopAgent</strong>：循环执行直到满足条件</li>
+</ul>
+<h3> Q4: 流式输出中出现乱码怎么办？</h3>
+<p>确保：</p>
+<ol>
+<li>后端设置正确的字符编码：<code>produces = MediaType.TEXT_EVENT_STREAM_VALUE</code></li>
+<li>前端 HTML 设置 UTF-8 编码：<code>&lt;meta charset="UTF-8"&gt;</code></li>
+<li>数据库和文件系统都使用 UTF-8 编码</li>
+</ol>
+<h2> 9. 总结与展望</h2>
+<h3> 9.1 核心要点回顾</h3>
+<p>本文介绍了如何使用 Spring AI Alibaba 的 SequentialAgent 实现一个多智能体故事创作系统：</p>
+<ol>
+<li><strong>职责分离</strong>：将复杂的创作任务分解为大纲、写作、评审三个专业环节</li>
+<li><strong>顺序执行</strong>：通过 SequentialAgent 按固定顺序编排多个 Agent</li>
+<li><strong>数据传递</strong>：利用 outputKey 和占位符实现 Agent 间的数据流转</li>
+<li><strong>流式展示</strong>：通过 SSE 实时推送创作进度，提升用户体验</li>
+<li><strong>完善的前端</strong>：提供美观的三栏布局和 Markdown 渲染</li>
+</ol>
+<h3> 9.2 未来改进方向</h3>
+<ol>
+<li>
+<p><strong>引入更多专业 Agent</strong>：</p>
+<ul>
+<li>事实核查 Agent：验证文章中的事实准确性</li>
+<li>SEO 优化 Agent：优化文章以适配搜索引擎</li>
+<li>多语言翻译 Agent：支持多语言输出</li>
+</ul>
+</li>
+<li>
+<p><strong>增强交互性</strong>：</p>
+<ul>
+<li>支持用户在创作过程中提供反馈</li>
+<li>允许用户对某个环节的结果不满意时重新生成</li>
+<li>提供多种风格选项（学术、通俗、幽默等）</li>
+</ul>
+</li>
+<li>
+<p><strong>质量评估</strong>：</p>
+<ul>
+<li>添加质量评分 Agent</li>
+<li>对比不同 Agent 组合的效果</li>
+<li>收集用户反馈持续优化</li>
+</ul>
+</li>
+<li>
+<p><strong>性能优化</strong>：</p>
+<ul>
+<li>实现 Agent 缓存机制</li>
+<li>支持部分结果的复用</li>
+<li>优化 token 使用效率</li>
+</ul>
+</li>
+</ol>
+<h3> 9.3 参考资料</h3>
+<ul>
+<li><a href="https://java2ai.com/" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 官方文档：https://java2ai.com/</a></li>
+<li><a href="https://java2ai.com/docs/frameworks/agent-framework/advanced/multi-agent" target="_blank" rel="noopener noreferrer">多智能体框架详解</a></li>
+<li><a href="https://java2ai.com/docs/frameworks/agent-framework/api/sequential-agent" target="_blank" rel="noopener noreferrer">SequentialAgent API 文档</a></li>
+</ul>
+<hr>
+<p><strong>项目源码</strong>：<a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/ali/L05-multi-agent-sequence" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p>
+<blockquote>
+<p><strong>作者</strong>：一灰<br>
+<strong>日期</strong>：2026-03-17<br>
+<strong>标签</strong>: #Spring-AI, #Multi-Agent, #SequentialAgent, #人工智能，#Java</p>
+</blockquote>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="SpringAI"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-03-17T17:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">07.基于 Spring AI Alibaba 实现方案策划多智能体</title>
+    <id>https://ppai.top/ai-guides/ai-dev/ALiAI/L07.Spring%20AI%20Alibaba%20%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88%E7%AD%96%E5%88%92%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93.html</id>
+    <link href="https://ppai.top/ai-guides/ai-dev/ALiAI/L07.Spring%20AI%20Alibaba%20%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88%E7%AD%96%E5%88%92%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93.html"/>
+    <updated>2026-03-23T06:11:32.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 多智能体实战 | 基于 Spring AI Alibaba 实现方案策划多智能体</h1>
+<h2> 1. 引言</h2>
+<p>这一篇我们将继续之前多智能体介绍中的 <a href="https://mp.weixin.qq.com/s/wrKymQhomKCf9yi-bHbmyg" target="_blank" rel="noopener noreferrer">当 Spring AI Alibaba 遇上 Multi-Agent：解锁智能体的团队协作模式</a>  并行策略，通过让多个 specialized agent（专业智能体）协同工作，以此构建出能够处理复杂任务的 AI 系统。本文将深入讲解如何使用 Spring AI Alibaba 框架实现一个基于并行多智能体协作的方案策划系统。</p>]]></summary>
+    <content type="html"><![CDATA[<h1> 多智能体实战 | 基于 Spring AI Alibaba 实现方案策划多智能体</h1>
+<h2> 1. 引言</h2>
+<p>这一篇我们将继续之前多智能体介绍中的 <a href="https://mp.weixin.qq.com/s/wrKymQhomKCf9yi-bHbmyg" target="_blank" rel="noopener noreferrer">当 Spring AI Alibaba 遇上 Multi-Agent：解锁智能体的团队协作模式</a>  并行策略，通过让多个 specialized agent（专业智能体）协同工作，以此构建出能够处理复杂任务的 AI 系统。本文将深入讲解如何使用 Spring AI Alibaba 框架实现一个基于并行多智能体协作的方案策划系统。</p>
+<p>本项目通过构建一个"策划智能体"，演示了如何并行调用多个子 agent（创意策划师、财务规划师、执行专家），并通过两种不同的策略整合最终输出方案。</p>
+<figure><img src="https://imgbed.ppai.top/file/1773797251176_L07-1.jpeg" alt="L07-1.jpeg" tabindex="0" loading="lazy"><figcaption>L07-1.jpeg</figcaption></figure>
+<p><strong>通过本文的内容，您将会学到</strong>：</p>
+<ul>
+<li>如何使用 Spring AI Alibaba 的 ParallelAgent 实现并行多智能体调用</li>
+<li>如何通过自定义合并策略整合多个 agent 的输出</li>
+<li>如何利用 SequentialAgent 实现"并行 + 串行"的混合协作模式</li>
+<li>如何构建 SSE 流式接口实时展示 agent 协作过程</li>
+<li>如何设计现代化的前端界面可视化多智能体工作状态</li>
+</ul>
+<h2> 2. 背景与动机</h2>
+<h3> 2.1 为什么需要多智能体协作？</h3>
+<p>在现实世界的业务场景中，一个复杂的策划任务往往需要从多个维度进行考量：</p>
+<ul>
+<li><strong>创意维度</strong>：需要富有创意的点子和灵感</li>
+<li><strong>财务维度</strong>：需要合理的预算规划和成本控制</li>
+<li><strong>执行维度</strong>：需要详细的执行步骤和时间节点</li>
+</ul>
+<p>传统的单一 agent 方法虽然也能完成这些任务，但存在以下问题：</p>
+<ol>
+<li><strong>专业度不足</strong>：一个 agent 很难在所有领域都表现出色</li>
+<li><strong>上下文混乱</strong>：过多的指令会让 agent 困惑</li>
+<li><strong>可维护性差</strong>：难以单独优化某个维度的能力</li>
+</ol>
+<p>多智能体协作系统通过将复杂任务分解为多个子任务，每个子任务由专门优化的 agent 处理，最后整合结果，可以显著提升输出质量和系统可维护性。</p>
+<h3> 2.2 技术选型</h3>
+<p>本项目选择 <strong>Spring AI Alibaba</strong> 框架，主要基于以下考虑：</p>
+<ul>
+<li><strong>丰富的 Agent 类型支持</strong>：提供 ParallelAgent（并行）、SequentialAgent（串行）、ReactAgent（反应式）等多种 agent 类型</li>
+<li><strong>灵活的编排能力</strong>：支持自定义合并策略、状态管理等高级功能</li>
+<li><strong>与 Spring 生态无缝集成</strong>：可以充分利用 Spring Boot 的自动配置、依赖注入等特性</li>
+<li><strong>流式输出支持</strong>：原生支持 SSE（Server-Sent Events），便于构建实时交互界面</li>
+</ul>
+<h2> 3. 系统架构设计</h2>
+<h3> 3.1 整体架构图</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773797793676_L07-6.png" alt="L07-6.png" tabindex="0" loading="lazy"><figcaption>L07-6.png</figcaption></figure>
+<h3> 3.2 核心组件说明</h3>
+<table>
+<thead>
+<tr>
+<th>组件名称</th>
+<th>类型</th>
+<th>职责</th>
+<th>输出键</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ParallelPlanAgent</strong></td>
+<td>ParallelAgent</td>
+<td>主协调 agent，并行调用三个子 agent</td>
+<td>complete_plan</td>
+</tr>
+<tr>
+<td><strong>CreativeAgent</strong></td>
+<td>ReactAgent</td>
+<td>生成创意点子</td>
+<td>creative_ideas</td>
+</tr>
+<tr>
+<td><strong>BudgetAgent</strong></td>
+<td>ReactAgent</td>
+<td>制定预算规划</td>
+<td>budget_plan</td>
+</tr>
+<tr>
+<td><strong>ExecutionAgent</strong></td>
+<td>ReactAgent</td>
+<td>规划执行步骤</td>
+<td>execution_steps</td>
+</tr>
+<tr>
+<td><strong>CompleteAgent</strong></td>
+<td>ReactAgent</td>
+<td>整合所有输出形成最终方案</td>
+<td>complete_plan</td>
+</tr>
+<tr>
+<td><strong>SequentialAgent</strong></td>
+<td>SequentialAgent</td>
+<td>串联 ParallelAgent 和 CompleteAgent</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="https://imgbed.ppai.top/file/1773797255070_L07-2.jpg" alt="L07-2.jpg" tabindex="0" loading="lazy"><figcaption>L07-2.jpg</figcaption></figure>
+<h3> 3.3 数据流转过程</h3>
+<p>接下来以数据流转的视角，看一下整个策划Agent的工作流程：</p>
+<figure><img src="https://imgbed.ppai.top/file/1773797970952_L07-7.png" alt="L07-7.png" tabindex="0" loading="lazy"><figcaption>L07-7.png</figcaption></figure>
+<h2> 4. 详细设计与实现</h2>
+<h3> 4.1 子 Agent 定义</h3>
+<h4> 4.1.1 创意策划师 (CreativeAgent)</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点说明</strong>：</p>
+<ul>
+<li><strong>instruction</strong>: 定义了 agent 的角色和任务，使用 <code>{input}</code> 占位符接收用户输入</li>
+<li><strong>outputKey</strong>: 指定输出结果在状态中的存储键名，这里是 <code>creative_ideas</code></li>
+<li><strong>enableLogging</strong>: 启用日志记录，便于调试和观察 agent 行为</li>
+</ul>
+<h4> 4.1.2 财务规划师 (BudgetAgent)</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 4.1.3 执行专家 (ExecutionAgent)</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.2 并行 Agent (ParallelPlanAgent)</h3>
+<p>这是本项目的核心组件，负责协调三个子 agent 的并行执行。</p>
+<figure><img src="https://imgbed.ppai.top/file/1773797251999_L07-3.webp" alt="L07-3.webp" tabindex="0" loading="lazy"><figcaption>L07-3.webp</figcaption></figure>
+<h4> 4.2.1 ParallelAgent 的基本配置</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键参数说明</strong>：</p>
+<ul>
+<li><strong>subAgents</strong>: 要并行调用的子 agent 列表</li>
+<li><strong>mergeStrategy</strong>: 合并策略，决定如何处理多个 agent 的输出</li>
+<li><strong>maxConcurrency</strong>: 最大并发数，设置为 3 表示三个 agent 同时执行</li>
+<li><strong>mergeOutputKey</strong>: 合并后的输出在状态中的键名</li>
+</ul>
+<h4> 4.2.2 方案一：自定义合并策略 (PlanMergeStrategy)</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>策略特点</strong>：</p>
+<ul>
+<li>主动获取三个子 agent 的输出</li>
+<li>通过 LLM 再次处理，生成结构化的完整方案</li>
+<li>包含错误处理机制，合并失败时返回原始结果</li>
+<li>适合<strong>只需要并行执行</strong>的场景</li>
+</ul>
+<h4> 4.2.3 方案二：组合 SequentialAgent</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>策略特点</strong>：</p>
+<ul>
+<li>使用 SequentialAgent 将流程分为两个阶段</li>
+<li><strong>第一阶段</strong>：ParallelAgent 并行执行三个子 agent，使用 DefaultMergeStrategy 合并每个agent的结果</li>
+<li><strong>第二阶段</strong>：CompleteAgent 读取所有中间结果，生成最终方案</li>
+<li>适合<strong>先并行收集信息，后串行处理</strong>的复杂场景</li>
+</ul>
+<p>对于并行执行多Agent时，如何处理多个agent的输出结果，是我们必须考虑的事情，如果每个agent的结构是彼此独立，作为最终结果的一部分，那么简单的合并即可；如果后续还需要使用这些输出，来作为大模型的输入，那么在并行收集之后，再套一个串行Agent的调度策略，无疑是更好的一个选择</p>
+<figure><img src="https://imgbed.ppai.top/file/1773797258628_L07-5.jpg" alt="L07-5.jpg" tabindex="0" loading="lazy"><figcaption>L07-5.jpg</figcaption></figure>
+<h3> 4.3 控制器实现 (PlanController)</h3>
+<p>提供 SSE 流式接口，实时推送 agent 协作过程。</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键技术点</strong>：</p>
+<ul>
+<li>使用 <code>Flux&lt;NodeOutput&gt;</code> 处理流式数据</li>
+<li>过滤掉 <code>AGENT_MODEL_FINISHED</code> 事件，减少不必要的数据传输</li>
+<li>通过 <code>determineStage</code> 方法识别当前执行的 agent 类型</li>
+<li>完善的错误处理机制</li>
+</ul>
+<h3> 4.4 前端界面设计</h3>
+<p>前端采用现代化的单页应用设计，实时展示多 agent 协作过程。</p>
+<p>对于前端的展现，我们的原型设计为上下两部分，上面为三个子Agent的输出（支持并行输出），下面则用于展示最终的策划方案</p>
+<figure><img src="https://imgbed.ppai.top/file/1773797255865_L07-4.jpg" alt="L07-4.jpg" tabindex="0" loading="lazy"><figcaption>L07-4.jpg</figcaption></figure>
+<h4> 4.4.1 界面布局</h4>
+<div class="language-html line-numbers-mode" data-ext="html"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>展现的成品如下</p>
+<figure><img src="https://imgbed.ppai.top/file/1773798616314_L07-8.webp" alt="L07-8.webp" tabindex="0" loading="lazy"><figcaption>L07-8.webp</figcaption></figure>
+<h4> 4.4.2 SSE 连接与实时更新</h4>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 4.4.3 Markdown 渲染与代码高亮</h4>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 5. 配置与部署</h2>
+<h3> 5.1 环境准备</h3>
+<p><strong>必需的软件和依赖</strong>：</p>
+<ul>
+<li>JDK 17 或更高版本</li>
+<li>Maven 3.6+</li>
+<li>Node.js 14+ (仅前端开发需要)</li>
+</ul>
+<h3> 5.2 项目结构</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.3 配置文件详解</h3>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>API Key 配置方式</strong>：</p>
+<p>方式一：环境变量</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>方式二：启动参数</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>方式三：直接修改配置文件（不推荐用于生产环境）</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><h3> 5.4 本地运行</h3>
+<ol>
+<li><strong>克隆项目</strong></li>
+</ol>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><ol start="2">
+<li><strong>安装依赖</strong></li>
+</ol>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><ol start="3">
+<li><strong>配置 API Key</strong></li>
+</ol>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><ol start="4">
+<li><strong>启动应用</strong></li>
+</ol>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><ol start="5">
+<li><strong>访问界面</strong></li>
+</ol>
+<p>启动成功后，控制台会显示：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>浏览器访问：<code>http://localhost:8080</code></p>
+<h3> 5.5 打包部署</h3>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 6. 使用示例</h2>
+<h3> 6.1 示例 : 一灰灰的小店十周年庆</h3>
+<figure><img src="https://imgbed.ppai.top/file/1773799118630_L07-10.webp" alt="L07-10.webp" tabindex="0" loading="lazy"><figcaption>L07-10.webp</figcaption></figure>
+<p>执行过程动画如下：</p>
+<figure><img src="https://imgbed.ppai.top/file/1773799121544_L07-9.gif" alt="L07-9.gif" tabindex="0" loading="lazy"><figcaption>L07-9.gif</figcaption></figure>
+<h2> 7. 故障排查</h2>
+<h3> 7.1 常见问题</h3>
+<h4> 问题 1：API Key 无效</h4>
+<p><strong>症状</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>解决方案</strong>：</p>
+<ol>
+<li>检查环境变量是否正确设置</li>
+<li>确认 API Key 格式正确（通常以 <code>sk-</code> 开头）</li>
+<li>验证 API Key 是否已过期或被禁用</li>
+<li>查看账户余额是否充足</li>
+</ol>
+<h4> 问题 2：模型调用超时</h4>
+<p><strong>症状</strong>：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p><strong>解决方案</strong>：</p>
+<ol>
+<li>检查网络连接是否正常</li>
+<li>尝试更换其他可用模型</li>
+<li>增加超时配置：</li>
+</ol>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 问题 3：中文乱码</h4>
+<p><strong>症状</strong>：
+前端页面中文显示为乱码</p>
+<p><strong>解决方案</strong>：</p>
+<ol>
+<li>确认 <code>application.yml</code> 中配置了 UTF-8 编码</li>
+</ol>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ol start="2">
+<li>检查 HTML 页面的 charset 设置</li>
+</ol>
+<div class="language-html line-numbers-mode" data-ext="html"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><h4> 问题 4：SSE 连接中断</h4>
+<p><strong>症状</strong>：
+前端显示"连接意外断开"，但有部分内容已生成</p>
+<p><strong>解决方案</strong>：</p>
+<ol>
+<li>这是正常现象，当所有 agent 执行完成后，SSE 连接会自动关闭</li>
+<li>前端代码已经处理了这种情况，会检查是否有内容生成</li>
+<li>如果有内容，则判定为正常完成</li>
+</ol>
+<h4> 问题 5：ParallelAgent 不执行</h4>
+<p><strong>症状</strong>：
+日志中没有看到子 agent 的执行信息</p>
+<p><strong>解决方案</strong>：</p>
+<ol>
+<li>检查 <code>enableLogging(true)</code> 是否配置</li>
+<li>确认 subAgents 列表不为空</li>
+<li>查看 mergeStrategy 是否正确配置</li>
+<li>检查 maxConcurrency 设置（建议设置为子 agent 数量）</li>
+</ol>
+<h3> 7.2 日志级别调整</h3>
+<p>开发调试时，可以增加日志详细度：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 8. 最佳实践</h2>
+<h3> 8.1 Agent 设计原则</h3>
+<ol>
+<li><strong>单一职责</strong>：每个 agent 只负责一个明确的任务</li>
+<li><strong>清晰命名</strong>：agent 名称应该反映其职责（如 <code>creative_agent</code>）</li>
+<li><strong>合理输出</strong>：使用有意义的 outputKey 存储结果</li>
+<li><strong>启用日志</strong>：开发阶段始终开启日志记录</li>
+</ol>
+<h3> 8.2 合并策略选择</h3>
+<p><strong>使用自定义合并策略的场景</strong>：</p>
+<ul>
+<li>只需要并行执行，不需要后续处理</li>
+<li>需要在合并时进行复杂的逻辑处理</li>
+<li>需要调用外部服务或数据库</li>
+</ul>
+<p><strong>使用 SequentialAgent 的场景</strong>：</p>
+<ul>
+<li>需要先并行收集信息，再统一处理</li>
+<li>需要多个阶段的流水线处理</li>
+<li>希望保持代码的简洁性和可维护性</li>
+</ul>
+<h3> 8.3 性能优化建议</h3>
+<ol>
+<li>
+<p><strong>并发控制</strong>：</p>
+<ul>
+<li>根据模型 API 的并发限制设置 maxConcurrency</li>
+<li>避免过高的并发导致 API 限流</li>
+</ul>
+</li>
+<li>
+<p><strong>缓存策略</strong>：</p>
+<ul>
+<li>对于常见的主题，可以缓存 agent 的输出结果</li>
+<li>使用 Spring Cache 减少对 LLM 的重复调用</li>
+</ul>
+</li>
+<li>
+<p><strong>超时设置</strong>：</p>
+<ul>
+<li>为每个 agent 设置合理的超时时间</li>
+<li>避免因单个 agent 卡住导致整个流程阻塞</li>
+</ul>
+</li>
+<li>
+<p><strong>错误恢复</strong>：</p>
+<ul>
+<li>实现重试机制处理临时网络错误</li>
+<li>提供降级方案（如使用默认模板）</li>
+</ul>
+</li>
+</ol>
+<h3> 8.4 扩展建议</h3>
+<ol>
+<li>
+<p><strong>增加更多子 agent</strong>：</p>
+<ul>
+<li>风险评估 agent</li>
+<li>市场调研 agent</li>
+<li>竞品分析 agent</li>
+</ul>
+</li>
+<li>
+<p><strong>引入工具调用</strong>：</p>
+<ul>
+<li>搜索互联网获取最新信息</li>
+<li>查询数据库获取历史数据</li>
+<li>调用第三方 API（天气、地图等）</li>
+</ul>
+</li>
+<li>
+<p><strong>增加审核环节</strong>：</p>
+<ul>
+<li>添加一个审核 agent 对最终方案进行评估</li>
+<li>检查方案的可行性、完整性</li>
+</ul>
+</li>
+</ol>
+<h2> 9. 总结</h2>
+<p>本文详细介绍了如何使用 Spring AI Alibaba 框架构建一个基于并行多智能体协作的方案策划系统。通过实际案例，我们展示了以下核心技术：</p>
+<h3> 9.1 核心知识点回顾</h3>
+<ol>
+<li>
+<p><strong>ParallelAgent 的使用</strong></p>
+<ul>
+<li>如何配置并行执行的子 agent</li>
+<li>如何设置并发数和合并策略</li>
+<li>自定义合并策略的实现方法</li>
+</ul>
+</li>
+<li>
+<p><strong>SequentialAgent 的组合使用</strong></p>
+<ul>
+<li>如何将 ParallelAgent 与其他 agent 串联</li>
+<li>实现"并行 + 串行"的混合协作模式</li>
+</ul>
+</li>
+<li>
+<p><strong>流式接口的实现</strong></p>
+<ul>
+<li>使用 SSE 实时推送 agent 执行进度</li>
+<li>前端界面的动态更新和状态管理</li>
+</ul>
+</li>
+<li>
+<p><strong>前后端交互设计</strong></p>
+<ul>
+<li>现代化的单页应用架构</li>
+<li>Markdown 渲染和代码高亮</li>
+<li>错误处理和用户体验优化</li>
+</ul>
+</li>
+</ol>
+<h3> 9.2 技术亮点</h3>
+<ul>
+<li><strong>双策略实现</strong>：提供了自定义合并策略和 SequentialAgent 两种方案</li>
+<li><strong>实时可视化</strong>：通过 SSE 和现代化 UI 实时展示 agent 协作过程</li>
+<li><strong>生产级代码</strong>：包含完善的错误处理、日志记录和配置管理</li>
+<li><strong>可扩展架构</strong>：易于添加新的子 agent 或调整协作流程</li>
+</ul>
+<h3> 9.3 后续学习方向</h3>
+<ol>
+<li><strong>深入学习 Graph</strong>：探索更复杂的状态图和工作流</li>
+<li><strong>工具调用进阶</strong>：学习 Function Calling 和 MCP（Model Context Protocol）</li>
+<li><strong>记忆管理</strong>：实现对话历史的持久化和上下文管理</li>
+<li><strong>多模态处理</strong>：结合图像、音频等多模态输入输出</li>
+</ol>
+<h2> 参考文献</h2>
+<ol>
+<li><a href="https://docs.spring.io/spring-ai/reference/" target="_blank" rel="noopener noreferrer">Spring AI 官方文档</a></li>
+<li><a href="https://github.com/alibaba/spring-ai-alibaba" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 项目地址</a></li>
+<li><a href="https://langgraph4j.org/" target="_blank" rel="noopener noreferrer">LangGraph4J 文档</a></li>
+<li><a href="https://docs.siliconflow.cn/" target="_blank" rel="noopener noreferrer">SiliconFlow API 文档</a></li>
+</ol>
+<hr>
+<p><strong>项目源码</strong>：<a href="https://github.com/liuyueyi/spring-ai-demo/tree/master/ali/L06-multi-agent-paralle" target="_blank" rel="noopener noreferrer">liuyueyi/spring-ai-demo</a></p>
+<blockquote>
+<p><strong>作者</strong>: [一灰]<br>
+<strong>日期</strong>: 2026-03-17<br>
+<strong>Tags</strong>: #SpringAI, #Multi-Agent, #ParallelAgent, #SequentialAgent, #智能体协作</p>
+</blockquote>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="SpringAI"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-03-17T17:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">08.基于 Spring AI Alibaba 实现智能客服多智能体</title>
+    <id>https://ppai.top/ai-guides/ai-dev/ALiAI/L08.Spring%20AI%20Alibaba%20%E5%AE%9E%E7%8E%B0%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93.html</id>
+    <link href="https://ppai.top/ai-guides/ai-dev/ALiAI/L08.Spring%20AI%20Alibaba%20%E5%AE%9E%E7%8E%B0%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93.html"/>
+    <updated>2026-03-23T06:14:53.000Z</updated>
+    <summary type="html"><![CDATA[<figure><img src="https://imgbed.ppai.top/file/1774144785373_L08-cover.png" alt="L08-cover.png" tabindex="0" loading="lazy"><figcaption>L08-cover.png</figcaption></figure>
+<h1> Spring AI Alibaba 多智能体路由模式实战：构建智能客服系统</h1>
+<h2> 1. 引言</h2>
+<p>在当今 AI 应用开发中，单一智能体往往难以应对复杂多变的业务场景。多智能体协作模式应运而生，其中<strong>路由交接模式</strong>是一种高效的任务分发策略。本文将基于 Spring AI Alibaba 框架，详细介绍如何实现一个智能客服系统，该系统能够根据用户意图自动路由到不同的专家 Agent。</p>]]></summary>
+    <content type="html"><![CDATA[<figure><img src="https://imgbed.ppai.top/file/1774144785373_L08-cover.png" alt="L08-cover.png" tabindex="0" loading="lazy"><figcaption>L08-cover.png</figcaption></figure>
+<h1> Spring AI Alibaba 多智能体路由模式实战：构建智能客服系统</h1>
+<h2> 1. 引言</h2>
+<p>在当今 AI 应用开发中，单一智能体往往难以应对复杂多变的业务场景。多智能体协作模式应运而生，其中<strong>路由交接模式</strong>是一种高效的任务分发策略。本文将基于 Spring AI Alibaba 框架，详细介绍如何实现一个智能客服系统，该系统能够根据用户意图自动路由到不同的专家 Agent。</p>
+<figure><img src="https://imgbed.ppai.top/file/1774144673562_L08-1.png" alt="L08-1.png" tabindex="0" loading="lazy"><figcaption>L08-1.png</figcaption></figure>
+<h3> 1.1 什么是多智能体路由模式？</h3>
+<p>多智能体路由模式（Router Pattern）是一种协作架构，其中：</p>
+<ul>
+<li><strong>Router Agent</strong>：负责分析用户输入，判断意图，选择合适的专家 Agent</li>
+<li><strong>Expert Agents</strong>：各领域的专业智能体，处理特定类型的任务</li>
+<li><strong>自动切换</strong>：用户无感知地在不同专家间切换，获得专业服务</li>
+</ul>
+<h3> 1.2 适用场景</h3>
+<p>这种模式特别适合：</p>
+<ul>
+<li>智能客服系统（销售、技术支持、HR 等）</li>
+<li>多领域知识问答</li>
+<li>任务分发和工作流自动化</li>
+<li>专家系统集成</li>
+</ul>
+<h2> 2. 项目架构概览</h2>
+<h3> 2.1 技术栈</h3>
+<ul>
+<li><strong>框架</strong>：Spring Boot 3.x + Spring AI Alibaba</li>
+<li><strong>AI 模型</strong>：Qwen2.5-7B-Instruct（通过 SiliconFlow API）</li>
+<li><strong>前端</strong>：Thymeleaf + 原生 JavaScript</li>
+<li><strong>通信</strong>：SSE（Server-Sent Events）实现流式响应</li>
+</ul>
+<h3> 2.2 智能体架构</h3>
+<figure><img src="https://imgbed.ppai.top/file/1774144674559_L08-2.png" alt="L08-2.png" tabindex="0" loading="lazy"><figcaption>L08-2.png</figcaption></figure>
+<h3> 2.3 Agent 角色定义</h3>
+<table>
+<thead>
+<tr>
+<th>Agent 名称</th>
+<th>角色描述</th>
+<th>outputKey</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>router_agent</td>
+<td>路由决策者，根据用户意图选择专家</td>
+<td>（不产生输出，仅路由）</td>
+</tr>
+<tr>
+<td>sales_agent</td>
+<td>销售专家，处理购买、价格等问题</td>
+<td>sales_response</td>
+</tr>
+<tr>
+<td>hr_agent</td>
+<td>招聘专家，处理招聘、面试等问题</td>
+<td>hr_response</td>
+</tr>
+<tr>
+<td>tech_support_agent</td>
+<td>技术支持专家，处理产品使用/故障问题</td>
+<td>tech_response</td>
+</tr>
+</tbody>
+</table>
+<h2> 3. 核心实现详解</h2>
+<h3> 3.1 项目结构</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.2 路由 Agent 配置</h3>
+<p>路由 Agent 是整个系统的核心，负责意图识别和任务分发：</p>
+<figure><img src="https://imgbed.ppai.top/file/1774144670015_L08-3.png" alt="L08-3.png" tabindex="0" loading="lazy"><figcaption>L08-3.png</figcaption></figure>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>关键点解析</strong>：</p>
+<ol>
+<li><strong>LlmRoutingAgent</strong>：Spring AI Alibaba 提供的路由智能体，自动处理意图识别</li>
+<li><strong>instruction</strong>：定义路由规则的提示词，告诉 LLM 如何分类用户问题</li>
+<li><strong>subAgents</strong>：注册所有可用的专家 Agent</li>
+<li><strong>description</strong>：每个 Agent 的描述，帮助 LLM 做出路由决策</li>
+</ol>
+<h3> 3.3 专家 Agent 实现</h3>
+<p>每个专家 Agent 使用 <code>ReactAgent</code> 构建，专注于特定领域：</p>
+<figure><img src="https://imgbed.ppai.top/file/1774144669604_L08-4.png" alt="L08-4.png" tabindex="0" loading="lazy"><figcaption>L08-4.png</figcaption></figure>
+<h4> 销售 Agent</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 人力资源 Agent</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 技术支持 Agent</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>ReactAgent 配置要点</strong>：</p>
+<ul>
+<li><strong>name</strong>：Agent 的唯一标识符，用于路由和日志</li>
+<li><strong>model</strong>：使用的 AI 模型</li>
+<li><strong>description</strong>：简短描述，帮助 Router 识别该 Agent 的职责</li>
+<li><strong>instruction</strong>：详细的角色定义和行为指导</li>
+<li><strong>outputKey</strong>：输出键名，用于在多 Agent 协作中标识响应来源</li>
+<li><strong>enableLogging</strong>：启用日志记录，便于调试</li>
+</ul>
+<h3> 3.4 流式接口实现</h3>
+<p>控制器使用 SSE 技术实现实时流式响应：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>流式响应数据结构</strong>：</p>
+<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 4. 前端实现</h2>
+<h3> 4.1 界面设计特点</h3>
+<ul>
+<li><strong>现代化 UI</strong>：渐变色设计，圆角卡片布局</li>
+<li><strong>实时状态展示</strong>：四个部门的状态指示器，高亮当前服务部门</li>
+<li><strong>打字机效果</strong>：SSE 流式响应实现逐字显示</li>
+<li><strong>部门标识</strong>：不同颜色区分不同部门的回复</li>
+</ul>
+<h3> 4.2 核心 JavaScript 逻辑</h3>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 4.3 Agent 状态更新</h3>
+<div class="language-javascript line-numbers-mode" data-ext="js"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 5. 配置与部署</h2>
+<h3> 5.1 应用配置</h3>
+<p>在 <code>application.yml</code> 中配置 AI 模型：</p>
+<div class="language-yaml line-numbers-mode" data-ext="yml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 5.2 启动步骤</h3>
+<ol>
+<li>
+<p><strong>配置 API Key</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>启动应用</strong>：</p>
+<div class="language-bash line-numbers-mode" data-ext="sh"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>访问界面</strong>：
+打开浏览器访问 <code>http://localhost:8080/</code></p>
+</li>
+</ol>
+<h3> 5.3 测试用例</h3>
+<figure><img src="https://imgbed.ppai.top/file/1774146767647_L08-show.gif" alt="L08-show.gif" tabindex="0" loading="lazy"><figcaption>L08-show.gif</figcaption></figure>
+<h2> 6. 工作流程图</h2>
+<figure><img src="https://imgbed.ppai.top/file/1774144668639_L08-5.png" alt="L08-5.png" tabindex="0" loading="lazy"><figcaption>L08-5.png</figcaption></figure>
+<h2> 7. 扩展与优化</h2>
+<h3> 7.1 添加新 Agent</h3>
+<p>要添加新的专家 Agent，只需：</p>
+<ol>
+<li>创建新的 Agent 类：</li>
+</ol>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ol start="2">
+<li>在 Router 中注册：</li>
+</ol>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><ol start="3">
+<li>更新路由提示词和前端显示</li>
+</ol>
+<h3> 7.2 为 Agent 添加工具</h3>
+<p>Agent 可以装配工具来扩展能力：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 7.3 性能优化建议</h3>
+<ul>
+<li><strong>缓存路由决策</strong>：对于常见问题，缓存路由结果</li>
+<li><strong>模型选择</strong>：根据场景选择合适的模型大小</li>
+<li><strong>异步处理</strong>：对于耗时操作，使用异步处理</li>
+<li><strong>限流控制</strong>：防止 API 调用过载</li>
+</ul>
+<h2> 8. 多智能体模式对比与选型</h2>
+<h3> 8.1 Spring AI Alibaba 多智能体模式对比</h3>
+<p>Spring AI Alibaba 提供了多种多智能体协作模式，适用于不同场景：</p>
+<figure><img src="https://imgbed.ppai.top/file/1774144670594_L08-6.png" alt="L08-6.png" tabindex="0" loading="lazy"><figcaption>L08-6.png</figcaption></figure>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>工作原理</th>
+<th>控制流</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SequentialAgent</strong></td>
+<td>按预定义顺序依次执行</td>
+<td>线性</td>
+<td>已知工作流程、数据转换</td>
+</tr>
+<tr>
+<td><strong>ParallelAgent</strong></td>
+<td>多Agent并行处理相同输入</td>
+<td>并发</td>
+<td>独立分析、多角度评估</td>
+</tr>
+<tr>
+<td><strong>LlmRoutingAgent</strong></td>
+<td>LLM智能决策单路由</td>
+<td>单次选择</td>
+<td>基础任务分类、简单路由</td>
+</tr>
+<tr>
+<td><strong>SupervisorAgent</strong></td>
+<td>LLM监督者多步骤循环路由</td>
+<td>多步骤循环</td>
+<td>复杂任务编排、专家接管</td>
+</tr>
+<tr>
+<td><strong>Handoffs（交接）</strong></td>
+<td>状态驱动Agent切换</td>
+<td>去中心化</td>
+<td>客服场景、角色轮换</td>
+</tr>
+</tbody>
+</table>
+<h3> 8.2 快速选型指南</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 8.3 LlmRoutingAgent vs SupervisorAgent</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>LlmRoutingAgent</th>
+<th>SupervisorAgent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>路由次数</td>
+<td>单次</td>
+<td>多步骤循环</td>
+</tr>
+<tr>
+<td>子Agent返回</td>
+<td>直接结束</td>
+<td>返回监督者继续决策</td>
+</tr>
+<tr>
+<td>Instruction占位符</td>
+<td>❌</td>
+<td>✅ 支持</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>简单分类</td>
+<td>复杂多步骤任务</td>
+</tr>
+</tbody>
+</table>
+<h3> 8.4 最佳实践</h3>
+<h4> 优化路由准确性</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 使用占位符传递数据</h4>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 9. 常见问题</h2>
+<h3> 9.1 路由不准确</h3>
+<p><strong>问题</strong>：Router 错误地将问题路由到不相关的 Agent。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>优化 Router 的 instruction 提示词，更清晰地定义各 Agent 职责</li>
+<li>为每个 Agent 提供更准确的 description</li>
+<li>考虑使用更强大的模型做路由决策</li>
+</ul>
+<h3> 9.2 响应延迟</h3>
+<p><strong>问题</strong>：用户等待时间过长。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>使用 SSE 流式响应，实现边生成边显示</li>
+<li>优化模型选择，平衡速度和质量</li>
+<li>考虑使用本地部署模型减少网络延迟</li>
+</ul>
+<h3> 9.3 上下文丢失</h3>
+<p><strong>问题</strong>：多轮对话中 Agent 丢失上下文。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>实现对话历史管理</li>
+<li>在 Agent 之间传递上下文信息</li>
+<li>使用 Redis 等缓存对话状态</li>
+</ul>
+<h2> 10. 总结</h2>
+<p>本文详细介绍了基于 Spring AI Alibaba 框架实现多智能体路由模式的完整流程。</p>
+<figure><img src="https://imgbed.ppai.top/file/1774144673668_L08-7.jpg" alt="L08-7.jpg" tabindex="0" loading="lazy"><figcaption>L08-7.jpg</figcaption></figure>
+<p>通过构建智能客服系统，我们学习了：</p>
+<ol>
+<li><strong>路由模式的核心概念</strong>：Router Agent 负责意图识别，Expert Agents 负责专业处理</li>
+<li><strong>Spring AI Alibaba 的关键组件</strong>：LlmRoutingAgent 和 ReactAgent 的使用</li>
+<li><strong>流式响应的实现</strong>：SSE 技术实现实时对话体验</li>
+<li><strong>前后端协作</strong>：完整的智能客服系统架构</li>
+</ol>
+<p>这种模式具有良好的扩展性，可以轻松添加新的专家 Agent，适用于各种需要智能分发任务的场景。</p>
+<h2> 11. 参考资料</h2>
+<h3> 官方文档</h3>
+<table>
+<thead>
+<tr>
+<th>文档类型</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>官方文档首页</strong></td>
+<td><a href="https://java2ai.com" target="_blank" rel="noopener noreferrer">https://java2ai.com</a></td>
+</tr>
+<tr>
+<td><strong>中文文档</strong></td>
+<td><a href="https://java2ai.com/docs/overview" target="_blank" rel="noopener noreferrer">https://java2ai.com/docs/overview</a></td>
+</tr>
+<tr>
+<td><strong>多智能体文档</strong></td>
+<td><a href="https://java2ai.com/docs/frameworks/agent-framework/advanced/multi-agent" target="_blank" rel="noopener noreferrer">https://java2ai.com/docs/frameworks/agent-framework/advanced/multi-agent</a></td>
+</tr>
+<tr>
+<td><strong>Agent Tool 文档</strong></td>
+<td><a href="https://java2ai.com/docs/frameworks/agent-framework/advanced/agent-tool" target="_blank" rel="noopener noreferrer">https://java2ai.com/docs/frameworks/agent-framework/advanced/agent-tool</a></td>
+</tr>
+<tr>
+<td><strong>GitHub 仓库</strong></td>
+<td><a href="https://github.com/alibaba/spring-ai-alibaba" target="_blank" rel="noopener noreferrer">https://github.com/alibaba/spring-ai-alibaba</a></td>
+</tr>
+<tr>
+<td><strong>示例项目</strong></td>
+<td><a href="https://github.com/liuyueyi/spring-ai-demo" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a></td>
+</tr>
+</tbody>
+</table>
+<h3> 相关资源</h3>
+<ul>
+<li><a href="https://github.com/alibaba/spring-ai-alibaba" target="_blank" rel="noopener noreferrer">Spring AI Alibaba 官方文档</a></li>
+<li><a href="https://docs.spring.io/spring-ai/reference/" target="_blank" rel="noopener noreferrer">Spring AI 官方文档</a></li>
+</ul>
+<h2> 附录：完整代码清单</h2>
+<p>项目源码：<a href="https://github.com/liuyueyi/spring-ai-demo" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo</a></p>
+<p>完整的项目代码可在 <code>ali/L07-multi-agent-route</code> 目录中找到，包括：</p>
+<ul>
+<li>后端 Java 代码（4 个 Agent + 1 个 Controller）</li>
+<li>前端模板（cs-chat.html）</li>
+<li>配置文件（application.yml）</li>
+<li>Maven 配置（pom.xml）</li>
+</ul>
+<blockquote>
+<p><strong>Author</strong>: 一灰
+<strong>Date</strong>: 2026-03-22
+<strong>Tags</strong>: #SpringAI, #多智能体, #路由模式, #智能客服, #Alibaba</p>
+</blockquote>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="SpringAI"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-03-22T08:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
   <entry>
     <title type="text">02.多智能体系统：当AI学会&amp;quot;团队协作&amp;quot;</title>
     <id>https://ppai.top/ai-guides/tutorial/ai-talking/02.%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93%E7%B3%BB%E7%BB%9F-%E5%BD%93AI%E5%AD%A6%E4%BC%9A%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C.html</id>
@@ -831,20 +2069,17 @@
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
-    <title type="text">Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</title>
+    <title type="text">04.Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</title>
     <id>https://ppai.top/ai-guides/ai-dev/ALiAI/L04.Spring%20AI%20Alibaba%20%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%AE%9E%E7%8E%B0%E5%BF%AB%E9%80%92%E4%B8%8B%E5%8D%95%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%8A%A9%E6%89%8B.html</id>
     <link href="https://ppai.top/ai-guides/ai-dev/ALiAI/L04.Spring%20AI%20Alibaba%20%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%AE%9E%E7%8E%B0%E5%BF%AB%E9%80%92%E4%B8%8B%E5%8D%95%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%8A%A9%E6%89%8B.html"/>
-    <updated>2026-03-13T06:32:20.000Z</updated>
+    <updated>2026-03-23T06:11:32.000Z</updated>
     <summary type="html"><![CDATA[<h1> Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</h1>
-<p><strong>Author</strong>: [一灰]<br>
-<strong>Date</strong>: 2026-03-12<br>
-<strong>Tags</strong>: [Spring AI, Alibaba, 多轮对话，Agent, 工具调用]</p>
 <h2> 1. 引言</h2>
-<p>在人工智能应用的开发中，多轮对话交互是一个常见且重要的场景。现在市面上的AI应用，有不少都可以直接在对话框中，执行一些交互动作，比如“帮我买杯奶茶”，作为一个“古老”的研发人员，自然会有些好奇，这个是怎么实现的呢？</p>]]></summary>
+<p>在人工智能应用的开发中，多轮对话交互是一个常见且重要的场景。现在市面上的AI应用，有不少都可以直接在对话框中，执行一些交互动作，比如“帮我买杯奶茶”，作为一个“古老”的研发人员，自然会有些好奇，这个是怎么实现的呢？</p>
+<p>怎么就从调用大模型的API接口，进化到可以直接通过多轮对话，完成下单的操作呢？</p>
+<p>比如用户想要通过对话完成快递下单，需要依次提供收件人信息、发件人信息、物品信息等。</p>
+<p>如何优雅地管理这个分步骤的交互流程？又如何讲这些分步骤的过程数据，最终汇总一个完整的下单请求体呢？</p>]]></summary>
     <content type="html"><![CDATA[<h1> Spring AI Alibaba 实战：从零实现快递下单多轮对话助手</h1>
-<p><strong>Author</strong>: [一灰]<br>
-<strong>Date</strong>: 2026-03-12<br>
-<strong>Tags</strong>: [Spring AI, Alibaba, 多轮对话，Agent, 工具调用]</p>
 <h2> 1. 引言</h2>
 <p>在人工智能应用的开发中，多轮对话交互是一个常见且重要的场景。现在市面上的AI应用，有不少都可以直接在对话框中，执行一些交互动作，比如“帮我买杯奶茶”，作为一个“古老”的研发人员，自然会有些好奇，这个是怎么实现的呢？</p>
 <p>怎么就从调用大模型的API接口，进化到可以直接通过多轮对话，完成下单的操作呢？</p>
@@ -1096,11 +2331,12 @@
       <name>一灰灰blog</name>
       <uri>https://ppai.top</uri>
     </author>
+    <category term="SpringAI"/>
     <contributor>
       <name>一灰灰blog</name>
       <uri>https://ppai.top</uri>
     </contributor>
-    <published>2026-03-13T06:32:20.000Z</published>
+    <published>2026-03-12T12:15:07.000Z</published>
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
