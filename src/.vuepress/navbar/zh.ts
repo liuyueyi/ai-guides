@@ -29,7 +29,7 @@ export const zhNavbar = navbar([
       {
         text: "SpringAI",
         prefix: "",
-        children: ["基础篇/", "进阶篇/", "应用篇/", "源码篇/", "AliAI/"]
+        children: ["基础篇/", "进阶篇/", "应用篇/", "源码篇/", "ALiAI/"]
       }
     ]
   },
