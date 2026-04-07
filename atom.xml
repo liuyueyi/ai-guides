@@ -9,18 +9,803 @@
   </author>
   <logo>https://ppai.top/ai-guides/favicon.ico</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-04-03T08:04:45.045Z</updated>
+  <updated>2026-04-07T07:48:52.450Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://ppai.top/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://ppai.top/ai-guides/"/>
+  <category term="Agent"/>
   <category term="LLM"/>
   <category term="SpringAI"/>
-  <category term="Agent"/>
   <category term="AI"/>
   <contributor>
     <name>一灰灰blog</name>
     <uri>https://ppai.top</uri>
   </contributor>
+  <entry>
+    <title type="text">06.多轮 Agent 在动态意图识别环境下的生命周期管理</title>
+    <id>https://ppai.top/ai-guides/tutorial/hello-agent/06.Agent%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%9C%A8%E5%8A%A8%E6%80%81%E6%84%8F%E5%9B%BE%E8%AF%86%E5%88%AB%E7%8E%AF%E5%A2%83%E4%B8%8B%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86.html</id>
+    <link href="https://ppai.top/ai-guides/tutorial/hello-agent/06.Agent%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%9C%A8%E5%8A%A8%E6%80%81%E6%84%8F%E5%9B%BE%E8%AF%86%E5%88%AB%E7%8E%AF%E5%A2%83%E4%B8%8B%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86.html"/>
+    <updated>2026-04-07T07:47:31.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 多轮 Agent 在动态意图识别环境下的生命周期管理</h1>
+<figure><img src="https://imgbed.ppai.top/file/1775205745434_HA06-01.png" alt="HA06-01.png" tabindex="0" loading="lazy"><figcaption>HA06-01.png</figcaption></figure>
+<h2> 1. 引言</h2>
+<p>在构建基于 AI 的对话系统时，我们常常需要将现有的服务能力封装为 AI 对话的 tool，或者将多个服务能力打包为一个 agent 供 AI 对话交互使用。当已有服务能力较多时，基于用户交互的意图识别 + 动态注册服务能力成为一种常见的架构选择。</p>]]></summary>
+    <content type="html"><![CDATA[<h1> 多轮 Agent 在动态意图识别环境下的生命周期管理</h1>
+<figure><img src="https://imgbed.ppai.top/file/1775205745434_HA06-01.png" alt="HA06-01.png" tabindex="0" loading="lazy"><figcaption>HA06-01.png</figcaption></figure>
+<h2> 1. 引言</h2>
+<p>在构建基于 AI 的对话系统时，我们常常需要将现有的服务能力封装为 AI 对话的 tool，或者将多个服务能力打包为一个 agent 供 AI 对话交互使用。当已有服务能力较多时，基于用户交互的意图识别 + 动态注册服务能力成为一种常见的架构选择。</p>
+<p>然而，这种架构在面对<strong>多轮引导式信息收集</strong>场景时，会出现一个核心问题：<strong>用户输入的内容可能因意图识别与当前 agent 无关联，导致该 agent 未被注册，从而造成整个多轮对话流程的意外中断。</strong></p>
+<p>本文将深入探讨这一问题的本质，分析多种可行的解决方案，并对各方案进行对比，帮助你在实际项目中做出合适的架构决策。</p>
+<h2> 2. 问题背景</h2>
+<h3> 2.1 典型架构模式</h3>
+<p>在现代 AI 对话系统中，常见的架构模式如下：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div></div></div><p>这种模式的优势在于：</p>
+<ul>
+<li><strong>按需加载</strong>：只注册与当前意图相关的服务，减少 token 消耗</li>
+<li><strong>扩展性强</strong>：新增服务能力只需注册即可，无需修改核心逻辑</li>
+<li><strong>资源高效</strong>：避免将所有 tool 一次性注入 prompt</li>
+</ul>
+<figure><img src="https://imgbed.ppai.top/file/1775205815074_HA06-02.png" alt="HA06-02.png" tabindex="0" loading="lazy"><figcaption>HA06-02.png</figcaption></figure>
+<h3> 2.2 多轮 Agent 的特殊性</h3>
+<p>多轮引导式 agent 的典型特征是：</p>
+<ul>
+<li>需要<strong>跨多轮对话</strong>维持状态</li>
+<li>每轮对话中，agent 会向用户提出问题，收集特定信息</li>
+<li>用户回答可能<strong>偏离当前 agent 的意图范畴</strong></li>
+<li>信息收集完成后，agent 才会执行最终的服务调用</li>
+</ul>
+<p>例如，一个"预订会议室"的 agent 可能需要多轮对话来收集：</p>
+<ol>
+<li>会议时间</li>
+<li>参会人数</li>
+<li>设备需求</li>
+<li>特殊要求</li>
+</ol>
+<p>在这个过程中，用户可能会突然问："今天天气怎么样？"——这显然与会议室预订无关。</p>
+<h2> 3. 问题说明</h2>
+<h3> 3.1 核心矛盾</h3>
+<p>问题的核心矛盾在于：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>动态意图识别</th>
+<th>多轮 Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>设计目标</td>
+<td>每轮独立识别最相关意图</td>
+<td>维持跨轮次的对话状态</td>
+</tr>
+<tr>
+<td>注册策略</td>
+<td>仅注册匹配当前意图的服务</td>
+<td>需要持续注册直至任务完成</td>
+</tr>
+<tr>
+<td>状态管理</td>
+<td>无状态或弱状态</td>
+<td>强状态依赖</td>
+</tr>
+</tbody>
+</table>
+<p>当用户输入偏离当前 agent 的意图范畴时，意图识别模块可能：</p>
+<ol>
+<li><strong>完全忽略</strong>当前活跃的 agent</li>
+<li><strong>注册其他</strong>更匹配的 tool/agent</li>
+<li>导致当前 agent <strong>失去执行机会</strong></li>
+</ol>
+<figure><img src="https://imgbed.ppai.top/file/1775205929420_HA06-03.png" alt="HA06-03.png" tabindex="0" loading="lazy"><figcaption>HA06-03.png</figcaption></figure>
+<h3> 3.2 具体表现</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3.3 影响范围</h3>
+<p>这个问题会导致：</p>
+<ul>
+<li><strong>用户体验下降</strong>：需要重新开始整个流程</li>
+<li><strong>信息丢失</strong>：已收集的信息无法保留</li>
+<li><strong>信任度降低</strong>：用户认为系统"记不住"之前的对话</li>
+<li><strong>转化率下降</strong>：对于业务场景（如预订、购买），直接导致转化失败</li>
+</ul>
+<h2> 4. 解决方案</h2>
+<figure><img src="https://imgbed.ppai.top/file/1775205895763_HA06-04.png" alt="HA06-04.png" tabindex="0" loading="lazy"><figcaption>HA06-04.png</figcaption></figure>
+<h3> 方案一：Agent 会话锁定（Session Locking）</h3>
+<h4> 核心思想</h4>
+<p>当多轮 agent 被激活后，在会话层面设置<strong>锁定标志</strong>，在锁定期间强制优先注册该 agent，即使用户输入与其他意图匹配，也不释放焦点。</p>
+<h4> 为什么需要这个方案</h4>
+<p>在动态意图识别架构中，每一轮对话都是"从零开始"的意图匹配。这意味着系统天然不具备"记忆"——它不知道上一轮正在执行哪个 agent。对于单轮查询（如天气、翻译），这完全没问题；但对于多轮信息收集场景，这种无状态特性就是致命的。</p>
+<p>会话锁定是最直接的解决思路：<strong>既然系统记不住，那我就强制它记住</strong>。通过一个显式的锁定标志，告诉全局路由"当前有一个正在进行的多轮任务，不要打断它"。</p>
+<h4> 实现方式</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 工作流程示意</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 对话示例</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>实现简单，改动最小</td>
+<td>可能误伤用户的真实意图切换</td>
+</tr>
+<tr>
+<td>保证多轮流程完整性</td>
+<td>需要合理设置锁定超时时间</td>
+</tr>
+<tr>
+<td>状态管理清晰，易于调试</td>
+<td>锁定期间无法响应其他意图</td>
+</tr>
+<tr>
+<td>不依赖额外存储</td>
+<td>用户体验偏"强硬"</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>业务流程明确、字段固定的场景（如表单填写）</li>
+<li>用户不太可能中途切换意图的场景</li>
+<li>对完成率要求较高的业务场景</li>
+<li>快速验证多轮 agent 可行性的初期阶段</li>
+</ul>
+<h4> 与其他方案的关系</h4>
+<p>会话锁定是最基础的方案，可以作为其他方案的<strong>前置条件</strong>或<strong>降级策略</strong>：</p>
+<ul>
+<li>与**方案六（子意图处理）**组合：锁定期间由 agent 内部处理意外输入，体验更柔和</li>
+<li>作为**方案五（混合模式）**中关键流程的默认策略</li>
+<li>作为**方案七（任务栈机制）**的底层锁定原语</li>
+</ul>
+<h3> 方案二：意图优先级 + 软切换（Priority + Soft Switch）</h3>
+<h4> 核心思想</h4>
+<p>不采用硬锁定，而是为不同意图设置<strong>优先级权重</strong>。当检测到多轮 agent 活跃时，为其添加优先级加成，但<strong>不阻止</strong>高置信度的新意图切换。本质上是让意图识别从"非黑即白"变成"概率竞争"。</p>
+<h4> 为什么需要这个方案</h4>
+<p>方案一的硬锁定虽然简单直接，但用户体验偏"强硬"——即使用户非常明确地想切换话题，系统也会强行拉回原流程。这在某些场景下是不可接受的。</p>
+<p>软切换的核心改进在于：<strong>不再阻止用户切换意图，而是通过优先级加成让当前活跃 agent 获得"主场优势"</strong>。如果用户只是随口一问（低置信度），系统会继续当前流程；如果用户明确要切换（高置信度），系统会优雅地放行。</p>
+<h4> 实现方式</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 工作流程示意</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 对话示例</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 参数调优建议</h4>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>推荐值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优先级加成 (bonus)</td>
+<td>0.2 ~ 0.4</td>
+<td>过高则难以切换，过低则失去保护意义</td>
+</tr>
+<tr>
+<td>衰减速率 (decayRate)</td>
+<td>0.001 ~ 0.005</td>
+<td>建议指数衰减，避免线性衰减的突变</td>
+</tr>
+<tr>
+<td>切换阈值 (threshold)</td>
+<td>0.2 ~ 0.4</td>
+<td>根据业务容忍度调整，电商下单建议偏高</td>
+</tr>
+</tbody>
+</table>
+<h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>灵活性高，允许意图切换</td>
+<td>实现复杂度高于硬锁定</td>
+</tr>
+<tr>
+<td>不会完全阻塞其他意图</td>
+<td>需要精细调参（加成值、衰减率、阈值）</td>
+</tr>
+<tr>
+<td>用户体验更自然、不"强硬"</td>
+<td>可能出现优先级冲突或频繁切换</td>
+</tr>
+<tr>
+<td>支持优先级随时间衰减，更符合实际</td>
+<td>调参不当可能导致行为不可预测</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>用户可能中途切换意图的场景</li>
+<li>需要平衡流程完整性和意图响应性的场景</li>
+<li>有足够数据来调优优先级参数的场景</li>
+<li>对用户体验要求高于实现成本的场景</li>
+</ul>
+<h4> 与其他方案的关系</h4>
+<ul>
+<li>与**方案六（子意图处理）**组合：优先级加成解决全局路由问题，子意图处理解决 agent 内部意外输入</li>
+<li>作为**方案五（混合模式）**的默认策略</li>
+<li>可作为**方案一（会话锁定）**的平滑升级路径</li>
+</ul>
+<h3> 方案三：状态持久化 + 延迟注册（State Persistence + Deferred Registration）</h3>
+<h4> 核心思想</h4>
+<p>将多轮 agent 的<strong>状态持久化到外部存储</strong>，即使某轮对话中该 agent 未被注册，下一轮用户输入回到该 agent 范畴时，能够从存储中<strong>恢复之前的状态</strong>继续执行，无需用户重新填写已提供的信息。</p>
+<h4> 为什么需要这个方案</h4>
+<p>方案一和方案二都假设"agent 不被注册 = 流程中断"。但如果换个思路：<strong>中断就中断，只要状态还在就行</strong>。状态持久化的核心哲学是：<strong>不怕被打断，就怕记不住</strong>。</p>
+<p>这种方案特别适合用户行为高度不确定的场景——用户可能今天填了一半的表单，明天才回来继续。没有持久化，一切体验优化都是空谈。</p>
+<h4> 实现方式</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 工作流程示意</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 对话示例</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最灵活，允许任意意图切换</td>
+<td>实现复杂度较高</td>
+</tr>
+<tr>
+<td>用户可随时回到之前的流程</td>
+<td>需要额外的存储和清理机制</td>
+</tr>
+<tr>
+<td>支持跨会话恢复（隔天继续）</td>
+<td>状态冲突处理复杂</td>
+</tr>
+<tr>
+<td>不阻塞其他意图</td>
+<td>需要考虑状态过期策略</td>
+</tr>
+<tr>
+<td>天然适配方案六（子意图处理）</td>
+<td>存储成本随用户量增长</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>用户行为高度不确定的场景</li>
+<li>需要支持跨会话恢复的场景（如隔天继续填写）</li>
+<li>对用户体验要求极高的场景</li>
+<li>有足够工程资源实现状态管理的团队</li>
+</ul>
+<h4> 与其他方案的关系</h4>
+<ul>
+<li>与**方案六（子意图处理）**天然兼容：槽位状态可直接持久化</li>
+<li>与<strong>方案一/二</strong>互补：持久化保证状态不丢失，锁定/优先级保证流程不被打断</li>
+<li>是**方案五（混合模式）**中"关键流程"的基础设施</li>
+</ul>
+<h3> 方案四：全局上下文感知（Global Context Awareness）</h3>
+<h4> 核心思想</h4>
+<p>在意图识别阶段，将<strong>当前活跃的 agent 上下文</strong>作为额外输入注入到意图识别模型中，让模型能够理解"用户当前正在与某个 agent 交互"这一事实，从而做出更智能的判断。</p>
+<h4> 为什么需要这个方案</h4>
+<p>前三种方案都在"路由层"做文章——要么锁定、要么优先级、要么恢复状态。但它们都有一个共同前提：<strong>意图识别本身是无上下文的</strong>。</p>
+<p>方案四的思路更根本：<strong>让意图识别本身变得有上下文</strong>。既然 LLM 已经具备了强大的上下文理解能力，为什么不直接把"当前正在进行的任务"告诉它，让它来做判断呢？</p>
+<h4> 实现方式</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 工作流程示意</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 对话示例</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最智能，LLM 自主判断</td>
+<td>依赖 LLM 能力，可能不稳定</td>
+</tr>
+<tr>
+<td>不需要硬编码规则</td>
+<td>每次识别消耗更多 token</td>
+</tr>
+<tr>
+<td>可处理复杂场景</td>
+<td>延迟较高</td>
+</tr>
+<tr>
+<td>易于扩展</td>
+<td>需要精心设计的 prompt</td>
+</tr>
+<tr>
+<td>最贴近人类对话理解方式</td>
+<td>LLM 输出可能不一致，需要兜底策略</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>有强大 LLM 支持的场景</li>
+<li>用户输入多样化的场景</li>
+<li>愿意为智能性牺牲一定性能和成本的场景</li>
+<li>对话流程复杂、难以用规则覆盖的场景</li>
+</ul>
+<h4> Prompt 设计建议</h4>
+<table>
+<thead>
+<tr>
+<th>原则</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>简洁</td>
+<td>只注入必要上下文，避免 prompt 过长</td>
+</tr>
+<tr>
+<td>结构化</td>
+<td>使用清晰的格式描述当前状态</td>
+</tr>
+<tr>
+<td>明确判断标准</td>
+<td>告诉 LLM 什么情况下应该切换、什么情况下应该保持</td>
+</tr>
+<tr>
+<td>兜底策略</td>
+<td>LLM 判断不确定时，提供 fallback 机制</td>
+</tr>
+</tbody>
+</table>
+<h4> 与其他方案的关系</h4>
+<ul>
+<li>可作为**方案五（混合模式）**中"智能判断"的实现方式</li>
+<li>与**方案六（子意图处理）**互补：全局上下文感知解决路由层判断，子意图处理解决 agent 内部理解</li>
+<li>可作为**方案二（优先级+软切换）**的智能升级版</li>
+</ul>
+<h3> 方案五：Agent 内部"子意图"处理 + 超时降级（Internal Sub-Intent + Timeout Fallback）</h3>
+<h4> 核心思想</h4>
+<p>让多轮 agent 自己具备处理"意外输入"的能力，而不是完全依赖全局路由。核心思路是：<strong>将意图处理的边界从全局路由下沉到 agent 内部</strong>，让 agent 自行判断用户输入是"正在回答我的问题"、"偏离但可引导"还是"明确要结束"。</p>
+<h4> 为什么需要这个方案</h4>
+<p>前四种方案都将"意图识别"和"agent 注册"视为全局路由层的职责。但这种方式有一个根本性缺陷：<strong>全局路由无法理解 agent 内部的对话上下文</strong>。</p>
+<p>例如，一个"预订会议室"的 agent 正在等待用户输入"参会人数"，用户回答"大概10个人左右吧"——这句话从全局意图识别来看，可能无法匹配任何已知意图（因为没有明确的动词或关键词），但如果由 agent 自身来处理，它能理解这是对"参会人数"问题的回答。</p>
+<h4> 实现方式</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 工作流程示意</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 对话示例</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不依赖全局路由，agent 自治性强</td>
+<td>每个 agent 需要单独实现子意图处理逻辑</td>
+</tr>
+<tr>
+<td>使用轻量模型，成本低</td>
+<td>需要为每个 agent 定义槽位和提取规则</td>
+</tr>
+<tr>
+<td>用户引导体验好，有明确进度提示</td>
+<td>超时策略需要合理设置</td>
+</tr>
+<tr>
+<td>支持降级机制，不会无限循环</td>
+<td>对模糊输入的容忍度取决于模型能力</td>
+</tr>
+<tr>
+<td>可与其他方案组合使用</td>
+<td>增加了 agent 内部的复杂度</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>槽位明确、流程固定的多轮对话（如预订、申请、查询）</li>
+<li>希望降低全局路由复杂度的场景</li>
+<li>对成本敏感，希望用轻量模型处理大部分输入</li>
+<li>需要给用户明确进度反馈的业务场景</li>
+</ul>
+<h4> 与其他方案的关系</h4>
+<p>方案五不是一个独立的"全局策略"，而是一个 <strong>agent 级别的增强机制</strong>，可以与方案一至方案四组合使用：</p>
+<ul>
+<li>与<strong>会话锁定</strong>组合：锁定期间由 agent 内部处理子意图</li>
+<li>与<strong>优先级+软切换</strong>组合：agent 内部处理 + 全局优先级加成</li>
+<li>与<strong>状态持久化</strong>组合：槽位状态天然可持久化</li>
+<li>与<strong>上下文感知</strong>组合：子意图识别结果可作为全局上下文的一部分</li>
+</ul>
+<h3> 方案六：任务栈机制（Task Stack — 支持挂起、唤醒与嵌套）</h3>
+<figure><img src="https://imgbed.ppai.top/file/1775205925114_HA06-05.png" alt="HA06-05.png" tabindex="0" loading="lazy"><figcaption>HA06-05.png</figcaption></figure>
+<h4> 核心思想</h4>
+<p>引入类似浏览器页面栈或函数调用栈的<strong>任务栈（Task Stack）机制</strong>，支持 agent 在执行过程中被挂起（push）、执行其他 agent 后恢复（pop），实现多 agent 之间的<strong>嵌套调用</strong>和<strong>无缝切换</strong>。</p>
+<h4> 为什么需要这个方案</h4>
+<p>方案一至方案五都假设"同一时间只有一个活跃 agent"。但现实中，用户的行为往往更加复杂：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这种场景下，用户并不是"切换意图"，而是<strong>临时插入一个新任务</strong>，完成后希望回到之前的任务继续。这正是任务栈机制要解决的问题。</p>
+<h4> 核心数据结构</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 完整工作流程</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 对话示例</h4>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 边界情况处理</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最贴近真实用户行为模式</td>
+<td>实现复杂度最高</td>
+</tr>
+<tr>
+<td>支持任意深度的任务嵌套</td>
+<td>需要精心设计栈的管理逻辑</td>
+</tr>
+<tr>
+<td>用户体验极佳，无缝切换</td>
+<td>状态管理复杂，容易出 bug</td>
+</tr>
+<tr>
+<td>自然支持"临时插入任务"场景</td>
+<td>调试和排查问题困难</td>
+</tr>
+<tr>
+<td>与方案五（子意图处理）天然兼容</td>
+<td>最大深度和超时策略需要调优</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>用户行为高度自由、频繁插入临时任务的场景</li>
+<li>需要支持多 agent 协作的复杂业务平台</li>
+<li>对用户体验有极致要求的场景</li>
+<li>有充足工程资源投入的团队</li>
+</ul>
+<h4> 与方案五的组合</h4>
+<p>任务栈机制与方案五（子意图处理）是<strong>天然互补</strong>的关系：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这种组合方式可以同时获得：</p>
+<ul>
+<li><strong>全局层面</strong>：多 agent 嵌套、挂起、恢复的能力</li>
+<li><strong>局部层面</strong>：每个 agent 内部的槽位管理、引导、降级能力</li>
+</ul>
+<h3> 方案七：混合模式（Hybrid Approach）</h3>
+<h4> 核心思想</h4>
+<p>结合上述六种方案的优点，在不同场景下采用不同策略，实现<strong>按场景配置、按需组合</strong>的灵活架构：</p>
+<ul>
+<li><strong>默认</strong>：使用意图优先级 + 软切换</li>
+<li><strong>关键流程</strong>：使用会话锁定（如支付、预订）</li>
+<li><strong>状态恢复</strong>：对重要 agent 启用状态持久化</li>
+<li><strong>智能判断</strong>：在边界情况下使用 LLM 辅助决策</li>
+<li><strong>Agent 自治</strong>：为每个 agent 启用子意图处理</li>
+<li><strong>任务嵌套</strong>：为复杂场景启用任务栈机制</li>
+</ul>
+<h4> 为什么需要这个方案</h4>
+<p>前六种方案各有优劣，但真实业务场景往往是<strong>多种场景共存</strong>的。一个企业内部可能同时存在：</p>
+<ul>
+<li>简单的查询类 agent（天气、日程）—— 不需要复杂的状态管理</li>
+<li>表单填写类 agent（预订、申请）—— 需要槽位管理和引导</li>
+<li>复杂流程类 agent（报销、审批）—— 可能需要任务嵌套</li>
+</ul>
+<p>混合模式的核心价值在于：<strong>不要求所有 agent 使用同一套策略，而是让每个 agent 根据自身特点选择最合适的方案组合</strong>。</p>
+<h4> 实现方式</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 配置示例</h4>
+<div class="language-typescript line-numbers-mode" data-ext="ts"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4> 优缺点</h4>
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最灵活，可按需选择策略</td>
+<td>实现和维护成本最高</td>
+</tr>
+<tr>
+<td>适应不同业务场景</td>
+<td>需要为每个 agent 配置策略</td>
+</tr>
+<tr>
+<td>平衡性能、成本和体验</td>
+<td>调试和监控复杂度高</td>
+</tr>
+<tr>
+<td>可渐进式引入</td>
+<td>需要完善的监控和可观测性</td>
+</tr>
+<tr>
+<td>支持策略热更新</td>
+<td>配置管理需要额外工具</td>
+</tr>
+</tbody>
+</table>
+<h4> 适用场景</h4>
+<ul>
+<li>多业务线、多场景的复杂系统</li>
+<li>有不同 SLA 要求的 agent 共存</li>
+<li>团队有足够的工程能力</li>
+<li>需要长期演进的平台级产品</li>
+</ul>
+<h4> 配置管理建议</h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>配置存储</td>
+<td>使用数据库或配置中心，支持热更新</td>
+</tr>
+<tr>
+<td>配置校验</td>
+<td>启动时校验配置合法性</td>
+</tr>
+<tr>
+<td>监控指标</td>
+<td>记录每个 agent 的策略命中率、切换频率</td>
+</tr>
+<tr>
+<td>灰度发布</td>
+<td>新策略先在小范围 agent 上验证</td>
+</tr>
+<tr>
+<td>降级策略</td>
+<td>当混合管理器异常时，降级为简单的意图识别</td>
+</tr>
+</tbody>
+</table>
+<h2> 5. 解决方案对比</h2>
+<figure><img src="https://imgbed.ppai.top/file/1775205811571_HA06-06.png" alt="HA06-06.png" tabindex="0" loading="lazy"><figcaption>HA06-06.png</figcaption></figure>
+<h3> 5.1 综合对比表</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>会话锁定</th>
+<th>优先级+软切换</th>
+<th>状态持久化</th>
+<th>上下文感知</th>
+<th>子意图+超时降级</th>
+<th>任务栈机制</th>
+<th>混合模式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>实现复杂度</strong></td>
+<td>⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>灵活性</strong></td>
+<td>⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>用户体验</strong></td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>性能开销</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>维护成本</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td><strong>适用场景广度</strong></td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+</tr>
+</tbody>
+</table>
+<h3> 5.2 选择建议</h3>
+<table>
+<thead>
+<tr>
+<th>你的场景</th>
+<th>推荐方案</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>简单表单填写，流程固定</td>
+<td>会话锁定</td>
+<td>实现成本最低，效果最好</td>
+</tr>
+<tr>
+<td>用户可能中途切换话题</td>
+<td>优先级+软切换</td>
+<td>平衡灵活性和完整性</td>
+</tr>
+<tr>
+<td>高价值业务流程（如电商下单）</td>
+<td>状态持久化</td>
+<td>确保不丢失任何用户输入</td>
+</tr>
+<tr>
+<td>有强大 LLM 支持，追求智能</td>
+<td>上下文感知</td>
+<td>LLM 自主判断最符合人类直觉</td>
+</tr>
+<tr>
+<td>槽位明确，希望 agent 自治</td>
+<td>子意图+超时降级</td>
+<td>降低全局路由负担，agent 自行处理意外输入</td>
+</tr>
+<tr>
+<td>用户频繁插入临时任务</td>
+<td>任务栈机制</td>
+<td>支持嵌套、挂起、恢复，最贴近真实行为</td>
+</tr>
+<tr>
+<td>多业务线、多场景共存</td>
+<td>混合模式</td>
+<td>不同场景不同策略，最优解</td>
+</tr>
+</tbody>
+</table>
+<h3> 5.3 渐进式落地路径</h3>
+<p>如果你正在从零开始构建这个能力，建议按以下路径渐进式落地：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2> 6. 总结</h2>
+<p>多轮 agent 在动态意图识别环境下的生命周期管理，本质上是一个<strong>状态管理</strong>与<strong>意图切换</strong>之间的平衡问题。没有银弹，只有最适合你当前场景的方案。</p>
+<h3> 七种方案的本质差异</h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>核心思路</th>
+<th>控制层级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>会话锁定</td>
+<td>硬锁定，独占焦点</td>
+<td>全局路由层</td>
+</tr>
+<tr>
+<td>优先级+软切换</td>
+<td>软优先级，允许高置信度切换</td>
+<td>全局路由层</td>
+</tr>
+<tr>
+<td>状态持久化</td>
+<td>状态可恢复，不怕中断</td>
+<td>存储层</td>
+</tr>
+<tr>
+<td>上下文感知</td>
+<td>LLM 理解全局上下文后自主判断</td>
+<td>意图识别层</td>
+</tr>
+<tr>
+<td>子意图+超时降级</td>
+<td>agent 内部处理意外输入，超时自动释放</td>
+<td>Agent 内部</td>
+</tr>
+<tr>
+<td>任务栈机制</td>
+<td>挂起/恢复/嵌套，支持多任务并行</td>
+<td>全局调度层</td>
+</tr>
+<tr>
+<td>混合模式</td>
+<td>按场景选择策略，组合使用</td>
+<td>全局编排层</td>
+</tr>
+</tbody>
+</table>
+<h3> 核心要点</h3>
+<ol>
+<li><strong>明确你的业务场景</strong>：用户是否会中途切换意图？流程是否固定？是否需要任务嵌套？</li>
+<li><strong>从简单开始</strong>：先实现会话锁定，再逐步引入更复杂的策略</li>
+<li><strong>状态是关键</strong>：无论采用哪种方案，都要确保状态不丢失</li>
+<li><strong>分层思考</strong>：全局路由层解决"选哪个 agent"的问题，agent 内部解决"怎么处理意外输入"的问题</li>
+<li><strong>组合优于单一</strong>：方案五（子意图处理）和方案六（任务栈）天然互补，组合使用效果最佳</li>
+<li><strong>监控和可观测性</strong>：记录每次意图识别的结果和 agent 注册情况，便于调优</li>
+<li><strong>用户测试</strong>：最终评判标准是用户体验，而非技术优雅度</li>
+</ol>
+<p>希望这篇文章能帮助你更好地设计和实现多轮 agent 的生命周期管理。</p>
+<h2> 参考资料</h2>
+<table>
+<thead>
+<tr>
+<th>参考资料</th>
+<th>访问地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LangGraph - Stateful Multi-Agent Workflows</td>
+<td><a href="https://langchain-ai.github.io/langgraph/" target="_blank" rel="noopener noreferrer">https://langchain-ai.github.io/langgraph/</a></td>
+</tr>
+<tr>
+<td>Microsoft AutoGen - Multi-Agent Conversation Framework</td>
+<td><a href="https://microsoft.github.io/autogen/" target="_blank" rel="noopener noreferrer">https://microsoft.github.io/autogen/</a></td>
+</tr>
+<tr>
+<td>CrewAI - Role-Based Multi-Agent Framework</td>
+<td><a href="https://docs.crewai.com/" target="_blank" rel="noopener noreferrer">https://docs.crewai.com/</a></td>
+</tr>
+<tr>
+<td>OpenAI Function Calling</td>
+<td><a href="https://platform.openai.com/docs/guides/function-calling" target="_blank" rel="noopener noreferrer">https://platform.openai.com/docs/guides/function-calling</a></td>
+</tr>
+<tr>
+<td>Google Gemini - Tool Use</td>
+<td><a href="https://ai.google.dev/gemini-api/docs/function-calling" target="_blank" rel="noopener noreferrer">https://ai.google.dev/gemini-api/docs/function-calling</a></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>作者</strong>：一灰<br>
+<strong>日期</strong>：2026-04-03<br>
+<strong>标签</strong>： #AI #Agent #多轮对话 #意图识别 #状态管理 #架构设计 #任务栈 #子意图</p>
+</blockquote>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="Agent"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-04-03T19:15:07.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
   <entry>
     <title type="text">第四部分｜RAG 与外部知识注入：让企业知识库助手具备事实可靠性</title>
     <id>https://ppai.top/ai-guides/tutorial/hello-llm/15.%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%20RAG%E4%B8%8E%E5%A4%96%E9%83%A8%E7%9F%A5%E8%AF%86%E6%B3%A8%E5%85%A5.html</id>
@@ -7771,34 +8556,6 @@
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
-    <title type="text">LLM教程</title>
-    <id>https://ppai.top/ai-guides/tutorial/</id>
-    <link href="https://ppai.top/ai-guides/tutorial/"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></summary>
-    <content type="html"><![CDATA[<h1> 技术专栏</h1>
-<h2> ❤️ 扫盲</h2>
-<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
-<h2> 📝 AiCoding</h2>
-<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2026-01-22T08:45:40.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
     <title type="text">关于我</title>
     <id>https://ppai.top/ai-guides/me/</id>
     <link href="https://ppai.top/ai-guides/me/"/>
@@ -7885,6 +8642,34 @@
 <li>邮箱 : <a href="mailto:bangzewu@126.com">bangzewu@126.com</a></li>
 <li>微博 : 一灰灰blog (基本上不活跃)</li>
 </ul>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-01-22T08:45:40.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">LLM教程</title>
+    <id>https://ppai.top/ai-guides/tutorial/</id>
+    <link href="https://ppai.top/ai-guides/tutorial/"/>
+    <updated>2026-01-22T08:45:40.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></summary>
+    <content type="html"><![CDATA[<h1> 技术专栏</h1>
+<h2> ❤️ 扫盲</h2>
+<p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
+<h2> 📝 AiCoding</h2>
+<p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
 ]]></content>
     <author>
       <name>一灰灰blog</name>
