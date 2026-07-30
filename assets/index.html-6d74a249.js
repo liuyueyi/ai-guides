@@ -1,0 +1,1 @@
+import{_ as t,V as o,W as r,Y as e,a0 as a,Z as c,F as s}from"./framework-9f272d12.js";const _={},l={href:"http://README.md",target:"_blank",rel:"noopener noreferrer"};function d(i,m){const n=s("ExternalLinkIcon");return o(),r("div",null,[e("p",null,[e("a",l,[a("README.md"),c(n)])])])}const p=t(_,[["render",d],["__file","index.html.vue"]]);export{p as default};
