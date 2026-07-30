@@ -9,7 +9,7 @@
   </author>
   <logo>https://ppai.top/ai-guides/favicon.ico</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-07-30T03:48:11.077Z</updated>
+  <updated>2026-07-30T03:53:07.792Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://ppai.top/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://ppai.top/ai-guides/"/>
@@ -1355,13 +1355,28 @@
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
-    <title type="text"></title>
+    <title type="text">AgentScope</title>
     <id>https://ppai.top/ai-guides/ai-dev/AgentScope/</id>
     <link href="https://ppai.top/ai-guides/ai-dev/AgentScope/"/>
-    <updated>2026-07-30T03:45:11.000Z</updated>
-    <summary type="html"><![CDATA[<p><a href="http://README.md" target="_blank" rel="noopener noreferrer">README.md</a></p>
-]]></summary>
-    <content type="html"><![CDATA[<p><a href="http://README.md" target="_blank" rel="noopener noreferrer">README.md</a></p>
+    <updated>2026-07-30T03:51:42.000Z</updated>
+    <summary type="html"><![CDATA[<p>AgentScope Java 2.0 框架相关教程</p>
+<h3> 新手系列</h3>
+<ul>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/u4wERL0UXChPgvWQJpwurA" target="_blank" rel="noopener noreferrer">第1篇：简介与环境搭建</a></strong>：从零搭环境，跑通第一个 Agent 对话</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3SkybaLc47yu-EWOkd9G-w" target="_blank" rel="noopener noreferrer">第2篇：ReActAgent 核心拆解</a></strong>：理解"思考→行动→观察"的推理循环</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/l1HmsYK2w11U0hk-tadpLg" target="_blank" rel="noopener noreferrer">第3篇：你的第一个 Java Agent</a></strong>：Builder 模式全面解析 + 流式输出 + 思考模式</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3PPy1gB5gxhZSBSxWQ6rng" target="_blank" rel="noopener noreferrer">第4篇：工具系统（Tools）实战</a></strong>：用 <code>@Tool</code> 注解将 Java 方法注册为 Agent 工具</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/92WrOmKjypAi4upDcTXy3g" target="_blank" rel="noopener noreferrer">第5篇：结构化输出实战</a></strong> —— 让 Agent 直接返回 Java 对象</li>
+</ul>]]></summary>
+    <content type="html"><![CDATA[<p>AgentScope Java 2.0 框架相关教程</p>
+<h3> 新手系列</h3>
+<ul>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/u4wERL0UXChPgvWQJpwurA" target="_blank" rel="noopener noreferrer">第1篇：简介与环境搭建</a></strong>：从零搭环境，跑通第一个 Agent 对话</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3SkybaLc47yu-EWOkd9G-w" target="_blank" rel="noopener noreferrer">第2篇：ReActAgent 核心拆解</a></strong>：理解"思考→行动→观察"的推理循环</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/l1HmsYK2w11U0hk-tadpLg" target="_blank" rel="noopener noreferrer">第3篇：你的第一个 Java Agent</a></strong>：Builder 模式全面解析 + 流式输出 + 思考模式</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3PPy1gB5gxhZSBSxWQ6rng" target="_blank" rel="noopener noreferrer">第4篇：工具系统（Tools）实战</a></strong>：用 <code>@Tool</code> 注解将 Java 方法注册为 Agent 工具</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/92WrOmKjypAi4upDcTXy3g" target="_blank" rel="noopener noreferrer">第5篇：结构化输出实战</a></strong> —— 让 Agent 直接返回 Java 对象</li>
+</ul>
 ]]></content>
     <author>
       <name>一灰灰blog</name>

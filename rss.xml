@@ -6,8 +6,8 @@
     <link>https://ppai.top/ai-guides/</link>
     <description>一灰灰的AI入门、实战教程</description>
     <language>zh-CN</language>
-    <pubDate>Thu, 30 Jul 2026 03:48:11 GMT</pubDate>
-    <lastBuildDate>Thu, 30 Jul 2026 03:48:11 GMT</lastBuildDate>
+    <pubDate>Thu, 30 Jul 2026 03:53:07 GMT</pubDate>
+    <lastBuildDate>Thu, 30 Jul 2026 03:53:07 GMT</lastBuildDate>
     <generator>vuepress-plugin-feed2</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <copyright>Copyright by 一灰灰blog</copyright>
@@ -1266,13 +1266,21 @@
       <enclosure url="https://imgbed.ppai.top/file/1785318780056_scover.jpeg" type="image/jpeg"/>
     </item>
     <item>
-      <title></title>
+      <title>AgentScope</title>
       <link>https://ppai.top/ai-guides/ai-dev/AgentScope/</link>
       <guid>https://ppai.top/ai-guides/ai-dev/AgentScope/</guid>
-      <source url="https://ppai.top/ai-guides/rss.xml"></source>
-      <description>README.md</description>
+      <source url="https://ppai.top/ai-guides/rss.xml">AgentScope</source>
+      <description>AgentScope Java 2.0 框架相关教程 新手系列 ✅ 第1篇：简介与环境搭建：从零搭环境，跑通第一个 Agent 对话 ✅ 第2篇：ReActAgent 核心拆解：理解&amp;quot;思考→行动→观察&amp;quot;的推理循环 ✅ 第3篇：你的第一个 Java Agent：Builder 模式全面解析 + 流式输出 + 思考模式 ✅ 第4篇：工具系统（Tools）实战：用 @Tool 注解将 Java 方法注册为 Agent 工具 ✅ 第5篇：结构化输出实战 —— 让 Agent 直接返回 Java 对象</description>
       <pubDate>Thu, 30 Jul 2026 03:45:11 GMT</pubDate>
-      <content:encoded><![CDATA[<p><a href="http://README.md" target="_blank" rel="noopener noreferrer">README.md</a></p>
+      <content:encoded><![CDATA[<p>AgentScope Java 2.0 框架相关教程</p>
+<h3> 新手系列</h3>
+<ul>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/u4wERL0UXChPgvWQJpwurA" target="_blank" rel="noopener noreferrer">第1篇：简介与环境搭建</a></strong>：从零搭环境，跑通第一个 Agent 对话</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3SkybaLc47yu-EWOkd9G-w" target="_blank" rel="noopener noreferrer">第2篇：ReActAgent 核心拆解</a></strong>：理解"思考→行动→观察"的推理循环</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/l1HmsYK2w11U0hk-tadpLg" target="_blank" rel="noopener noreferrer">第3篇：你的第一个 Java Agent</a></strong>：Builder 模式全面解析 + 流式输出 + 思考模式</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3PPy1gB5gxhZSBSxWQ6rng" target="_blank" rel="noopener noreferrer">第4篇：工具系统（Tools）实战</a></strong>：用 <code>@Tool</code> 注解将 Java 方法注册为 Agent 工具</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/92WrOmKjypAi4upDcTXy3g" target="_blank" rel="noopener noreferrer">第5篇：结构化输出实战</a></strong> —— 让 Agent 直接返回 Java 对象</li>
+</ul>
 ]]></content:encoded>
     </item>
     <item>
