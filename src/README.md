@@ -157,6 +157,18 @@ footer: ©2017 - present @一灰灰Blog 保留所有权利 | <a href="https://be
                   </a>
               </div>
           </div>
+          <div class="llm-bg-white llm-rounded-xl llm-overflow-hidden llm-shadow-md llm-card-hover">
+              <div class="llm-h-24 llm-card-gradient">
+                  <i class="fa fa-cogs llm-text-white llm-text-5xl" style="font-size:3rem"></i>
+              </div>
+              <div class="llm-p-6">
+                  <h3 class="llm-text-xl llm-font-semibold llm-mb-2">AgentScope</h3>
+                  <p class="llm-text-gray-600 llm-text-sm llm-mb-4"> AgentScope Java 2.0 的最新特性（如 HarnessAgent、Middleware、Skills 系统等）进行了系统化梳理</p>
+                  <a href="ai-dev/实战篇/" class="llm-link-primary">
+                      开始学习 <i class="fa fa-arrow-right llm-ml-1"></i>
+                  </a>
+              </div>
+          </div>
       </div>
   </div>
 </section>

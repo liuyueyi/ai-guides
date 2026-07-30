@@ -74,6 +74,12 @@ export const zhSidebar = sidebar({
       collapsible: true,
       prefix: "ALiAI/",
       children: "structure",
+    },
+    {
+      text: "AgentSCope",
+      collapsible: true,
+      prefix: "AgentScope/",
+      children: "structure",
     }
   ],
 });
