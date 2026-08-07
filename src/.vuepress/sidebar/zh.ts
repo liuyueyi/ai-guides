@@ -76,7 +76,7 @@ export const zhSidebar = sidebar({
       children: "structure",
     },
     {
-      text: "AgentSCope",
+      text: "AgentScope",
       collapsible: true,
       prefix: "AgentScope/",
       children: "structure",
