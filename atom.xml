@@ -9,12 +9,15 @@
   </author>
   <logo>https://ppai.top/ai-guides/favicon.ico</logo>
   <rights>Copyright by 一灰灰blog</rights>
-  <updated>2026-08-07T09:41:10.312Z</updated>
+  <updated>2026-11-04T06:19:56.814Z</updated>
   <generator>vuepress-plugin-feed2</generator>
   <link rel="self" href="https://ppai.top/ai-guides/atom.xml"/>
   <link rel="alternate" href="https://ppai.top/ai-guides/"/>
   <category term="AgentScope Java新手村"/>
   <category term="进阶架构"/>
+  <category term="SkillRepository 组合实战"/>
+  <category term="Agent"/>
+  <category term="AI"/>
   <category term="HarnessAgent 工程底座"/>
   <category term="Workspace 大脑外化"/>
   <category term="AgentScope Java进阶架构"/>
@@ -28,13 +31,782 @@
   <category term="结构化输出"/>
   <category term="SpringAI"/>
   <category term="面试"/>
-  <category term="Agent"/>
   <category term="LLM"/>
-  <category term="AI"/>
   <contributor>
     <name>一灰灰blog</name>
     <uri>https://ppai.top</uri>
   </contributor>
+  <contributor>
+    <name>一灰灰</name>
+  </contributor>
+  <entry>
+    <title type="text">9.技能中台实战：像搭 OverlayFS 一样组合五层 SkillRepository</title>
+    <id>https://ppai.top/ai-guides/ai-dev/AgentScope/09.%E6%8A%80%E8%83%BD%E4%B8%AD%E5%8F%B0%E5%AE%9E%E6%88%98%EF%BC%9A%E5%83%8F%E6%90%AD%20OverlayFS%20%E4%B8%80%E6%A0%B7%E7%BB%84%E5%90%88%E4%BA%94%E5%B1%82%20SkillRepository.html</id>
+    <link href="https://ppai.top/ai-guides/ai-dev/AgentScope/09.%E6%8A%80%E8%83%BD%E4%B8%AD%E5%8F%B0%E5%AE%9E%E6%88%98%EF%BC%9A%E5%83%8F%E6%90%AD%20OverlayFS%20%E4%B8%80%E6%A0%B7%E7%BB%84%E5%90%88%E4%BA%94%E5%B1%82%20SkillRepository.html"/>
+    <updated>2026-11-04T06:18:16.000Z</updated>
+    <summary type="html"><![CDATA[<blockquote>
+<p>不是"把技能放在不同地方"那么简单。SkillRepository 组合的本质，是在 Agent 世界构建一套 <strong>技能中台</strong>——让不同来源的技能像 OverlayFS 的层一样叠加，同名技能上层遮蔽下层，异名技能合并且对外呈现统一视图。</p>
+</blockquote>
+<h1> 技能中台实战：像搭 OverlayFS 一样组合五层 SkillRepository</h1>
+<p>一般来讲，谈到技能管理，很多小伙伴的第一反应是："把 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 放到一个目录里不就行了？"——但一个真正的企业级 Agent 平台，从来不是"本地放几个 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 就能跑"这么简单。</p>
+<p>让我们面对一个残酷的现实：<strong>技能的管理，本质上是组织能力的治理问题。</strong></p>
+<p>不同团队有不同的技能沉淀方式——有的写在 Git 仓库里走 PR 评审，有的存在配置中心需要热更新，有的在数据库里做平台级管控，还有的是开发者自己的私藏"神器"。更麻烦的是，同一个技能（比如"代码评审"）在不同团队可能有不同标准——Java 组有一套严格的规范，前端组有一套自己的风格，基础架构组还有一套安全红线。如果这些技能全堆在同一个地方，那就是一场灾难，估计一个 <code>code-reviewer</code> 的技能名，五个团队能打起来😂</p>
+<p>那么问题来了：<strong>能不能像搭积木一样，把不同来源、不同归属的技能，叠成一个统一、可覆盖、可隔离的技能体系？</strong></p>
+<p>AgentScope 2.0 的 <code>SkillRepository</code> 组合机制，给出了一个非常优雅的答案：<strong>像搭 OverlayFS 一样叠加技能层</strong>。</p>
+]]></summary>
+    <content type="html"><![CDATA[<blockquote>
+<p>不是"把技能放在不同地方"那么简单。SkillRepository 组合的本质，是在 Agent 世界构建一套 <strong>技能中台</strong>——让不同来源的技能像 OverlayFS 的层一样叠加，同名技能上层遮蔽下层，异名技能合并且对外呈现统一视图。</p>
+</blockquote>
+<h1> 技能中台实战：像搭 OverlayFS 一样组合五层 SkillRepository</h1>
+<p>一般来讲，谈到技能管理，很多小伙伴的第一反应是："把 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 放到一个目录里不就行了？"——但一个真正的企业级 Agent 平台，从来不是"本地放几个 <a href="http://SKILL.md" target="_blank" rel="noopener noreferrer">SKILL.md</a> 就能跑"这么简单。</p>
+<p>让我们面对一个残酷的现实：<strong>技能的管理，本质上是组织能力的治理问题。</strong></p>
+<p>不同团队有不同的技能沉淀方式——有的写在 Git 仓库里走 PR 评审，有的存在配置中心需要热更新，有的在数据库里做平台级管控，还有的是开发者自己的私藏"神器"。更麻烦的是，同一个技能（比如"代码评审"）在不同团队可能有不同标准——Java 组有一套严格的规范，前端组有一套自己的风格，基础架构组还有一套安全红线。如果这些技能全堆在同一个地方，那就是一场灾难，估计一个 <code>code-reviewer</code> 的技能名，五个团队能打起来😂</p>
+<p>那么问题来了：<strong>能不能像搭积木一样，把不同来源、不同归属的技能，叠成一个统一、可覆盖、可隔离的技能体系？</strong></p>
+<p>AgentScope 2.0 的 <code>SkillRepository</code> 组合机制，给出了一个非常优雅的答案：<strong>像搭 OverlayFS 一样叠加技能层</strong>。</p>
+<!-- more -->
+<h2> 一、从"技能孤岛"到"技能中台"：为什么要分层？</h2>
+<h3> 1. 一个真实的组织困境</h3>
+<p>先来看一个接地气的场景：你在为一家中型互联网公司搭建 AI 编码助手。公司有 5 个技术团队，各自沉淀了一套"代码评审规范"：</p>
+<ul>
+<li><strong>Java 组</strong>：严格的 Checkstyle + Sonar 规则，SQL 必须走索引</li>
+<li><strong>前端组</strong>：ESLint + Prettier 规范，组件库使用指南</li>
+<li><strong>算法组</strong>：Python 类型注解 + Docstring，训练脚本模板</li>
+<li><strong>基础架构组</strong>：Dockerfile 安全基线，K8s 部署清单模板</li>
+<li><strong>平台组</strong>：统一的日志规范、监控埋点标准</li>
+</ul>
+<p>如果把这些规范全塞进一个技能库里，取个名字都冲突——五个团队都想叫它 <code>code-reviewer</code>。更糟糕的是，某个团队更新了规范，其他团队被迫"被升级"，Agent 的行为在团队间互相干扰。</p>
+<p><strong>这就是典型的"技能孤岛"问题</strong>——技能散落在各处，缺乏统一的治理视图和隔离边界。</p>
+<h3> 2. "技能中台"的四大治理需求</h3>
+<p>面对上述困境，一个企业级技能管理平台必须满足四个核心诉求：</p>
+<table>
+<thead>
+<tr>
+<th>治理维度</th>
+<th>核心问题</th>
+<th>理想状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>来源多样性</strong></td>
+<td>技能存在 Git/Nacos/MySQL/本地，怎么统一管理？</td>
+<td>多种来源统一接入，对 Agent 透明</td>
+</tr>
+<tr>
+<td><strong>版本与变更</strong></td>
+<td>团队 Git 库更新了，怎么让 Agent 感知？</td>
+<td>变更可控，支持热更新和 PR 评审</td>
+</tr>
+<tr>
+<td><strong>优先级裁决</strong></td>
+<td>同名技能冲突了，听谁的？</td>
+<td>明确的覆盖规则，上层遮蔽下层</td>
+</tr>
+<tr>
+<td><strong>隔离与边界</strong></td>
+<td>不同用户/团队的技能互相干扰怎么办？</td>
+<td>用户级隔离，团队级共享</td>
+</tr>
+</tbody>
+</table>
+<p>这四点需求，传统的"单仓库"方案一个都满足不了。而 AgentScope 的 <code>SkillRepository</code> 组合机制，正是为这套"技能中台"而设计的。</p>
+<h3> 3. OverlayFS 的启示</h3>
+<p>如果你用过 Docker，一定对 <strong>OverlayFS（叠加文件系统）</strong> 不陌生。它把多个目录"叠"成一个统一的视图——下层放基础文件，上层放增量修改，同名文件上层覆盖下层。</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><code>SkillRepository</code> 的组合机制，本质上就是 <strong>Agent 世界的 OverlayFS</strong>：</p>
+<ul>
+<li>每一个 <code>SkillRepository</code> 是一层"文件系统"</li>
+<li>多个仓库通过 <code>skillRepository()</code> 链式注册，形成叠加</li>
+<li><strong>后注册的仓库是"上层"</strong>，同名技能覆盖先注册的"下层"</li>
+<li>不同名技能取并集，对外呈现统一的技能视图</li>
+</ul>
+<p>这种设计让我们可以用<strong>搭积木</strong>的方式，把不同来源、不同归属的技能组织成一个完整的技能中台。</p>
+<h2> 二、技能中台的五层"积木"</h2>
+<p>明白了 OverlayFS 的比喻，接下来我们看看 AgentScope 提供了哪些"积木块"——也就是五种内置的 <code>SkillRepository</code>。</p>
+<h3> 1. 各层积木的定位与职责</h3>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>积木名称</th>
+<th>管理主体</th>
+<th>变更方式</th>
+<th>典型场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L0</td>
+<td><strong>Classpath</strong></td>
+<td>平台研发</td>
+<td>随应用发版</td>
+<td>产品内置的基础能力</td>
+</tr>
+<tr>
+<td>L1</td>
+<td><strong>Git</strong></td>
+<td>各技术团队</td>
+<td>Git PR + 评审</td>
+<td>团队级规范与模板</td>
+</tr>
+<tr>
+<td>L2</td>
+<td><strong>Nacos</strong></td>
+<td>运维/平台</td>
+<td>配置中心热更新</td>
+<td>应急预案、动态下发</td>
+</tr>
+<tr>
+<td>L3</td>
+<td><strong>MySQL</strong></td>
+<td>平台治理</td>
+<td>数据库统一管理</td>
+<td>安全红线、合规检查</td>
+</tr>
+<tr>
+<td>L4</td>
+<td><strong>Workspace</strong></td>
+<td>用户/项目</td>
+<td>文件目录编辑</td>
+<td>个人偏好、项目私有</td>
+</tr>
+</tbody>
+</table>
+<p>每一层都有明确的<strong>管理边界</strong>和<strong>变更策略</strong>，互不干扰。</p>
+<h3> 2. 逐层深度拆解</h3>
+<h4> L0：Classpath 层——"操作系统内置命令"</h4>
+<p>这一层是最基础的"系统级"技能，随应用 JAR 包一起发布，有点类似操作系统的内置命令，你不需要安装，开机就有：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心特征</strong>：只读、随包发布、版本锁定。适合那些"放之四海而皆准"的基础能力，比如对话、帮助、系统指令。</p>
+<h4> L1：Git 层——"团队共享库"</h4>
+<p>团队级技能通过 Git 仓库管理，变更走 PR 评审——想改技能？提 PR，review 通过才能合并，多干净，妈妈再也不用担心我手滑改坏技能了：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心特征</strong>：只读分发、版本可追溯、PR 评审。适合团队级规范、编码模板、脚手架用法。</p>
+<h4> L2：Nacos 层——"动态配置中心"</h4>
+<p>运维同学最喜欢的来了——通过 Nacos 配置中心，在不发版的情况下向所有 Agent 下发新技能。改技能不用等发版，一条配置下去，全量生效，这才叫"热更新"：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心特征</strong>：热更新、动态下发、需要 Closeable 管理。适合应急预案、上线检查清单等需要"秒级生效"的场景。</p>
+<h4> L3：MySQL 层——"平台治理中心"</h4>
+<p>平台侧要对所有技能做统一治理、审计和合规检查？那得上 MySQL，技能存在数据库里，通过 Builder 精细控制读写权限：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心特征</strong>：中心化治理、读写可控、可审计。适合安全红线、合规检查等需要"强制执行"的技能。</p>
+<h4> L4：Workspace 层——"用户私藏目录"</h4>
+<p>Workspace 层天然支持<strong>共享 + 用户隔离</strong>两级子层：</p>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>核心特征</strong>：文件即配置、零代码接入、用户级隔离。适合项目私有技能、个人偏好设置、临时调试脚本——自己的私藏"神器"放这儿，谁也不影响。</p>
+<h3> 3. 管理边界对齐：谁来管什么？</h3>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>谁有写入权限</th>
+<th>变更审批流程</th>
+<th>生效方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L0 Classpath</td>
+<td>平台研发</td>
+<td>代码 PR + CI</td>
+<td>应用重启</td>
+</tr>
+<tr>
+<td>L1 Git</td>
+<td>各团队 Tech Lead</td>
+<td>Git PR + Reviewer</td>
+<td>下次 Agent 加载</td>
+</tr>
+<tr>
+<td>L2 Nacos</td>
+<td>运维/平台管理员</td>
+<td>配置变更审批</td>
+<td>实时热更新</td>
+</tr>
+<tr>
+<td>L3 MySQL</td>
+<td>平台 DBA/治理组</td>
+<td>数据库变更工单</td>
+<td>下次 Agent 加载</td>
+</tr>
+<tr>
+<td>L4 Workspace</td>
+<td>用户自己</td>
+<td>无需审批</td>
+<td>保存即生效</td>
+</tr>
+</tbody>
+</table>
+<p><strong>"谁产出、谁维护、谁审批"</strong> ——这就是技能中台的治理闭环。</p>
+<h2> 三、叠加规则：OverlayFS 的"同名裁决"</h2>
+<p>积木有了，接下来是最关键的问题：<strong>这些层叠在一起，冲突了怎么办？</strong></p>
+<h3> 1. OverlayFS 的叠加语义</h3>
+<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>裁决规则</strong>（划重点，这个是整个机制的核心）：</p>
+<ol>
+<li><strong>同名技能</strong>：上层覆盖下层（上层"遮蔽"下层）</li>
+<li><strong>不同名技能</strong>：全部保留，取并集（各层技能共存）</li>
+</ol>
+<h3> 2. 链式注册的"压栈"语义</h3>
+<p>在 <code>SkillRepository</code> 之间，还有一个额外的优先级维度：<strong>后注册的压栈在上</strong>。</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这就像 OverlayFS 的 <code>lowerdir</code> 参数顺序——写在越后面的层，挂载得越高。</p>
+<h3> 3. 完整优先级表</h3>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>来源</th>
+<th>示例</th>
+<th>优先级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L0</td>
+<td>Classpath（<code>resources/skills/</code>）</td>
+<td>JAR 内基础技能</td>
+<td><strong>最低</strong></td>
+</tr>
+<tr>
+<td>L1</td>
+<td>SkillRepository 链（先注册）</td>
+<td>通用 Git 仓库</td>
+<td>低</td>
+</tr>
+<tr>
+<td>L2</td>
+<td>SkillRepository 链（后注册）</td>
+<td>团队专属 Git 仓库</td>
+<td>中</td>
+</tr>
+<tr>
+<td>L3</td>
+<td>Nacos / MySQL 仓库</td>
+<td>配置中心/平台库</td>
+<td>较高</td>
+</tr>
+<tr>
+<td>L4a</td>
+<td><code>workspace/skills/</code></td>
+<td>工作区共享技能</td>
+<td>高</td>
+</tr>
+<tr>
+<td>L4b</td>
+<td><code>&lt;userId&gt;/skills/</code></td>
+<td>用户私有覆盖</td>
+<td><strong>最高</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>关键理解</strong>：高优先级层<strong>遮蔽</strong>同名技能，而不是删除它。当高层技能被移除或失效时，低层的同名技能会自动"露出来"——这就是 OverlayFS 的"透明恢复"。</p>
+</blockquote>
+<h2> 四、实战：从"积木"到"中台"</h2>
+<p>理论讲完了，接下来进入正题——我们把五层积木真正搭成一个可运行的"技能中台"。</p>
+<h3> 1. 场景设定：一灰灰科技的 AI 编码助手</h3>
+<p>我们继续"一灰灰科技"的案例。公司有 5 个技术团队，我们需要构建一个统一的 AI 编码助手，让不同团队的开发者看到<strong>不同的技能视图</strong>——Java 组看到 Java 评审规范，前端组看到前端规范，但大家共享一套基础能力。</p>
+<h3> 2. 依赖配置</h3>
+<p>具体工程搭建就不赘述了，直接把核心依赖贴出来：</p>
+<div class="language-xml line-numbers-mode" data-ext="xml"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3> 3. 核心代码：五层叠加</h3>
+<p>使用姿势如下——把五层仓库全部叠进一个 HarnessAgent：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>等一下，可能有小伙伴要问了</strong>——L0 和 L5 怎么没看到代码？</p>
+<p>答案：这两层是<strong>框架自动处理</strong>的。L0 的 <code>resources/skills/</code> 随包加载，L5 的 workspace 目录由框架自动扫描——你只需要把技能文件放进对应目录，剩下的交给框架。代码里只需要显式注册"外部市场"（Git/Nacos/MySQL 等远程仓库）。</p>
+<h3> 4. 验证：不同用户看到不同的技能视图</h3>
+<p>接下来实测一下——模拟 alice（Java 组）和 bob（前端组）分别调用：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>实测的<strong>叠加效果</strong>如下：</p>
+<table>
+<thead>
+<tr>
+<th>技能名</th>
+<th>alice 看到的版本</th>
+<th>bob 看到的版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code-reviewer</code></td>
+<td>L4 平台层（安全红线） + L2 Java 组规范 + L1 通用规范</td>
+<td>L4 平台层（安全红线） + L1 通用规范（无 Java 专属）</td>
+</tr>
+<tr>
+<td><code>basic-chat</code></td>
+<td>L0 Classpath 基础版</td>
+<td>L0 Classpath 基础版</td>
+</tr>
+<tr>
+<td><code>project-helper</code></td>
+<td>L5 <code>alice/skills/</code> 私有版（若存在）</td>
+<td>L5 <code>workspace/skills/</code> 共享版</td>
+</tr>
+<tr>
+<td><code>hotfix-guide</code></td>
+<td>L3 Nacos 热更新技能</td>
+<td>L3 Nacos 热更新技能</td>
+</tr>
+</tbody>
+</table>
+<p><strong>同一套代码，不同的技能视图</strong>——这就是 OverlayFS 叠加的力量，是不是有种"一套代码，各自安好"的感觉😏</p>
+<h2> 五、生产环境踩坑与治理策略</h2>
+<h3> 1. 三个最容易翻车的坑</h3>
+<p><strong>坑一：MySQL 平台库忘了关写入权限</strong></p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>每次这种 sb 的操作，真心感觉心塞——平台库一旦可写，Agent 学习到的乱七八糟的东西都会灌进去，公共技能库瞬间变成垃圾场。</p>
+<p><strong>坑二：Nacos 仓库忘了释放订阅</strong></p>
+<p><code>NacosSkillRepository</code> 实现了 <code>AutoCloseable</code>，不 close 会泄漏订阅连接：</p>
+<div class="language-java line-numbers-mode" data-ext="java"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>坑三：把"同名覆盖"理解成"全量替换"</strong></p>
+<p>记住 OverlayFS 的语义：<strong>上层只遮蔽同名文件，不同名文件全部保留</strong>。如果你在高层仓库删除了某个技能，低层的同名技能会重新"露出来"（如果存在的话），而不是整个技能列表被替换。</p>
+<h3> 2. 治理策略：四层"栅栏"</h3>
+<p>在真实生产环境中，我们通过四个"栅栏"控制技能的流入流出：</p>
+<table>
+<thead>
+<tr>
+<th>栅栏</th>
+<th>管控点</th>
+<th>策略</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>写入栅栏</strong></td>
+<td>谁能往哪层写？</td>
+<td>L4 Workspace 用户自写；L1/L2/L3 需审批</td>
+</tr>
+<tr>
+<td><strong>读取栅栏</strong></td>
+<td>谁能看到哪些技能？</td>
+<td>L4b 用户隔离；L4a 共享；L1-L3 全员可见</td>
+</tr>
+<tr>
+<td><strong>覆盖栅栏</strong></td>
+<td>同名技能允许覆盖吗？</td>
+<td>允许，但需明确覆盖理由（通过层命名约定）</td>
+</tr>
+<tr>
+<td><strong>审计栅栏</strong></td>
+<td>谁改了哪个技能？</td>
+<td>L1 Git 原生审计；L3 MySQL 审计表；L4 无审计（个人责任）</td>
+</tr>
+</tbody>
+</table>
+<h3> 3. 推荐的分层使用策略</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐层</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>产品核心能力</td>
+<td><code>L0 Classpath</code></td>
+<td>不可变，随包发布</td>
+</tr>
+<tr>
+<td>团队规范与模板</td>
+<td><code>L1 Git</code></td>
+<td>可追溯、可评审</td>
+</tr>
+<tr>
+<td>应急/动态下发</td>
+<td><code>L2 Nacos</code></td>
+<td>热更新，秒级生效</td>
+</tr>
+<tr>
+<td>安全红线与合规</td>
+<td><code>L3 MySQL</code></td>
+<td>只读强制，不可覆盖</td>
+</tr>
+<tr>
+<td>项目私有技能</td>
+<td><code>L4a workspace/skills/</code></td>
+<td>随项目代码发布</td>
+</tr>
+<tr>
+<td>个人偏好与调试</td>
+<td><code>L4b &lt;userId&gt;/skills/</code></td>
+<td>用户完全自主</td>
+</tr>
+</tbody>
+</table>
+<h2> 六、小结</h2>
+<p>我们从"技能孤岛"的组织困境出发，走完了从"积木"到"中台"的完整旅程：</p>
+<ul>
+<li><strong>本质认知</strong>：<code>SkillRepository</code> 组合 = Agent 世界的 <strong>OverlayFS（叠加文件系统）</strong>——多个来源的技能叠成统一视图，同名上层遮蔽下层，异名取并集</li>
+<li><strong>五层积木</strong>：L0 Classpath（内置）、L1 Git（团队库）、L2 Nacos（热更新）、L3 MySQL（平台治理）、L4 Workspace（共享+用户隔离）</li>
+<li><strong>叠加规则</strong>：后注册的仓库优先级更高；<code>workspace/skills/</code> 高于远程仓库；<code>&lt;userId&gt;/skills/</code> 最高</li>
+<li><strong>治理闭环</strong>：写入栅栏、读取栅栏、覆盖栅栏、审计栅栏四层管控</li>
+</ul>
+<p>这套设计的精妙之处在于——<strong>框架不预设"谁覆盖谁"，而是把裁决权交给开发者的注册顺序和目录结构</strong>。你要什么样的治理策略，就按什么顺序搭积木。作为一个有追求、有理想的新四好码农，我觉得这不是一个"功能"，这是一种<strong>架构风格</strong>。</p>
+<p>下一篇文章，我们将进入第二阶段的收官篇——<strong>流式事件与前端交互</strong>：用 <code>streamEvents()</code> 实时展示 Agent 执行过程，让技能加载、工具调用、推理思考全部"看得见"。到时候我们给这个技能中台配一个炫酷的前端界面，让 Agent 的思考过程一览无余。</p>
+<p>看到这里的小伙伴，不妨点个赞，顺手关注下微信公众号"一灰灰blog"，咱们下篇见！</p>
+<h2> 七、其他</h2>
+<h3> 0. 项目</h3>
+<ul>
+<li>AgentScope Java 官方仓库：<a href="https://github.com/agentscope-ai/agentscope-java" target="_blank" rel="noopener noreferrer">https://github.com/agentscope-ai/agentscope-java</a></li>
+<li>官方文档：<a href="https://java.agentscope.io/v2/zh/" target="_blank" rel="noopener noreferrer">https://java.agentscope.io/v2/zh/</a></li>
+<li>技能系统文档：<a href="https://java.agentscope.io/v2/zh/docs/harness/skill.html" target="_blank" rel="noopener noreferrer">https://java.agentscope.io/v2/zh/docs/harness/skill.html</a></li>
+<li>工程示例：<a href="https://github.com/liuyueyi/spring-ai-demo/agent-scope" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi/spring-ai-demo/agent-scope</a></li>
+</ul>
+<h3> 1. 下篇预告</h3>
+<p><strong>第一阶段：新手村</strong> —— 核心概念与快速起步</p>
+<ul>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/u4wERL0UXChPgvWQJpwurA" target="_blank" rel="noopener noreferrer">第1篇：简介与环境搭建</a></strong>：从零搭环境，跑通第一个 Agent 对话</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3SkybaLc47yu-EWOkd9G-w" target="_blank" rel="noopener noreferrer">第2篇：ReActAgent 核心拆解</a></strong>：理解"思考→行动→观察"的推理循环</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/l1HmsYK2w11U0hk-tadpLg" target="_blank" rel="noopener noreferrer">第3篇：你的第一个 Java Agent</a></strong>：Builder 模式全面解析 + 流式输出 + 思考模式</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/3PPy1gB5gxhZSBSxWQ6rng" target="_blank" rel="noopener noreferrer">第4篇：工具系统（Tools）实战</a></strong>：用 <code>@Tool</code> 注解将 Java 方法注册为 Agent 工具</li>
+<li>✅ <strong><a href="https://mp.weixin.qq.com/s/92WrOmKjypAi4upDcTXy3g" target="_blank" rel="noopener noreferrer">第5篇：结构化输出实战</a></strong> —— 让 Agent 直接返回 Java 对象</li>
+</ul>
+<p><strong>第二阶段：进阶架构</strong> —— 掌握 2.0 的核心亮点 HarnessAgent，理解"文件即配置"的工程化理念。</p>
+<ul>
+<li><strong>✅ <a href="https://mp.weixin.qq.com/s/PQJD5cGydyOhgYHD88LJfA" target="_blank" rel="noopener noreferrer">6.HarnessAgent：为 ReActAgent 装上操作系统</a></strong>：对比 ReActAgent，理解 Harness 如何整合长期记忆、Session、子 Agent 编排与沙箱。</li>
+<li><strong>✅ <a href="https://mp.weixin.qq.com/s/HcQncfxJQzlN7IO8qpU7iA" target="_blank" rel="noopener noreferrer">7. Workspace 驱动的人格与记忆</a></strong>：通过 <code>AGENTS.md</code> 定义人设，通过 <code>MEMORY.md</code> 沉淀长期事实，实现"改文件即升级 Agent"。</li>
+<li><strong>✅ <a href="https://mp.weixin.qq.com/s/52ChzP-VtuEEd12PO93ISg" target="_blank" rel="noopener noreferrer">8. Skills 技能系统（核心）</a></strong>：掌握 <code>SKILL.md</code> 文件协议，理解"操作手册 + 资料包"的按需加载机制，节省 Token。</li>
+<li><strong>✅ <a href="">9. 多层级 SkillRepository 组合 - 本文</a></strong>：实战 Workspace、Git、Nacos、MySQL 等 5 层仓库的组合与隔离。</li>
+<li><strong>10. 流式事件与前端交互</strong>：使用 <code>streamEvents()</code> 实时展示 Agent 执行过程，对接 Web UI 渲染。</li>
+</ul>
+<hr>
+<blockquote>
+<p>尽信书则不如无书，以上内容纯属一家之言。因个人能力有限，难免有疏漏和错误之处，如发现 Bug 或有更好的建议，欢迎批评指正，不吝感激。</p>
+</blockquote>
+<p><strong>微信公众号：一灰灰Blog</strong></p>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <category term="AgentScope Java新手村"/>
+    <category term="进阶架构"/>
+    <category term="SkillRepository 组合实战"/>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-08-10T08:00:00.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">03.吃灰十年的 Kindle，被 Codex 一个技能改成了微信读书机</title>
+    <id>https://ppai.top/ai-guides/tutorial/ai-talking/03.%E5%90%83%E7%81%B0%E5%8D%81%E5%B9%B4%E7%9A%84Kindle-%E8%A2%ABCodex%E4%B8%80%E4%B8%AA%E6%8A%80%E8%83%BD%E6%94%B9%E6%88%90%E4%BA%86%E5%BE%AE%E4%BF%A1%E8%AF%BB%E4%B9%A6%E6%9C%BA.html</id>
+    <link href="https://ppai.top/ai-guides/tutorial/ai-talking/03.%E5%90%83%E7%81%B0%E5%8D%81%E5%B9%B4%E7%9A%84Kindle-%E8%A2%ABCodex%E4%B8%80%E4%B8%AA%E6%8A%80%E8%83%BD%E6%94%B9%E6%88%90%E4%BA%86%E5%BE%AE%E4%BF%A1%E8%AF%BB%E4%B9%A6%E6%9C%BA.html"/>
+    <updated>2026-11-04T06:18:16.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 吃灰十年的 Kindle，被 Codex 一个技能改成了微信读书机</h1>
+<h2> 01、引子：一篇 WorkBuddy 的文章，把我那台 Kindle 想起来了</h2>
+<p>前阵子刷到一篇文章，作者用 WorkBuddy 把自己的 Kindle 越狱后刷上了微信读书，文末还留了一个 Skill 的入口：<a href="https://skillhub.cn/skills/user_b8af0005/kindle-jailbreak-weread" target="_blank" rel="noopener noreferrer">https://skillhub.cn/skills/user_b8af0005/kindle-jailbreak-weread</a></p>]]></summary>
+    <content type="html"><![CDATA[<h1> 吃灰十年的 Kindle，被 Codex 一个技能改成了微信读书机</h1>
+<h2> 01、引子：一篇 WorkBuddy 的文章，把我那台 Kindle 想起来了</h2>
+<p>前阵子刷到一篇文章，作者用 WorkBuddy 把自己的 Kindle 越狱后刷上了微信读书，文末还留了一个 Skill 的入口：<a href="https://skillhub.cn/skills/user_b8af0005/kindle-jailbreak-weread" target="_blank" rel="noopener noreferrer">https://skillhub.cn/skills/user_b8af0005/kindle-jailbreak-weread</a></p>
+<p>看完的第一反应不是「AI 真厉害」，而是想起了我那块在书架上吃灰快十年的 Kindle。毕业工作之后，我就没怎么正经用过它。亚马逊中国区电子书店一关，这台机器直接从阅读器退化成了泡面盖。机器没坏，屏幕没坏，电池甚至还能撑几天，但它离我的生活确实越来越远了。</p>
+<p>最近在做一个 native 阅读 App 的间隙，我把这台吃灰的 Kindle 捞出来试了试，看能不能再盘活一下。毕竟上下班通勤时，这种轻量电纸书的阅读体验，确实比举着手机舒服不少。</p>
+<p>很早就知道 Kindle 可以越狱，网上教程一抓一大把，闲鱼上甚至还有付费服务。但真要自己动手，型号、固件、越狱包各说各话，看一圈下来比刷机还累，花的时间精力少不了。正好把之前看到的文章翻出来，捞出 Skill，剩下的全交给 Codex，抱着「成不成无所谓」的态度试了试，结果居然还挺不错。</p>
+<h2> 02、这次没照着教程手搓，而是让 Codex 跑 skill</h2>
+<p>这次全过程，不研究 Skill，也不管具体方案，就一个「全托管」，直接让 Codex 开干。反正最坏的结果也就是变砖，而它现在和砖的区别也不大。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793606118370_at01.jpg" alt="at01.jpg" tabindex="0" loading="lazy"><figcaption>at01.jpg</figcaption></figure>
+<p>整个过程比想象中顺利，Codex 很快就给出了执行方案。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793606268684_at02.jpg" alt="at02.jpg" tabindex="0" loading="lazy"><figcaption>at02.jpg</figcaption></figure>
+<p>接下来就是等待。Codex 会按 Skill 里的约束，先备份、准备越狱、预占存储空间，再让我执行设备侧的操作，最后重启。我负责的部分基本就是「点一下」和「等」，技术含量约等于给微波炉按开始键。</p>
+<p>事后看，完整流程是 0 到 8 步。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793614328483_image.png" alt="image.png" tabindex="0" loading="lazy"><figcaption>image.png</figcaption></figure>
+<p>分工写得也很清楚，电脑侧的事归 Codex，设备侧的点按、选择、扫码归我。Agent 负责干脏活，我负责在屏幕上戳来戳去。</p>
+<p>整个过程中，我需要干的就两件事：重启，以及访问网页下载 <code>jailbreak</code>。这玩意儿具体在干啥，我也没细看，反正 Codex 让我点，我就点，主打一个盲目信任。当然，友情提醒一句，不了解脚本作用的话，别随便下载网上的脚本🤣。</p>
+<p>当然，过程也不是一帆风顺，我遇到了两个问题。</p>
+<ol>
+<li>设备空间不够、读写较慢：机器太老，存储只有 4G，得先把旧内容清一清，最后堪堪够用（预留 80M+）。4G 的存储，装完系统就所剩无几，清空间的时候像在给一间老房子腾地方。</li>
+<li>在浏览器里点了下载，设备没有自动重启。正常情况下，下载完会自动重启，然后书架上会多出一本 <code>JAILBROKEN</code> 标记书。我当时的第一反应是：完了，是不是被我点坏了。</li>
+</ol>
+<p>问了 Codex 一句，它让我下载完再观察 2 分钟。……大概率还是设备太拉胯，响应慢。2 分钟，对这台机器来说可能只是刚睡醒。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793606919512_at03.jpg" alt="at03.jpg" tabindex="0" loading="lazy"><figcaption>at03.jpg</figcaption></figure>
+<p>重启成功后，书架上会出现一个 <code>KOReader.sh</code> 脚本，点进去就是 KOReader。再到工具里切换成「觅阅」桌面，微信读书才算真正跑起来。到这一步，这台吃灰十年的机器终于有点像台阅读器了。</p>
+<h2> 03、能用，但不代表好用</h2>
+<p>实际用起来，微信读书确实能上了。书架在，进度在，划线和想法也在。手机扫码登录一次，后面基本不用再管。那一刻还挺有成就感，感觉像给老爷车换了个新发动机。</p>
+<p>但这台机器的硬件属实有点拉胯。打开觅阅桌面要等，切换书籍要等，下载也慢；最离谱的是，阅读时调个字号，它直接弹「设备可用内存空间不够，为了避免崩溃拒绝执行」。调个字号而已，至于吗？于是我又把 Codex 叫了回来，让它上网查一圈，有没有更轻的桌面。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793607233290_at04.jpg" alt="at04.jpg" tabindex="0" loading="lazy"><figcaption>at04.jpg</figcaption></figure>
+<p>Codex 查回来的方案是 SimpleUI。名字听着像某个极简风主题，实际上也差不多。</p>
+<p>SimpleUI 是一个免费开源的 KOReader 界面插件。它不替代 KOReader，也没有微信读书接口，只把 KOReader 原来的文件管理器界面换成一个更清爽的主页，外加底部导航栏、顶部状态栏、阅读统计和快捷操作。一句话，它管脸，不管内容。</p>
+<blockquote>
+<p>额外说一句，KOReader 的原生界面是真够质朴的，质朴到让我想起了十年前的安卓平板。</p>
+</blockquote>
+<p>换成 SimpleUI 之后，最直观的感受是，这才像个阅读器该有的样子，简洁、直观，不跟你绕弯子。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793613703594_at05.jpg" alt="at05.jpg" tabindex="0" loading="lazy"><figcaption>at05.jpg</figcaption></figure>
+<p>阅读界面的设置比 Kindle 原生那套丰富不少，字体、行距、页边距都能调。Kindle 原生设置像是「够用就行」，KOReader 则是「你想调什么都有」。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793613701299_at06.jpg" alt="at06.jpg" tabindex="0" loading="lazy"><figcaption>at06.jpg</figcaption></figure>
+<p>待机页面也能自定义，比如换上我自己阅读器的 logo（树懒阅读🤣）。折腾到这一步，已经有点「不务正业」的快乐了。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793613706895_at07.jpg" alt="at07.jpg" tabindex="0" loading="lazy"><figcaption>at07.jpg</figcaption></figure>
+<p>需要明确一点，SimpleUI 不是微信读书客户端。它只能索引本地文件，读不出微信云书架，所以想用微信读书，还是得切回「觅阅」桌面。装个皮肤就想白嫖微信书库，属于想多了。</p>
+<h2> 04、结尾再说一句</h2>
+<p>如果只用本地阅读，原来的 Kindle 其实就够了，为什么还要折腾这一圈？问得好，我也这么问过自己。</p>
+<p>核心的出发点就是看到了这个 Skill，觉得可以低成本试一波，毕竟也没什么损失。本来还想再进一步，装个安卓阅读 App，结果发现还得刷 Android 系统，还是 5.x 的版本。5.x 的安卓，放到今天连很多 App 的安装包都嫌弃它。想想这台 Kindle 的性能，算了。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793614188075_at08.jpg" alt="at08.jpg" tabindex="0" loading="lazy"><figcaption>at08.jpg</figcaption></figure>
+<p>最后的最后，再感慨一句，越狱后的效果确实不错，但这台 Kindle 最终的归宿，大概率还是回书架上吃灰。毕竟手机还是更香一点🙂。折腾一上午，换来一个「好像也行，但我还是用手机」的结局。。。</p>
+<blockquote>
+<p>想试试的小伙伴，可以直接用 <a href="https://skillhub.cn/skills/user_b8af0005/kindle-jailbreak-weread" target="_blank" rel="noopener noreferrer">https://skillhub.cn/skills/user_b8af0005/kindle-jailbreak-weread</a> 这个 Skill 开干。友情提示，折腾有风险，变砖别找我🤣</p>
+</blockquote>
+]]></content>
+    <author>
+      <name>一灰灰</name>
+    </author>
+    <category term="Agent"/>
+    <contributor>
+      <name>一灰灰</name>
+    </contributor>
+    <published>2026-11-02T10:30:00.000Z</published>
+    <rights>Copyright by 一灰灰</rights>
+  </entry>
+  <entry>
+    <title type="text">04.我做了个用来放松的网站：8 种白噪音，外加划水、捏泡泡、滑沙</title>
+    <id>https://ppai.top/ai-guides/tutorial/ai-talking/04.%E6%88%91%E5%81%9A%E4%BA%86%E4%B8%AA%E7%94%A8%E6%9D%A5%E6%94%BE%E6%9D%BE%E7%9A%84%E7%BD%91%E7%AB%99.html</id>
+    <link href="https://ppai.top/ai-guides/tutorial/ai-talking/04.%E6%88%91%E5%81%9A%E4%BA%86%E4%B8%AA%E7%94%A8%E6%9D%A5%E6%94%BE%E6%9D%BE%E7%9A%84%E7%BD%91%E7%AB%99.html"/>
+    <updated>2026-11-04T06:18:16.000Z</updated>
+    <summary type="html"><![CDATA[<h1> 做了个用来放松的网站：8 种白噪音，外加划水、捏泡泡、滑沙</h1>
+<p>Vibe了个网站，叫轻境 Calmscape。打开之后没有登录、没有广告、没有「开通会员才能听完整版」的弹窗，只有八个自然场景和八个指尖解压的小工具。</p>
+<p>做这个的出发点比较简单，可以在上班的时候更专心的摸鱼。</p>
+<p>能听见风、雨、火堆的声音，也可以随便划两下、捏捏电子泡泡，直接使用Cloudflare进行部署，纯前端，配个域名就行：</p>
+<ul>
+<li>访问：<a href="https://calm.ppai.top/" target="_blank" rel="noopener noreferrer">https://calm.ppai.top/</a></li>
+<li>如果上面的访问有问题，也可以直接访问：<a href="https://calm-bqi.pages.dev/" target="_blank" rel="noopener noreferrer">https://calm-bqi.pages.dev/</a></li>
+</ul>]]></summary>
+    <content type="html"><![CDATA[<h1> 做了个用来放松的网站：8 种白噪音，外加划水、捏泡泡、滑沙</h1>
+<p>Vibe了个网站，叫轻境 Calmscape。打开之后没有登录、没有广告、没有「开通会员才能听完整版」的弹窗，只有八个自然场景和八个指尖解压的小工具。</p>
+<p>做这个的出发点比较简单，可以在上班的时候更专心的摸鱼。</p>
+<p>能听见风、雨、火堆的声音，也可以随便划两下、捏捏电子泡泡，直接使用Cloudflare进行部署，纯前端，配个域名就行：</p>
+<ul>
+<li>访问：<a href="https://calm.ppai.top/" target="_blank" rel="noopener noreferrer">https://calm.ppai.top/</a></li>
+<li>如果上面的访问有问题，也可以直接访问：<a href="https://calm-bqi.pages.dev/" target="_blank" rel="noopener noreferrer">https://calm-bqi.pages.dev/</a></li>
+</ul>
+<h2> 01、白噪音不缺，缺的是手上那点事</h2>
+<p>市面上的白噪音工具很多。随便搜一搜，雨声、海浪、篝火、咖啡馆，几乎能想到的声音都有。我想做点不一样的，可以在听声的同时，也可以划划水，在思考的时候，也可以让无处安放的手有一个落脚点</p>
+<p>所以在Clamscap轻境的实现中也很简单直接，给每个自然场景配一个可以简单交互的方案：</p>
+<p>比如麦田可以划拉一下，池塘可以点点涟漪，篝火可以添写木头，雪地上可以画一画</p>
+<p>就简单动一动，不需要目的，也不需要上下文，同样没什么限制，想干嘛就干嘛，比如夜间田园这个，点点小青蛙也挺有意思</p>
+<figure><img src="https://imgbed.ppai.top/file/1793761651562_at4-01.jpg" alt="at4-01.jpg" tabindex="0" loading="lazy"><figcaption>at4-01.jpg</figcaption></figure>
+<p>此外，这个网站我希望足够简单，打开即用，所以不要账号，也不加任何限制。所有的偏好都存在本地，打开就能用，关掉就走。没有云端同步，也没有跨设备记录，简简单单就好。</p>
+<h2> 02、八个自然场景，各自管一种情绪</h2>
+<p>白噪音，总共设计了八个典型的场景，覆盖“风吹雨打、雪飘叶落”</p>
+<p>名字也很直白，麦田吹风、雨落池塘、静静落雪、篝火时光、林间鸟语、海边听浪、风铃小院、夜间田园。</p>
+<p>每个场景一张静态壁纸 + 一些可以交互的小细节：背景、天气、环境粒子、声音强度会跟着场景走，鼠标或手指在画面上移动，也会改变局部的动态。</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>声音</th>
+<th>适合</th>
+<th>示意图</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>麦田吹风</td>
+<td>风声、麦浪</td>
+<td>想放空，又不想完全安静</td>
+<td><img src="https://imgbed.ppai.top/file/1793762200169_at4-02.jpg" alt="at4-02.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>雨落池塘</td>
+<td>雨声、水波</td>
+<td>写东西、看书</td>
+<td><img src="https://imgbed.ppai.top/file/1793762201593_at4-03.jpg" alt="at4-03.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>静静落雪</td>
+<td>很轻的环境声</td>
+<td>需要低刺激</td>
+<td><img src="https://imgbed.ppai.top/file/1793762197300_at4-04.jpg" alt="at4-04.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>篝火时光</td>
+<td>柴火噼啪</td>
+<td>晚上，想有点陪伴感</td>
+<td><img src="https://imgbed.ppai.top/file/1793762218467_at4-05.jpg" alt="at4-05.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>林间鸟语</td>
+<td>鸟鸣、树叶</td>
+<td>白天，需要一点生气</td>
+<td><img src="https://imgbed.ppai.top/file/1793762203973_at4-06.jpg" alt="at4-06.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>海边听浪</td>
+<td>海浪</td>
+<td>午休、发呆</td>
+<td><img src="https://imgbed.ppai.top/file/1793762200576_at4-07.jpg" alt="at4-07.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>风铃小院</td>
+<td>风铃</td>
+<td>短休息</td>
+<td><img src="https://imgbed.ppai.top/file/1793762205821_at4-08.jpg" alt="at4-08.jpg" loading="lazy"></td>
+</tr>
+<tr>
+<td>夜间田园</td>
+<td>虫鸣、蛙声</td>
+<td>睡前，关灯之后</td>
+<td><img src="https://imgbed.ppai.top/file/1793761651562_at4-01.jpg" alt="at4-01.jpg" loading="lazy"></td>
+</tr>
+</tbody>
+</table>
+<p>雨落池塘适合需要一点白噪音但不想太吵的时候。点一下水面，涟漪从落点散开；按住拖动，水波会被推着走，雨声也跟着密一点。</p>
+<p>静静落雪的动态最少。雪花慢慢落，按住画面轻划，雪面会留下痕迹，过一会儿又被新雪盖住。</p>
+<p>林间鸟语的重点在鸟。小鸟会在不同的枝叶上跳跃，点击小鸟也可以让小鸟自由的飞起来；在界面中，也会有叶子会慢慢飘下来。</p>
+<p>海边听浪这一个设计得比较拉跨，现在的实现距离我的预期相差甚远。</p>
+<p>风铃小院适合很短的空隙。点一下铃管，声音很轻；手指从铃管上划过，会带起一串风。</p>
+<p>麦田吹风的回应最直接。鼠标从左划到右，麦浪跟着动，风的声音也会有一点变化。</p>
+<p>篝火时光适合晚上。点一下火堆，会添一根柴，木头慢慢变黑，火星顺着光标往上飘。</p>
+<p>点柴和火星都有单独的声音，不是一段循环播放的火焰视频。</p>
+<p>夜间田园有一个小彩蛋。点水边的青蛙，它会叫一声。声音不大，但在虫鸣里很清楚。</p>
+<h2> 03、划水、捏泡泡、滑沙，手感从哪来</h2>
+<p>指尖解压一共八个工具。划水、捏泡泡、滑沙是最常用的三个，也是我最开始想做的三个。</p>
+<p>它们有一个共同点，动作都很短，回应都很直接。不用学规则，不用看说明，手指放上去就知道该怎么玩。</p>
+<h3> 划水</h3>
+<p>水面是一层会动的波纹。手指轻轻移动，水面被拨开。</p>
+<p>按住不放再拖，会带出一条尾波；点一下，水花往里陷，涟漪一圈一圈散开。</p>
+<p>水感滑杆控制的是波纹的幅度。往左调，水面很克制；往右调，波纹会明显一些。</p>
+<p>这个里面我比较喜欢的就是划水的声音，太适合“划水”的时候了😊</p>
+<figure><img src="https://imgbed.ppai.top/file/1793762577076_at4-09.jpg" alt="at4-09.jpg" tabindex="0" loading="lazy"><figcaption>at4-09.jpg</figcaption></figure>
+<h3> 捏泡泡</h3>
+<p>泡泡纸是一整张。手指按下去，泡泡先凹，再啪地破掉。按住划过，可以连续捏一排。</p>
+<p>泡泡有两种材质，塑料泡泡和水泡泡。两种材质的视觉和声音不一样，塑料的更脆，水泡泡更软。</p>
+<p>本来是准备做一个全屏的泡泡，但是想想这个对密集恐惧者是在是太不友好了，所以干脆搞一个小的板板算了，重点不是区域的大小，声音感觉更解压；电脑的版的缺陷就是没有震动反馈，触感差了点</p>
+<figure><img src="https://imgbed.ppai.top/file/1793762772889_at4-10.jpg" alt="at4-10.jpg" tabindex="0" loading="lazy"><figcaption>at4-10.jpg</figcaption></figure>
+<h3> 滑沙</h3>
+<p>沙盘是一层有纹理的细沙。按住拖动，指尖会留下一道沟。</p>
+<p>换成细耙，纹路会更整齐，像小时候在沙坑里划线。</p>
+<p>画歪了也没关系，画面下方有一个「抚平沙盘」，一键把沙面推平。这个按钮很解压，有时候我会故意画满，再一次性抚平。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793762923605_at4-11.jpg" alt="at4-11.jpg" tabindex="0" loading="lazy"><figcaption>at4-11.jpg</figcaption></figure>
+<p>其实我原始的想法是搞一个类似沙画的效果，鼠标滑动的地方落下沙，可以在画板上，进行沙绘，结果Codex实现的是现在这样，好吧，这样也行🤣</p>
+<p>剩下五个工具也各有各的动作。</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>动作</th>
+<th>回应</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>捏掉烦恼</td>
+<td>点、划</td>
+<td>泡泡凹陷、破裂</td>
+</tr>
+<tr>
+<td>指尖涟漪</td>
+<td>移动、按住、点击</td>
+<td>波纹、尾波、水花</td>
+</tr>
+<tr>
+<td>指尖沙盘</td>
+<td>按住拖动</td>
+<td>沙沟、细耙纹路</td>
+</tr>
+<tr>
+<td>流沙时光</td>
+<td>上下划</td>
+<td>沙漏翻转</td>
+</tr>
+<tr>
+<td>指尖陀螺</td>
+<td>沿边缘拨</td>
+<td>旋转、反向减速、按住刹停</td>
+</tr>
+<tr>
+<td>雾窗写意</td>
+<td>按住擦</td>
+<td>雾气散开、水珠滑落</td>
+</tr>
+<tr>
+<td>流墨入水</td>
+<td>点、拖、移动</td>
+<td>墨滴散开、晕染、搅动</td>
+</tr>
+<tr>
+<td>拨开花瓣</td>
+<td>移动、按住、点击</td>
+<td>花瓣推开、聚拢、散开</td>
+</tr>
+</tbody>
+</table>
+<p>流沙时光是我第二喜欢的一个。上下划一下，沙漏会翻转，沙粒重新往下落；点一下可以暂停，再点一下继续。</p>
+<p>雾窗写意适合开会走神的时候。按住玻璃擦出一块透明，水珠会顺着边缘往下滑，过一会儿雾气又慢慢回来。</p>
+<p>流墨入水有四种颜色，青黛、藕粉、淡金、墨黑。点一下落一滴墨，拖动会晕开，手指移动会搅出一圈一圈的纹（基本上就是前面划水的指尖涟漪的个性版）。</p>
+<h2> 04、一个页面，怎么装下两种场景</h2>
+<p>自然场景和指尖工具是两套完全不同的东西。前者是 Three.js 的 3D 场景，后者更接近 2D 的粒子和小游戏。</p>
+<p>轻境把它们放进同一个页面，用一个 ExperienceWorld 做统一入口。</p>
+<p>地址栏的 hash 决定打开哪个场景，#wind 是麦田，#water 是划水，#bubbles 是泡泡，#sand 是沙盘。切换场景时，页面只换世界，不整页刷新。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793763061676_at4-12.jpg" alt="at4-12.jpg" tabindex="0" loading="lazy"><figcaption>at4-12.jpg</figcaption></figure>
+<p>自然场景走 SceneWorld，里面是背景、天气、环境粒子三层 canvas，声音交给 NatureAudio。指尖工具走 TouchWorld，这个模块是懒加载的，第一次切到「指尖解压」才会下载。</p>
+<p>如果浏览器不支持 WebGL，或者 WebGL 上下文丢了，ExperienceWorld 会切到 CanvasWorld。画面会简单一些，但不会白屏。</p>
+<p>触摸音效和自然音效也分开了。TouchWorld 只负责把「什么时候该响」记下来，ExperienceWorld 每帧取走这些事件，再交给 NatureAudio 播放。</p>
+<p>画面和声音互不等待，掉帧的时候声音不会跟着卡。</p>
+<blockquote>
+<p>当然，在现在全托给Agent的大环境下，这些过于“技术”的东西好像没什么鸟用，AI会我就会，我不会AI会那也算会，所以我会不会都无所谓了 😄</p>
+</blockquote>
+<h2> 05、声音、性能和「不打扰」</h2>
+<p>轻境的声音全部是本地打包的 CC0 音频，不依赖第三方流媒体。自然声按强度分了三档，滑杆往上推，风声、雨声、火声的层次会变得更明显。</p>
+<p>触摸音效是短音，划水、捏泡泡、滑沙各有各的声音。第一次进入页面时，浏览器不允许自动播放，点一下画面才会解锁音频。这个设计有点烦，但没办法，浏览器规则如此。</p>
+<p>音频来源在设置里写得很清楚，NatureAudio 用的是 CC0 素材，触摸音效也一起打包在站点里。声音不依赖第三方流媒体，断网时已经缓存的场景不会突然没声。</p>
+<p>设置面板里还有「声音来源与许可」的折叠项，点开能看到每段声音的出处(在遵循版权规则这块，不得不说，AI比我更合格）。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793763253337_at4-13.jpg" alt="at4-13.jpg" tabindex="0" loading="lazy"><figcaption>at4-13.jpg</figcaption></figure>
+<p>设置里有画质、轻柔动态、隐藏控件时的文字透明度。画质有自动、高、轻三档；轻柔动态会减少粒子，适合老机器；如果系统开了「减少动态效果」，轻境也会跟着收敛。</p>
+<p>定时有 15、30、60 分钟三档。结束前 5 秒声音会淡出，不会突然一刀切。</p>
+<p>切场景会把定时清掉，想听着某个场景睡，先选好场景再设定时。</p>
+<p>离线缓存也做了。第一次打开之后，页面框架会缓存；场景素材和声音按需保存。</p>
+<p>断网时，已经加载过的场景还能打开，没加载过的就没办法了。</p>
+<h2> 06、手机上是什么体验</h2>
+<p>手机上的布局会重新排。顶部分组、场景标签、底部控制条都会收窄，场景标签可以横向滑。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793763366581_at4-14.jpg" alt="at4-14.jpg" tabindex="0" loading="lazy"><figcaption>at4-14.jpg</figcaption></figure>
+<p>Android 端有安装包，Google Play(<a href="https://play.google.com/store/apps/details?id=com.hui.calmscape" target="_blank" rel="noopener noreferrer">https://play.google.com/store/apps/details?id=com.hui.calmscape</a>) 能搜到，站点也提供 APK 下载。网页端本身也能加到主屏幕，离线缓存之后，断网也能打开已经加载过的场景。</p>
+<figure><img src="https://imgbed.ppai.top/file/1793763475300_at4-15.jpg" alt="at4-15.jpg" tabindex="0" loading="lazy"><figcaption>at4-15.jpg</figcaption></figure>
+<p>Android 安装包适合把网页当 App 用的人。安装之后，桌面图标点开就是站点，少了每次输地址的麻烦。</p>
+<p>如果不安装，手机浏览器也能把网页加到主屏幕，效果接近一个轻量 App。</p>
+<p>午休适合雨落池塘，晚上适合篝火，写东西卡住的时候适合划水。场景不用多，挑一个顺手的就行。</p>
+<h2> 07、它不做什么</h2>
+<p>轻境不是音乐播放器。不能导入自己的音频，不能建歌单，不能分享到社交平台。</p>
+<p>它也没有账号系统，换设备不会同步偏好。</p>
+<p>它不负责治病。白噪音对某些人有帮助，对另一些人可能完全没感觉。</p>
+<p>轻境不承诺三分钟入睡，也不替代任何治疗。</p>
+<p>自然场景依赖 WebGL。老浏览器会降级到 2D，画面会简单很多。</p>
+<p>触摸场景需要指针输入，键盘可以切场景、暂停、隐藏控件，但没法真的「划水」。</p>
+<p>还有一个小脾气，切场景会清掉定时。这个行为目前没改，算是一个已知限制。</p>
+<table>
+<thead>
+<tr>
+<th>它做</th>
+<th>它不做</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8 个自然场景加 8 个触摸工具</td>
+<td>自定义音频、歌单</td>
+</tr>
+<tr>
+<td>本地偏好、离线缓存</td>
+<td>账号同步</td>
+</tr>
+<tr>
+<td>Android 安装包</td>
+<td>社交分享</td>
+</tr>
+<tr>
+<td>定时、暂停、隐藏 UI</td>
+<td>治疗或疗效承诺</td>
+</tr>
+</tbody>
+</table>
+<h2> 08、怎么开始</h2>
+<p>地址再放一次，<a href="https://calm-bqi.pages.dev/" target="_blank" rel="noopener noreferrer">https://calm-bqi.pages.dev/</a> 。想直接划水，用 <a href="https://calm-bqi.pages.dev/#water" target="_blank" rel="noopener noreferrer">https://calm-bqi.pages.dev/#water</a> 。</p>
+<p>三步就够。</p>
+<ol>
+<li>选一个自然场景，戴上耳机，音量调到能听见但不抢注意力。</li>
+<li>想动手就切到「指尖解压」，从划水、捏泡泡、滑沙里挑一个。</li>
+<li>需要离开时设个定时，或者按 H 把控件藏起来。</li>
+</ol>
+<p>一个简简单单的轻量划水网站，随用随走</p>
+]]></content>
+    <author>
+      <name>一灰灰</name>
+    </author>
+    <category term="AI"/>
+    <contributor>
+      <name>一灰灰</name>
+    </contributor>
+    <published>2026-11-03T10:30:00.000Z</published>
+    <rights>Copyright by 一灰灰</rights>
+  </entry>
   <entry>
     <title type="text">6.HarnessAgent：为 ReActAgent 装上操作系统</title>
     <id>https://ppai.top/ai-guides/ai-dev/AgentScope/06.HarnessAgent%EF%BC%9A%E4%B8%BA%20ReActAgent%20%E8%A3%85%E4%B8%8A%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.html</id>
@@ -13745,105 +14517,6 @@
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
   <entry>
-    <title type="text">关于我</title>
-    <id>https://ppai.top/ai-guides/me/</id>
-    <link href="https://ppai.top/ai-guides/me/"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<h2> 关于我</h2>
-]]></summary>
-    <content type="html"><![CDATA[<h2> 关于我</h2>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2026-01-22T08:45:40.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
-    <title type="text">关于我</title>
-    <id>https://ppai.top/ai-guides/me/about-me.html</id>
-    <link href="https://ppai.top/ai-guides/me/about-me.html"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<h2> 1. 自我介绍</h2>
-<p>不习惯分享私人相关的，简单说几个关键点</p>
-<ul>
-<li>常用名：一灰，一灰灰，一灰灰blog</li>
-<li>性别：男</li>
-<li>工作：8+</li>
-<li>履历：一线大厂、千人规模、创业团队、国企都待过</li>
-</ul>
-<h2> 2. 有啥成就</h2>
-<p>比较惭愧，没有太大的成就，业内也不算出名，甚至是小透明</p>
-<ul>
-<li>个人网站： <a href="www.hhui.top">www.hhui.top</a></li>
-<li>GitHub： <a href="https://github.com/liuyueyi" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi</a></li>
-<li>上架的app： <a href="https://play.google.com/store/apps/details?id=com.yhh.zhongdian" target="_blank" rel="noopener noreferrer">https://play.google.com/store/apps/details?id=com.yhh.zhongdian</a></li>
-<li>活跃网站： <a href="https://juejin.cn/user/377887729916126" target="_blank" rel="noopener noreferrer">https://juejin.cn/user/377887729916126</a></li>
-</ul>]]></summary>
-    <content type="html"><![CDATA[<h2> 1. 自我介绍</h2>
-<p>不习惯分享私人相关的，简单说几个关键点</p>
-<ul>
-<li>常用名：一灰，一灰灰，一灰灰blog</li>
-<li>性别：男</li>
-<li>工作：8+</li>
-<li>履历：一线大厂、千人规模、创业团队、国企都待过</li>
-</ul>
-<h2> 2. 有啥成就</h2>
-<p>比较惭愧，没有太大的成就，业内也不算出名，甚至是小透明</p>
-<ul>
-<li>个人网站： <a href="www.hhui.top">www.hhui.top</a></li>
-<li>GitHub： <a href="https://github.com/liuyueyi" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi</a></li>
-<li>上架的app： <a href="https://play.google.com/store/apps/details?id=com.yhh.zhongdian" target="_blank" rel="noopener noreferrer">https://play.google.com/store/apps/details?id=com.yhh.zhongdian</a></li>
-<li>活跃网站： <a href="https://juejin.cn/user/377887729916126" target="_blank" rel="noopener noreferrer">https://juejin.cn/user/377887729916126</a></li>
-</ul>
-<h2> 3. 什么时候开始的分享</h2>
-<p>最早是在16、17年的时候开始在开源中国上分享一些自己的笔记，然后就一直坚持了下来，至今所有的文章加起来应该也有五六百篇了，当然其中有很多比较水；但也有不少文章是注入了心血的</p>
-<p>有到我站点逛的小伙伴可能也看到了，有几个分站</p>
-<ul>
-<li><a href="https://blog.hhui.top" target="_blank" rel="noopener noreferrer">https://blog.hhui.top</a> ： 最早搭建的博客站点，记录的内容多，且零散，检索阅读并不友好，虽然东西很多，但是很多时候我自己都找不到，更何况其他的小伙伴呢</li>
-<li><a href="https://spring.hhui.top" target="_blank" rel="noopener noreferrer">https://spring.hhui.tpp</a>： 这个站点相比于上面一个更垂直一点，全是spring相关的博文，每一篇文章都搭配有对应的项目源码，目前也在持续更新迭代中</li>
-<li><a href="https://hhui.top" target="_blank" rel="noopener noreferrer">https://hhui.top</a>：主站点，为了解决上面说到的知识点分散的问题，近期我也在做知识汇总，形成一个一个专栏性质的小册，后续也会逐渐整理为pdf，供有离线学习诉求的小伙伴查阅</li>
-</ul>
-<h2> 4. 最近在干什么</h2>
-<p>在22年中开始，和楼仔（强烈推荐关注他的公众号“楼仔”，分享的都是技术干活）凑一起搞事情，目前项目已上线，一个开源的博客论坛系统，将会围绕这个项目，出一版相关的教程，希望能基于此为各位有志于从事编程事业的小伙伴，提供一个极佳的练手项目、学习平台</p>
-<ul>
-<li>源码地址：<a href="https://github.com/itwanger/paicoding" target="_blank" rel="noopener noreferrer">https://github.com/itwanger/paicoding</a></li>
-<li>论坛地址：<a href="https://paicoding.com/" target="_blank" rel="noopener noreferrer">https://paicoding.com/</a></li>
-</ul>
-<h2> 5. 有公众号么</h2>
-<p>我的公众号是："一灰灰blog"， 有兴趣的小伙伴可以关注一波</p>
-<figure><img src="https://spring.hhui.top/spring-blog/imgs/info/info.png" alt="一灰灰的公众号" tabindex="0" loading="lazy"><figcaption>一灰灰的公众号</figcaption></figure>
-<p>我的小伙伴楼仔的公众号： "楼仔" 同时也推荐各位</p>
-<figure><img src="https://files.mdnice.com/user/13837/4b47ac79-8256-47cf-ac1a-036729635246.png" alt="楼仔的公众号" tabindex="0" loading="lazy"><figcaption>楼仔的公众号</figcaption></figure>
-<h2> 6. 有什么学习的资料么</h2>
-<p>找楼仔，他有很多pdf</p>
-<h2> 7. 有什么学习的建议么</h2>
-<p>我一般做不来指路明灯，或者导师的角色；一个建议就是跟着大佬后面走</p>
-<h2> 8. 怎么联系我</h2>
-<ul>
-<li>QQ : 3302797840</li>
-<li>微信 : liuyueyi25</li>
-<li>邮箱 : <a href="mailto:bangzewu@126.com">bangzewu@126.com</a></li>
-<li>微博 : 一灰灰blog (基本上不活跃)</li>
-</ul>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2026-01-22T08:45:40.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
     <title type="text">SpringAI</title>
     <id>https://ppai.top/ai-guides/ai-dev/</id>
     <link href="https://ppai.top/ai-guides/ai-dev/"/>
@@ -13952,6 +14625,105 @@
 <p><a href="/ai-guides/tutorial/hello-llm/" target="blank">hello llm:零基础入门大模型应用开发</a></p>
 <h2> 📝 AiCoding</h2>
 <p><a href="/ai-guides/tutorial/ai-coding/" target="blank">ai coding:氛围编程、项目实战</a></p>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-01-22T08:45:40.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">关于我</title>
+    <id>https://ppai.top/ai-guides/me/</id>
+    <link href="https://ppai.top/ai-guides/me/"/>
+    <updated>2026-01-22T08:45:40.000Z</updated>
+    <summary type="html"><![CDATA[<h2> 关于我</h2>
+]]></summary>
+    <content type="html"><![CDATA[<h2> 关于我</h2>
+]]></content>
+    <author>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </author>
+    <contributor>
+      <name>一灰灰blog</name>
+      <uri>https://ppai.top</uri>
+    </contributor>
+    <published>2026-01-22T08:45:40.000Z</published>
+    <rights>Copyright by 一灰灰blog</rights>
+  </entry>
+  <entry>
+    <title type="text">关于我</title>
+    <id>https://ppai.top/ai-guides/me/about-me.html</id>
+    <link href="https://ppai.top/ai-guides/me/about-me.html"/>
+    <updated>2026-01-22T08:45:40.000Z</updated>
+    <summary type="html"><![CDATA[<h2> 1. 自我介绍</h2>
+<p>不习惯分享私人相关的，简单说几个关键点</p>
+<ul>
+<li>常用名：一灰，一灰灰，一灰灰blog</li>
+<li>性别：男</li>
+<li>工作：8+</li>
+<li>履历：一线大厂、千人规模、创业团队、国企都待过</li>
+</ul>
+<h2> 2. 有啥成就</h2>
+<p>比较惭愧，没有太大的成就，业内也不算出名，甚至是小透明</p>
+<ul>
+<li>个人网站： <a href="www.hhui.top">www.hhui.top</a></li>
+<li>GitHub： <a href="https://github.com/liuyueyi" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi</a></li>
+<li>上架的app： <a href="https://play.google.com/store/apps/details?id=com.yhh.zhongdian" target="_blank" rel="noopener noreferrer">https://play.google.com/store/apps/details?id=com.yhh.zhongdian</a></li>
+<li>活跃网站： <a href="https://juejin.cn/user/377887729916126" target="_blank" rel="noopener noreferrer">https://juejin.cn/user/377887729916126</a></li>
+</ul>]]></summary>
+    <content type="html"><![CDATA[<h2> 1. 自我介绍</h2>
+<p>不习惯分享私人相关的，简单说几个关键点</p>
+<ul>
+<li>常用名：一灰，一灰灰，一灰灰blog</li>
+<li>性别：男</li>
+<li>工作：8+</li>
+<li>履历：一线大厂、千人规模、创业团队、国企都待过</li>
+</ul>
+<h2> 2. 有啥成就</h2>
+<p>比较惭愧，没有太大的成就，业内也不算出名，甚至是小透明</p>
+<ul>
+<li>个人网站： <a href="www.hhui.top">www.hhui.top</a></li>
+<li>GitHub： <a href="https://github.com/liuyueyi" target="_blank" rel="noopener noreferrer">https://github.com/liuyueyi</a></li>
+<li>上架的app： <a href="https://play.google.com/store/apps/details?id=com.yhh.zhongdian" target="_blank" rel="noopener noreferrer">https://play.google.com/store/apps/details?id=com.yhh.zhongdian</a></li>
+<li>活跃网站： <a href="https://juejin.cn/user/377887729916126" target="_blank" rel="noopener noreferrer">https://juejin.cn/user/377887729916126</a></li>
+</ul>
+<h2> 3. 什么时候开始的分享</h2>
+<p>最早是在16、17年的时候开始在开源中国上分享一些自己的笔记，然后就一直坚持了下来，至今所有的文章加起来应该也有五六百篇了，当然其中有很多比较水；但也有不少文章是注入了心血的</p>
+<p>有到我站点逛的小伙伴可能也看到了，有几个分站</p>
+<ul>
+<li><a href="https://blog.hhui.top" target="_blank" rel="noopener noreferrer">https://blog.hhui.top</a> ： 最早搭建的博客站点，记录的内容多，且零散，检索阅读并不友好，虽然东西很多，但是很多时候我自己都找不到，更何况其他的小伙伴呢</li>
+<li><a href="https://spring.hhui.top" target="_blank" rel="noopener noreferrer">https://spring.hhui.tpp</a>： 这个站点相比于上面一个更垂直一点，全是spring相关的博文，每一篇文章都搭配有对应的项目源码，目前也在持续更新迭代中</li>
+<li><a href="https://hhui.top" target="_blank" rel="noopener noreferrer">https://hhui.top</a>：主站点，为了解决上面说到的知识点分散的问题，近期我也在做知识汇总，形成一个一个专栏性质的小册，后续也会逐渐整理为pdf，供有离线学习诉求的小伙伴查阅</li>
+</ul>
+<h2> 4. 最近在干什么</h2>
+<p>在22年中开始，和楼仔（强烈推荐关注他的公众号“楼仔”，分享的都是技术干活）凑一起搞事情，目前项目已上线，一个开源的博客论坛系统，将会围绕这个项目，出一版相关的教程，希望能基于此为各位有志于从事编程事业的小伙伴，提供一个极佳的练手项目、学习平台</p>
+<ul>
+<li>源码地址：<a href="https://github.com/itwanger/paicoding" target="_blank" rel="noopener noreferrer">https://github.com/itwanger/paicoding</a></li>
+<li>论坛地址：<a href="https://paicoding.com/" target="_blank" rel="noopener noreferrer">https://paicoding.com/</a></li>
+</ul>
+<h2> 5. 有公众号么</h2>
+<p>我的公众号是："一灰灰blog"， 有兴趣的小伙伴可以关注一波</p>
+<figure><img src="https://spring.hhui.top/spring-blog/imgs/info/info.png" alt="一灰灰的公众号" tabindex="0" loading="lazy"><figcaption>一灰灰的公众号</figcaption></figure>
+<p>我的小伙伴楼仔的公众号： "楼仔" 同时也推荐各位</p>
+<figure><img src="https://files.mdnice.com/user/13837/4b47ac79-8256-47cf-ac1a-036729635246.png" alt="楼仔的公众号" tabindex="0" loading="lazy"><figcaption>楼仔的公众号</figcaption></figure>
+<h2> 6. 有什么学习的资料么</h2>
+<p>找楼仔，他有很多pdf</p>
+<h2> 7. 有什么学习的建议么</h2>
+<p>我一般做不来指路明灯，或者导师的角色；一个建议就是跟着大佬后面走</p>
+<h2> 8. 怎么联系我</h2>
+<ul>
+<li>QQ : 3302797840</li>
+<li>微信 : liuyueyi25</li>
+<li>邮箱 : <a href="mailto:bangzewu@126.com">bangzewu@126.com</a></li>
+<li>微博 : 一灰灰blog (基本上不活跃)</li>
+</ul>
 ]]></content>
     <author>
       <name>一灰灰blog</name>
@@ -17974,656 +18746,6 @@ in Large Language Models</a></li>
       <uri>https://ppai.top</uri>
     </contributor>
     <published>2025-11-06T14:15:07.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
-    <title type="text">03.Agent思考框架-ReAct</title>
-    <id>https://ppai.top/ai-guides/tutorial/hello-agent/03.Agent%E6%80%9D%E8%80%83%E6%A1%86%E6%9E%B6-ReAct.html</id>
-    <link href="https://ppai.top/ai-guides/tutorial/hello-agent/03.Agent%E6%80%9D%E8%80%83%E6%A1%86%E6%9E%B6-ReAct.html"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<h2> 1. 背景与起源</h2>
-<p><strong>ReAct 框架</strong>全称为 <code>[Reason + Act: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/)</code>，由 <strong>Yao et al.（2022, Google Research）</strong> 首次提出。论文标题为：</p>
-<blockquote>
-<p><a href="https://arxiv.org/pdf/2210.03629" target="_blank" rel="noopener noreferrer"><em>ReAct: Synergizing Reasoning and Acting in Language Models</em></a></p>
-</blockquote>]]></summary>
-    <content type="html"><![CDATA[<h2> 1. 背景与起源</h2>
-<p><strong>ReAct 框架</strong>全称为 <code>[Reason + Act: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/)</code>，由 <strong>Yao et al.（2022, Google Research）</strong> 首次提出。论文标题为：</p>
-<blockquote>
-<p><a href="https://arxiv.org/pdf/2210.03629" target="_blank" rel="noopener noreferrer"><em>ReAct: Synergizing Reasoning and Acting in Language Models</em></a></p>
-</blockquote>
-<p>这篇论文的出发点非常直接：</p>
-<blockquote>
-<p>仅靠 Chain-of-Thought（CoT）能让模型“思考”，但不能“行动”；
-而仅靠 Tool-use 或 Action-based Agent 能“行动”，但不会“思考”。</p>
-<p><strong>ReAct 试图让模型在推理（Reason）与行动（Act）之间交替进行，从而实现真正的智能体行为。</strong></p>
-</blockquote>
-<figure><img src="/imgs/column/springai/ag3-01.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
-<h2> 2. 核心思想：让模型在「思考」与「行动」之间循环</h2>
-<p>传统的 CoT 是<strong>静态推理</strong>：</p>
-<blockquote>
-<p>输入 → 推理链（CoT） → 答案</p>
-</blockquote>
-<p>而 ReAct 是<strong>动态交互式推理</strong>：</p>
-<blockquote>
-<p>输入 → 推理步骤（Reason） → 执行动作（Act） → 观察反馈（Observe） → 再推理（Reason） → 再行动（Act） → … → 最终答案</p>
-</blockquote>
-<p>这种循环让模型不只是生成一条思维链，而是能够：</p>
-<ul>
-<li><strong>主动与外部环境交互（通过工具或接口）</strong></li>
-<li><strong>根据反馈修正推理路径</strong></li>
-<li><strong>在多轮循环中完成复杂任务</strong></li>
-</ul>
-<p>举个例子如你想查 “北京明天是否适合户外施工”，会先想 “我需要知道明天的天气（推理）→ 打开天气 APP 查数据（行动）→ 看到明天有暴雨（观察）→ 得出‘不适合施工’的结论（再推理）”。
-放在大模型 / Agent 场景中，ReAct 就是让模型不再局限于 “纯内部推理”（比如 CoT 只在脑子里想），而是通过 “调用工具、获取外部反馈” 来验证和修正推理，形成闭环：</p>
-<ul>
-<li>推理（Reasoning）：分析目标、拆解步骤、决定下一步 “该做什么”（比如 “用户要订建筑材料，我需要先查库存→ 调用库存工具”）；</li>
-<li>行动（Acting）：执行具体操作（调用工具 API、查询数据库、发送指令等），是模型与外部世界交互的核心；</li>
-<li>观察（Observation）：获取行动的结果反馈（比如库存工具返回 “钢筋库存充足”“水泥缺货”）；</li>
-<li>迭代：根据观察结果调整推理，直到完成目标（比如水泥缺货→ 推理 “需要找替代供应商”→ 行动 “调用供应商匹配工具”）。</li>
-</ul>
-<h2> 3. ReAct 的机制结构</h2>
-<h3> 3.1 核心闭环流程</h3>
-<p>ReAct 的核心是一个循环式 Prompt 结构，每一轮由 3 个关键组件构成：</p>
-<table>
-<thead>
-<tr>
-<th>阶段</th>
-<th>名称</th>
-<th>功能</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Reason</code></td>
-<td>思考步骤</td>
-<td>模型分析当前状态，推理下一步要做什么</td>
-</tr>
-<tr>
-<td><code>Act</code></td>
-<td>执行动作</td>
-<td>模型根据推理结果调用外部工具、API、搜索等</td>
-</tr>
-<tr>
-<td><code>Observe</code></td>
-<td>观察反馈</td>
-<td>模型读取行动结果，更新内部状态</td>
-</tr>
-</tbody>
-</table>
-<p>循环结构如下：</p>
-<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这种结构兼具“推理链的透明性”与“可执行性”，是 CoT 向 Agent 推理自然演化的形式。</p>
-<h3> 3.2 关键要素</h3>
-<p>要想让上面的ReAct的流程跑通，必须满足三个核心条件</p>
-<ol>
-<li>明确的目标与终止条件：目标要可量化（如2016年、诺贝尔文学奖获得者），终止条件要清晰（找到用户，任务完成）</li>
-<li>标准化的工具接口：Agent 能 “看懂并调用” 工具（网络搜索）</li>
-<li>状态记忆模块：Agent 能记录每一轮的 “思考结果、行动内容、观察反馈”，避免重复劳动或者遗忘关键信息</li>
-</ol>
-<h2> 4. 与 CoT 的关系：ReAct = CoT + 行动接口</h2>
-<table>
-<thead>
-<tr>
-<th>对比维度</th>
-<th>Chain-of-Thought (CoT)</th>
-<th>ReAct (推理行动)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>核心功能</td>
-<td>静态推理（只思考）</td>
-<td>推理 + 行动 + 反馈循环</td>
-</tr>
-<tr>
-<td>是否交互</td>
-<td>否（纯语言生成）</td>
-<td>是（能调用外部工具/环境）</td>
-</tr>
-<tr>
-<td>信息来源</td>
-<td>依赖模型训练时的内部知识</td>
-<td>内部知识 + 外部输入 + 工具反馈数据（调用工具获取）</td>
-</tr>
-<tr>
-<td>可解释性</td>
-<td>高（显式推理链）</td>
-<td>更高（推理+行动全可追溯）</td>
-</tr>
-<tr>
-<td>典型应用</td>
-<td>逻辑推理、数学题</td>
-<td>工具使用、问答、信息检索、任务规划</td>
-</tr>
-</tbody>
-</table>
-<p>可以这样理解：</p>
-<blockquote>
-<p><strong>CoT 让模型“会思考”；
-ReAct 让模型“边思考边行动”。</strong></p>
-</blockquote>
-<p>ReAct 实际上是将 CoT 的“推理链”扩展为一个“推理-行动交替链（Reason–Act Loop）”，使模型能够通过外部信息验证和修正自身推理过程。</p>
-<h2> 5. 典型应用场景</h2>
-<p>ReAct 框架已成为众多 <strong>LLM Agent 框架的基础逻辑</strong>，例如：</p>
-<table>
-<thead>
-<tr>
-<th>场景</th>
-<th>示例</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>知识检索 Agent</strong></td>
-<td>模型根据推理决定是否调用搜索 API，检索结果再反馈给模型</td>
-</tr>
-<tr>
-<td><strong>任务执行 Agent</strong></td>
-<td>模型通过多轮思考与动作完成复杂流程（如预定行程、分析数据）</td>
-</tr>
-<tr>
-<td><strong>工具调用（Tool Use）</strong></td>
-<td>ReAct 框架下的模型能自主判断何时调用计算器、数据库或Python执行环境</td>
-</tr>
-<tr>
-<td><strong>多Agent协作</strong></td>
-<td>多个 Agent 间通过 ReAct 循环共享中间推理结果，实现协同任务（如 AutoGen、LangGraph）</td>
-</tr>
-</tbody>
-</table>
-<p>ReAct 机制也被广泛集成在框架中：</p>
-<ul>
-<li><strong>LangChain / LangGraph</strong>：ReAct 是默认的 reasoning template；</li>
-<li><strong>OpenAI GPTs / o1 系列</strong>：其系统提示内嵌了类似 ReAct 的隐式结构；</li>
-<li><strong>DeepSeek-R1 / Claude 3.5</strong>：均具备“内隐 ReAct”式动态推理循环。</li>
-</ul>
-<h2> 6. ReAct 的优势</h2>
-<table>
-<thead>
-<tr>
-<th>优势</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>融合思考与行动</strong></td>
-<td>不再需要人工编排先“思考”还是“执行”，模型可自动判断何时行动。</td>
-</tr>
-<tr>
-<td><strong>支持闭环反馈</strong></td>
-<td>环境结果反哺推理过程，形成自我纠错机制。 避免出现纯推理(如CoT)容易出现的“想当然”的错误</td>
-</tr>
-<tr>
-<td><strong>可解释性强</strong></td>
-<td>每一步 Reason 与 Action 都是可追踪文本，利于调试与评估。</td>
-</tr>
-<tr>
-<td><strong>易扩展</strong></td>
-<td>可嵌入任意工具调用接口（API、DB、Web 搜索等）。</td>
-</tr>
-<tr>
-<td><strong>增强记忆与规划能力</strong></td>
-<td>多轮 Reasoning 让模型能规划长序列任务，而非一次性输出。</td>
-</tr>
-<tr>
-<td><strong>通用性强</strong></td>
-<td>ReAct 不依赖特定任务或工具，只要能拆解步骤、调用工具，就能适用：比如从 “查天气” 到 “采购建筑材料”，从 “旅游规划” 到 “科研数据分析”，只需替换工具和目标，框架本身无需修改，开发效率高</td>
-</tr>
-</tbody>
-</table>
-<h2> 7. ReAct 的局限与改进方向</h2>
-<table>
-<thead>
-<tr>
-<th>局限</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>推理质量依赖模型本身的 CoT 能力</strong></td>
-<td>若模型的逻辑推理弱，ReAct 仍可能走错路线。</td>
-</tr>
-<tr>
-<td><strong>长上下文管理复杂</strong></td>
-<td>多轮循环可能导致上下文爆炸，需要 Memory 模块支持。</td>
-</tr>
-<tr>
-<td><strong>计算成本高</strong></td>
-<td>每轮 Reason + Act + Observe 都是一条完整的 API 调用。</td>
-</tr>
-<tr>
-<td><strong>缺乏全局规划能力</strong></td>
-<td>ReAct 是“逐步决策”，缺乏全局最优策略搜索。</td>
-</tr>
-</tbody>
-</table>
-<p>因此，后续研究提出了更高阶的扩展框架，如：</p>
-<ul>
-<li><strong>Tree-of-Thought (ToT)</strong>：将推理链分支化、多路径搜索；</li>
-<li><strong>Reflexion / Self-Refine</strong>：在 ReAct 基础上加入“自我反思”机制；</li>
-<li><strong>Graph-of-Thought (GoT)</strong>：通过图结构管理复杂的推理关系。</li>
-</ul>
-<p>这些框架都继承自 ReAct 的核心思想：<strong>Reason + Act 的循环推理范式</strong>。</p>
-<h2> 8. ReAct在Agent中的具体应用示例</h2>
-<p><code>ReAct</code> 是 <code>Agent</code> “编排层” 的核心逻辑，要在 <code>Agent</code> 中落地 <code>ReAct</code>，可以按照 “组件搭建→流程设计→优化迭代” 的三板斧进行套路</p>
-<h3> 8.1 第一步：搭建Agent的ReAct核心组件</h3>
-<p>前面说了ReAct的三个关键组件： Reason(思考)、Act(行动)、Observe(观察)，在具体的Agent实现中，我们还需要额外考虑上下文的管理(Memory)</p>
-<p>因此一个Agent要实现ReAct，则应包含下面四个核心模块</p>
-<blockquote>
-<p>比如我现在给Agent下达一个任务，<code>帮用户采购 100 吨 HRB400E 钢筋，要求 3 天内送达北京朝阳区工地，预算 50 万元</code></p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>组件</th>
-<th>功能描述</th>
-<th>技术实现参照</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>思考模块（Reasoner）</td>
-<td>接收目标+状态→ 拆解步骤→ 决定下一步行动（比如“调用哪个工具”“参数是什么”）</td>
-<td>基于大模型实现（如GPT-4、Gemini、DeepSeek），通过提示工程引导模型生成“行动指令”（比如“调用库存工具，参数：材料型号=HRB400E，数量=100吨”）</td>
-</tr>
-<tr>
-<td>行动执行器（Actor）</td>
-<td>解析思考模块的“行动指令”→ 调用对应的工具（API、数据库、RPA等）</td>
-<td>搭建工具注册中心（统一管理工具名称、输入输出格式），用函数调用（Function Call）实现模型与工具的对接（比如模型输出JSON格式的行动指令，执行器解析后调用API）</td>
-</tr>
-<tr>
-<td>观察模块（Observer）</td>
-<td>获取工具返回结果→ 整理成模型能理解的格式（比如把API返回的JSON转成自然语言）</td>
-<td>设计结果标准化模板（比如工具返回“{"supplier":"A","price":3700}"→ 整理为“供应商A的HRB400E钢筋报价3700元/吨”）</td>
-</tr>
-<tr>
-<td>状态记忆模块（Memory）</td>
-<td>存储“目标+每一轮的思考/行动/观察结果”→ 为下一轮思考提供上下文</td>
-<td>用向量数据库（如Milvus、FAISS）存储长上下文，支持“关键词检索”（比如快速查找“供应商A的履约率”）</td>
-</tr>
-</tbody>
-</table>
-<h3> 8.2 第二步：设计 ReAct 闭环执行流程</h3>
-<p>依然以上面的建筑材料采购Agent为例</p>
-<h4> （1）初始化：明确目标与工具</h4>
-<ul>
-<li>目标：用户输入“采购100吨HRB400E钢筋，3天内送达北京朝阳工地，预算50万”；</li>
-<li>注册工具：库存查询工具、供应商履约率工具、报价对比工具、订单生成工具。</li>
-</ul>
-<h4> （2）循环执行（直到任务完成/终止）</h4>
-<figure><img src="/imgs/column/springai/ag3-02.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
-<ul>
-<li>
-<p>每一轮的“思考指令”格式示例（模型输出）：</p>
-<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
-<li>
-<p>观察模块整理结果示例：
-“库存查询工具返回3家供应商：1. 供应商A（库存150吨，报价3700元/吨，3天达）；2. 供应商B（库存200吨，报价3800元/吨，2天达）；3. 供应商C（库存120吨，报价3600元/吨，4天达，超期）”</p>
-</li>
-</ul>
-<h4> （3）终止条件设计</h4>
-<ul>
-<li>成功终止：完成目标（如“采购订单提交成功，供应商A将在3天内送达100吨HRB400E钢筋，总价37万元”）；</li>
-<li>失败终止：多次迭代后无法满足目标（如“无符合‘3天达+100吨库存’的供应商，建议延长交货期至4天或更换材料型号”）。</li>
-</ul>
-<h3> 8.3 第三步：优化 ReAct 执行效率</h3>
-<p>实际应用中，需解决“循环次数过多、工具调用错误、推理冗余”等问题，常用优化技巧：</p>
-<ul>
-<li>① 工具选择策略：思考模块优先选择“高优先级工具”（比如先查库存，再查履约率，避免跳过关键步骤）；</li>
-<li>② 状态压缩：记忆模块只保留“关键信息”（比如只记“符合条件的供应商A/B”，忽略C的详细信息），减少大模型上下文压力；</li>
-<li>③ 错误重试机制：行动失败（如工具调用超时、返回错误）时，思考模块自动调整参数（比如“重新调用库存工具，增加‘北京周边供应商’筛选条件”）；</li>
-<li>④ 少样本示例引导：在思考模块的提示中，加入“问题+ReAct循环示例”，让模型更快掌握推理+行动的节奏（比如给一个“采购水泥”的ReAct示例，让模型模仿）。</li>
-</ul>
-<h2> 9. 总结：一句话概括 ReAct</h2>
-<p><strong>ReAct 是连接“语言模型的思考能力（CoT）”与“Agent 的执行能力”的桥梁。</strong></p>
-<p>它让大模型不仅能在语言空间中推理，还能在外部世界中行动；最后再以一张图，来重温一下ReAct</p>
-<figure><img src="/imgs/column/springai/ag3-03.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <category term="Agent"/>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2025-11-06T17:15:07.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
-    <title type="text">04.Agent思考框架-Plan-and-Execute</title>
-    <id>https://ppai.top/ai-guides/tutorial/hello-agent/04.Agent%E6%80%9D%E8%80%83%E6%A1%86%E6%9E%B6-Plan-and-Execute.html</id>
-    <link href="https://ppai.top/ai-guides/tutorial/hello-agent/04.Agent%E6%80%9D%E8%80%83%E6%A1%86%E6%9E%B6-Plan-and-Execute.html"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<blockquote>
-<p>Plan-and-Execute 框架：面向复杂任务的层次化推理与行动架构</p>
-</blockquote>
-<h2> 1. 引言</h2>
-<p>随着语言模型推理能力与外部工具使用能力的增强，如何高效地解决<strong>长程、多步骤、复杂任务</strong>成为 AI Agent 的关键挑战。</p>
-<p>传统的 <strong>Chain-of-Thought (CoT)</strong> 与 <strong>ReAct</strong> 框架虽能支持推理与行动的结合，但它们通常以<strong>逐步生成的方式</strong>执行任务，容易陷入“短视（myopic）”问题——即模型缺乏全局规划能力，只能在局部推理层面决策。</p>]]></summary>
-    <content type="html"><![CDATA[<blockquote>
-<p>Plan-and-Execute 框架：面向复杂任务的层次化推理与行动架构</p>
-</blockquote>
-<h2> 1. 引言</h2>
-<p>随着语言模型推理能力与外部工具使用能力的增强，如何高效地解决<strong>长程、多步骤、复杂任务</strong>成为 AI Agent 的关键挑战。</p>
-<p>传统的 <strong>Chain-of-Thought (CoT)</strong> 与 <strong>ReAct</strong> 框架虽能支持推理与行动的结合，但它们通常以<strong>逐步生成的方式</strong>执行任务，容易陷入“短视（myopic）”问题——即模型缺乏全局规划能力，只能在局部推理层面决策。</p>
-<p>基于此，就有了 <strong>Plan-and-Execute（计划–执行）框架</strong>，其核心逻辑是 <strong>“先全局规划，再分步执行，全程监控调整”</strong> —— 模仿人类处理复杂任务的模式（比如项目经理做项目计划、旅行博主规划跨城行程），先拆解出完整的任务步骤，再逐一执行，同时根据执行结果动态优化计划，避免 “边想边做” 导致的返工或偏离目标。</p>
-<h2> 2. 核心思想</h2>
-<p>Plan-and-Execute 的基本理念是：</p>
-<blockquote>
-<p><strong>让语言模型先“想清楚要做什么”，再“逐步去做”。</strong></p>
-</blockquote>
-<h3> 2.1 定义</h3>
-<p>Plan-and-Execute（简称 “P&amp;E”）是一种 “目标驱动 + 规划先行” 的 Agent 认知架构，核心是将复杂任务拆解为 “可执行的子步骤（计划）”，再逐个执行子步骤，同时监控执行结果，若出现偏差则修正计划，直至完成整体目标。</p>
-<h3> 2.2 子系统</h3>
-<p>在该框架中，模型被划分为两个协作子系统：</p>
-<ol>
-<li><strong>Planner（规划器）</strong> —— 负责全局任务分解与阶段性目标设定；</li>
-<li><strong>Executor（执行器）</strong> —— 负责逐步执行具体步骤，并根据反馈调整局部行为。</li>
-</ol>
-<p>相比 ReAct 的“边想边做”模式，Plan-and-Execute 更接近人类在处理复杂任务时的思维方式：</p>
-<h3> 2.3 示例说明</h3>
-<p>还是以上一篇ReAct中的示例进行扩展说明：<code>完成 “建筑项目跨区域材料调度”（目标：把北京项目的剩余 100 吨钢材，5 天内运到天津项目，预算 10 万元）</code></p>
-<p>对于P&amp;E框架，其执行步骤如下：</p>
-<ol>
-<li>先规划（Plan）：拆分子步骤→
-<ul>
-<li>① 确认北京项目钢材库存及规格；</li>
-<li>② 联系合规物流商报价；</li>
-<li>③ 对比物流方案（成本、时效）；</li>
-<li>④ 办理材料运输备案；</li>
-<li>⑤ 安排装车运输；</li>
-<li>⑥ 天津项目验收；</li>
-</ul>
-</li>
-<li>再执行（Execute）：按步骤逐一落地，比如先调用 “库存工具” 确认钢材，再调用 “物流商工具” 报价；</li>
-<li>动态调整：若执行中发现 “某物流商报价超预算”，则回到规划环节，补充 “筛选低价物流商” 子步骤，修正后继续执行。</li>
-</ol>
-<h2> 3. 框架结构</h2>
-<h3> 3.1 流程概览</h3>
-<p>Plan-and-Execute 框架的核心流程如下：</p>
-<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>在实践中，这两阶段通常由同一个语言模型（或多个模型）协作完成：</p>
-<ul>
-<li><strong>Planner</strong>：生成多步任务计划，明确每个子任务的目标；</li>
-<li><strong>Executor</strong>：逐步执行每个子任务，可调用工具或环境；</li>
-<li><strong>Evaluator（可选）</strong>：在执行后评估结果质量，并决定是否重新规划。</li>
-</ul>
-<h3> 3.2 示例</h3>
-<p>假设目标：“为某地铁项目采购3类材料（1000吨HRB400E钢筋、500立方米C30混凝土、200套消防设备），要求20天内全部送达工地，预算800万元，需符合地铁工程质量标准”</p>
-<table>
-<thead>
-<tr>
-<th>步骤</th>
-<th>具体操作（Agent 执行）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>① 目标解析（Target Parsing）</td>
-<td>拆解目标关键约束：材料类型（3类）、数量、时效（20天）、预算（800万）、质量标准（地铁级）→ 明确“不可妥协条件”（质量、时效）和“可调整条件”（预算浮动5%）</td>
-</tr>
-<tr>
-<td>② 全局规划（Plan Generation）</td>
-<td>生成详细子步骤（按逻辑顺序）：<br>1. 校验3类材料的地铁级质量标准参数；<br>2. 筛选符合质量标准的供应商（每类材料≥3家）；<br>3. 向供应商询价，对比报价是否在预算内；<br>4. 确认供应商交货周期（≤20天）；<br>5. 选择最优供应商（质量+价格+时效平衡）；<br>6. 签订采购合同；<br>7. 安排分批次物流运输；<br>8. 工地验收材料（核对质量+数量）</td>
-</tr>
-<tr>
-<td>③ 分步执行（Plan Execution）</td>
-<td>按子步骤调用工具执行：<br>- 步骤1：调用“建筑质量标准工具”，获取地铁级材料参数；<br>- 步骤2：调用“供应商筛选工具”，输入参数筛选供应商；<br>- 步骤3：调用“报价工具”，向6家供应商询价；<br>（每执行完一个子步骤，记录结果）</td>
-</tr>
-<tr>
-<td>④ 监控反馈（Monitoring &amp; Feedback）</td>
-<td>检查执行结果是否符合计划要求：<br>- 发现“混凝土供应商报价超预算10%”（偏离预算约束）；<br>- 发现“消防设备供应商交货周期25天”（偏离时效约束）；<br>- 整理偏差：2个子步骤未达标，需修正</td>
-</tr>
-<tr>
-<td>⑤ 计划修正（Plan Revision）</td>
-<td>基于偏差调整计划：<br>1. 新增“混凝土供应商二次筛选”（要求报价≤预算上限）；<br>2. 新增“消防设备供应商谈判”（要求交货周期≤20天，否则更换）；<br>3. 调整步骤顺序：先谈判消防设备，再二次筛选混凝土供应商；<br>→ 修正后回到“分步执行”环节，继续推进</td>
-</tr>
-</tbody>
-</table>
-<div class="language-text line-numbers-mode" data-ext="text"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这种结构清晰地展示了规划与执行的分工：Planner 负责构思路线，Executor 负责落实行动。</p>
-<h3> 3.3 P&amp;E关键要素</h3>
-<p>要让 P&amp;E 框架跑通，Agent 必须具备4个核心能力，对应4个关键组件：</p>
-<ul>
-<li>① 目标解析能力：能从模糊需求中提取“关键约束”（如质量、时效、预算）和“可调整空间”，避免规划方向跑偏（比如用户没说质量标准，Agent 需自动补充“符合项目所属行业标准”）；</li>
-<li>② 规划生成能力：能拆解“颗粒度合适”的子步骤（既不能太粗，比如只拆“选供应商→采购→验收”，也不能太细，比如拆“打开供应商工具→输入参数→点击查询”），且子步骤符合逻辑顺序（如“验收”必须在“运输”之后）；</li>
-<li>③ 执行调度能力：能按计划顺序调用工具，处理“并行步骤”（如钢筋和消防设备的询价可同时进行）和“依赖步骤”（如“签订合同”必须在“询价对比”之后）；</li>
-<li>④ 监控修正能力：能识别“执行偏差”（如超预算、超时效），并判断是“调整子步骤”（如二次筛选供应商）还是“重新规划”（如预算严重不足，需和用户协商调整目标）。</li>
-</ul>
-<h2> 4. 与 ReAct 的对比</h2>
-<p>P&amp;E 和 ReAct 都属于 Agent 推理框架，但适用场景完全不同，对比清晰：</p>
-<table>
-<thead>
-<tr>
-<th>对比维度</th>
-<th>ReAct(推理-行动)</th>
-<th>Plan-and-Execute(规划-执行)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>推理方式</td>
-<td>推理与行动交替进行</td>
-<td>规划与执行分阶段进行</td>
-</tr>
-<tr>
-<td>计划优先级</td>
-<td>执行是核心，规划服务于单次执行</td>
-<td>规划是核心，执行围绕规划展开</td>
-</tr>
-<tr>
-<td>决策粒度</td>
-<td>细粒度、即时决策</td>
-<td>粗粒度、全局规划</td>
-</tr>
-<tr>
-<td>步骤关联性</td>
-<td>子步骤弱关联（比如查价格后可直接反馈，无需后续步骤）</td>
-<td>子步骤强关联（比如 “备案” 必须在 “选物流商” 之后）</td>
-</tr>
-<tr>
-<td>优势</td>
-<td>灵活、动态响应环境</td>
-<td>结构化、全局性强</td>
-</tr>
-<tr>
-<td>局限</td>
-<td>容易迷失方向、循环冗长</td>
-<td>计划可能过于刚性，缺乏即时反应</td>
-</tr>
-<tr>
-<td>适用任务</td>
-<td>开放式问答、信息检索等简单、短流程、不确定性高的任务（查库存、查价格、物流跟踪）</td>
-<td>长程任务、复杂流程、多阶段决策（跨项目调度、大型采购、项目管理）</td>
-</tr>
-</tbody>
-</table>
-<p>从本质上看，<strong>ReAct 偏向“思考中的即时行动”，而 Plan-and-Execute 偏向“先计划再执行的理性决策”</strong>。</p>
-<p>两者可视为 AI Agent 推理架构的两种互补策略。</p>
-<h2> 5. 优势分析</h2>
-<p>Plan-and-Execute 的主要优势体现在以下几个方面：</p>
-<table>
-<thead>
-<tr>
-<th>优势</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>全局可控性强</strong></td>
-<td>通过显式规划步骤，模型行为更可预测、更易解释。</td>
-</tr>
-<tr>
-<td><strong>层次化推理能力</strong></td>
-<td>模型能在不同抽象层次上思考任务，从全局到局部逐层细化。</td>
-</tr>
-<tr>
-<td><strong>可复用性高</strong></td>
-<td>已生成的计划可复用或共享，便于多Agent协作或任务迁移。</td>
-</tr>
-<tr>
-<td><strong>易于监控与调试</strong></td>
-<td>Planner 与 Executor 的独立性使得错误定位更清晰。</td>
-</tr>
-</tbody>
-</table>
-<h2> 6. 局限与改进方向</h2>
-<p>尽管 Plan-and-Execute 提升了任务结构化程度，但也存在一些局限性：</p>
-<table>
-<thead>
-<tr>
-<th>局限</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>计划僵化</strong></td>
-<td>若初始计划不合理，后续执行可能陷入错误路径。</td>
-</tr>
-<tr>
-<td><strong>缺乏动态适应能力</strong></td>
-<td>对突发情况或环境变化响应较慢。</td>
-</tr>
-<tr>
-<td><strong>计算成本高</strong></td>
-<td>需要额外生成和维护计划文本。</td>
-</tr>
-<tr>
-<td><strong>依赖任务分解质量</strong></td>
-<td>Planner 的规划能力直接决定整体表现。</td>
-</tr>
-</tbody>
-</table>
-<p>为缓解这些问题，研究者提出了一系列改进版本，例如：</p>
-<ul>
-<li><strong>Reflexion + Plan-and-Execute</strong>：在执行后引入反思机制；</li>
-<li><strong>Hierarchical Agent（分层智能体）</strong>：多层 Planner–Executor 架构；</li>
-<li><strong>Adaptive Planning</strong>：执行阶段可根据观察结果动态更新计划。</li>
-</ul>
-<p>这些方法进一步增强了系统的鲁棒性与灵活性。</p>
-<h2> 7. 应用与实践</h2>
-<p>按“组件搭建→流程设计→优化迭代”三步走，每个步骤都要结合业务场景细化</p>
-<h3> 7.1 第一步：搭建 Agent 的 P&amp;E 核心组件</h3>
-<p>Agent 要支持 P&amp;E，必须包含5个核心模块（对应 P&amp;E 闭环流程）：</p>
-<table>
-<thead>
-<tr>
-<th>组件</th>
-<th>功能描述</th>
-<th>技术实现建议</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>目标解析模块（Target Parser）</td>
-<td>提取用户需求中的“核心目标+约束条件+可调整空间”，生成标准化目标（如“采购1000吨钢筋，约束：地铁级质量、20天达、预算≤400万”）</td>
-<td>基于大模型（如GPT-4、Gemini），通过提示工程引导模型识别约束（比如“从需求中提取材料类型、数量、时效、预算、质量标准”），结合行业数据库补充默认约束（如无质量标准则默认“项目所属行业国标”）</td>
-</tr>
-<tr>
-<td>规划器（Planner）</td>
-<td>基于标准化目标，生成“逻辑连贯、颗粒度合适”的子步骤计划，支持“并行/依赖步骤”标记（如“钢筋询价”和“消防设备询价”可并行，“签合同”依赖“询价对比”）</td>
-<td>用大模型+少样本示例（比如给“3个采购计划示例”），引导模型生成结构化计划（如JSON格式的子步骤清单，包含“步骤ID、名称、依赖步骤、执行工具、预期结果”）</td>
-</tr>
-<tr>
-<td>执行器（Executor）</td>
-<td>按计划顺序调用工具执行子步骤，支持“并行步骤同步执行”“依赖步骤串行执行”，记录每个步骤的实际结果</td>
-<td>搭建工具调度中心，管理工具调用优先级（如“验收步骤”优先级高于“询价步骤”），用函数调用（Function Call）对接工具，返回结构化执行结果（如“询价结果：供应商A报价3800元/吨，交货期15天”）</td>
-</tr>
-<tr>
-<td>监控器（Monitor）</td>
-<td>对比“执行结果”与“计划预期结果”，识别偏差（如“报价3800元/吨＞预算上限3700元/吨”“交货期15天≤预期20天”），标记偏差类型（预算偏差、时效偏差、质量偏差）</td>
-<td>设定偏差阈值（如预算偏差≥5%触发警报），用规则引擎+大模型判断偏差影响（如“预算超10%需重新规划，超3%可谈判”）</td>
-</tr>
-<tr>
-<td>修正器（Reviser）</td>
-<td>基于偏差类型，调整计划：① 轻微偏差（如报价超3%）→ 新增子步骤（如“与供应商谈判降价”）；② 严重偏差（如无符合时效的供应商）→ 重新生成全局计划；③ 无法修正（如预算严重不足）→ 反馈用户</td>
-<td>用大模型+行业规则，生成修正方案（如“新增谈判步骤，目标降价至3700元/吨以下，若谈判失败则二次筛选供应商”），修正后更新计划清单</td>
-</tr>
-</tbody>
-</table>
-<h3> 7.2 第二步：设计 P&amp;E 闭环执行流程（以“跨项目材料调度Agent”为例）</h3>
-<h4> （1）初始化：明确目标与资源</h4>
-<ul>
-<li>目标：用户输入“将北京项目剩余的80吨钢筋、50吨水泥，20天内调度至天津滨海新区项目，总成本≤15万元，钢筋需符合HRB400E标准，水泥需符合P.O42.5标准”；</li>
-<li>注册工具：库存盘点工具、供应商资质校验工具、物流报价工具、合规备案工具、运输跟踪工具、验收工具。</li>
-</ul>
-<h4> （2）闭环执行流程（可视化）</h4>
-<figure><img src="/imgs/column/springai/ag4-01.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
-<ul>
-<li>
-<p>规划器生成的“子步骤计划”示例（JSON格式）：</p>
-<div class="language-json line-numbers-mode" data-ext="json"><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></li>
-<li>
-<p>监控器识别偏差示例：
-“步骤3执行结果：2家物流商报价，分别为15.8万元、16.5万元，均超预算（15万元），偏差类型：预算偏差，偏差率：5.3%（轻微偏差）”</p>
-</li>
-<li>
-<p>修正器调整计划示例：
-“新增步骤4：与报价15.8万元的物流商谈判，目标降价至15万元以下；若谈判失败，新增步骤5：筛选天津本地小型物流商补充报价”</p>
-</li>
-</ul>
-<h4> （3）终止条件设计</h4>
-<ul>
-<li>成功终止：所有子步骤执行完成，满足核心目标（如“材料已送达天津项目，验收合格，总成本14.8万元，耗时18天”）；</li>
-<li>失败终止：多次修正后仍无法满足核心约束（如“所有物流商报价均超18万元，无法压缩至15万元内，且无替代物流方案”），反馈用户并提供备选建议（如“延长运输时间至30天，可降低成本至14.5万元”）。</li>
-</ul>
-<h3> 7.3 第三步：优化 P&amp;E 执行效率</h3>
-<p>P&amp;E 框架的落地难点是<code>规划太复杂、执行效率低、修正频繁</code>，需通过以下技巧优化：</p>
-<ul>
-<li>① 分层规划（Hierarchical Planning）：把复杂计划拆分为 *<em>主计划+子计划</em>
-<ul>
-<li>比如“跨项目调度主计划”包含“库存盘点、物流规划、验收”3个主步骤</li>
-<li>每个主步骤再拆子计划（如“物流规划”拆“询价、谈判、签约”），避免计划过于冗长；</li>
-</ul>
-</li>
-<li>② 计划压缩（Plan Compression）：只保留<strong>关键步骤</strong>和<strong>约束条件</strong>，忽略细节（如无需在计划中写<code>打开物流工具→输入参数</code>，只需写<code>调用物流工具询价</code>），减少大模型上下文压力；</li>
-<li>③ 动态资源分配：执行器支持<strong>并行步骤同步执行</strong>（如同时盘点钢筋和水泥库存），缩短整体周期；对<strong>关键步骤</strong>（如合规备案）分配更多资源（如优先调用工具、超时重试3次）；</li>
-<li>④ 少样本规划引导：在规划器的提示中，加入<strong>行业相关的规划示例</strong>（如“建筑材料调度的标准步骤清单”），让模型生成的计划更贴合业务实际，减少修正次数；</li>
-<li>⑤ 偏差阈值动态调整：根据任务阶段调整偏差阈值（如前期询价阶段，预算偏差阈值设为10%；后期签约阶段，阈值设为3%），避免过度修正影响效率。</li>
-</ul>
-<h2> 8. 总结</h2>
-<p><strong>Plan-and-Execute 框架</strong> 是一种面向复杂任务的层次化推理与行动机制。</p>
-<p>它通过“先规划、再执行”的解耦结构，使模型能够在全局视角下进行任务分解与多阶段执行，从而在可解释性、稳定性和任务规划性上优于 ReAct 等即时推理框架。</p>
-<blockquote>
-<p><strong>一句话总结：</strong>
-<strong>Plan-and-Execute 是让 AI Agent 从“即兴思考者”进化为“有计划的行动者”的关键框架。</strong></p>
-</blockquote>
-<p>最后再以一张图，来重温一下P&amp;E</p>
-<figure><img src="/imgs/column/springai/ag3-03.webp" alt="" tabindex="0" loading="lazy"><figcaption></figcaption></figure>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <category term="Agent"/>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2025-11-07T09:15:07.000Z</published>
-    <rights>Copyright by 一灰灰blog</rights>
-  </entry>
-  <entry>
-    <title type="text">Agent篇</title>
-    <id>https://ppai.top/ai-guides/tutorial/hello-agent/</id>
-    <link href="https://ppai.top/ai-guides/tutorial/hello-agent/"/>
-    <updated>2026-01-22T08:45:40.000Z</updated>
-    <summary type="html"><![CDATA[<p>主要介绍AI Agent相关的知识点，包括相关技术栈，应用开发等</p>
-]]></summary>
-    <content type="html"><![CDATA[<p>主要介绍AI Agent相关的知识点，包括相关技术栈，应用开发等</p>
-]]></content>
-    <author>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </author>
-    <contributor>
-      <name>一灰灰blog</name>
-      <uri>https://ppai.top</uri>
-    </contributor>
-    <published>2026-01-22T08:45:40.000Z</published>
     <rights>Copyright by 一灰灰blog</rights>
   </entry>
 </feed>
